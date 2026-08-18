@@ -10,25 +10,54 @@
 //! failure for a pass.
 
 use std::path::Path;
-use std::process::Command;
 
-use slasher::{config, disk, paths, snapshot, tables};
+use slasher::{config, disk, github, paths, snapshot, tables};
 
 fn main() {
     println!("checking what a grind needs before starting one\n");
 
-    let mut blocked = Vec::new();
+    let mut blocked: Vec<String> = Vec::new();
     let mut warned = Vec::new();
 
-    // 1. GitHub, first and loudest. Without it a night of grinding has nowhere to go.
+    // 1. GitHub, first and loudest. Without it a night of grinding has nowhere to go. The
+    //    three ways this goes wrong get three different instructions, because the person
+    //    reading them may never have used a terminal before: `gh` genuinely missing, `gh`
+    //    installed but invisible to a terminal older than the install, and `gh` present but
+    //    not signed in.
     match github() {
-        Ok(who) => println!("  [ok]      signed in to GitHub as {who}"),
-        Err(why) => {
-            println!("  [BLOCKED] GitHub: {why}");
+        GitHub::SignedIn { who, on_path } => {
+            if on_path {
+                println!("  [ok]      signed in to GitHub as {who}");
+            } else {
+                println!(
+                    "  [ok]      signed in to GitHub as {who} (gh found by its install path; \
+                     this terminal is older than the install and does not know the `gh` \
+                     command, which is fine)"
+                );
+            }
+        }
+        GitHub::NotSignedIn(gh) => {
+            println!("  [BLOCKED] GitHub: not signed in");
+            blocked.push(format!(
+                "Sign in to GitHub. Run:\
+                 \n              {}\
+                 \n          then answer its questions: GitHub.com, HTTPS, and login with a web\
+                 \n          browser. Findings cannot be submitted without this.",
+                gh.login_hint()
+            ));
+        }
+        GitHub::NotInstalled => {
+            println!("  [BLOCKED] GitHub: the GitHub CLI (`gh`) is not installed");
             blocked.push(
-                "Sign in to GitHub. Install the GitHub CLI from https://cli.github.com, then run:\
+                "Install the GitHub CLI. On Windows:\
+                 \n              winget install --id GitHub.cli\
+                 \n          (anywhere else, see https://cli.github.com). Then sign in:\
                  \n              gh auth login\
-                 \n          Findings cannot be submitted without it, so do this before grinding.",
+                 \n          and run this check again. If the terminal says it does not know\
+                 \n          `gh` right after installing, that terminal is older than the\
+                 \n          install -- just run this check again and it will say what to type.\
+                 \n          Findings cannot be submitted without it, so do this before grinding."
+                    .to_owned(),
             );
         }
     }
@@ -64,7 +93,8 @@ fn main() {
         blocked.push(
             "The snapshots ship with the repository and never change, so this means\
              \n          one has been deleted, or `snapshots` in config.toml points\
-             \n          elsewhere. Nothing can be confirmed without one.",
+             \n          elsewhere. Nothing can be confirmed without one."
+                .to_owned(),
         );
     }
 
@@ -84,9 +114,10 @@ fn main() {
         Err(why) => {
             println!("  [BLOCKED] hash tables: {why}");
             blocked.push(
-                "Fetch the hash tables. They come from https://github.com/echo000/cod-name-db                 
-          and nothing here works without them:                 
-              cargo run --release --bin fetch-tables",
+                "Fetch the hash tables. They come from https://github.com/echo000/cod-name-db
+          and nothing here works without them:
+              cargo run --release --bin fetch-tables"
+                    .to_owned(),
             );
         }
     }
@@ -133,17 +164,31 @@ fn main() {
     std::process::exit(1);
 }
 
-/// Who GitHub thinks we are, or why it does not know.
+/// The three states GitHub access can be in, each needing different words.
+enum GitHub {
+    SignedIn { who: String, on_path: bool },
+    NotSignedIn(github::Gh),
+    NotInstalled,
+}
+
+/// Who GitHub thinks we are, or exactly what stands in the way of it knowing.
 ///
 /// `gh auth status` is asked rather than a token file read, because it is the same question the
-/// submission itself will ask and there is no value in the two disagreeing.
-fn github() -> Result<String, String> {
-    let found = Command::new("gh").arg("auth").arg("status").output();
-
-    let output = match found {
-        Ok(output) => output,
-        Err(_) => return Err("the GitHub CLI (`gh`) is not installed".to_owned()),
+/// submission itself will ask and there is no value in the two disagreeing. gh itself is looked
+/// for beyond PATH, because the commonest failure is a terminal older than the install.
+fn github() -> GitHub {
+    let Some(gh) = github::locate() else {
+        return GitHub::NotInstalled;
     };
+
+    let output = match gh.command().arg("auth").arg("status").output() {
+        Ok(output) => output,
+        Err(_) => return GitHub::NotInstalled,
+    };
+
+    if !output.status.success() {
+        return GitHub::NotSignedIn(gh);
+    }
 
     // `gh` writes this to stderr on older versions and stdout on newer ones.
     let text = format!(
@@ -151,10 +196,6 @@ fn github() -> Result<String, String> {
         String::from_utf8_lossy(&output.stdout),
         String::from_utf8_lossy(&output.stderr)
     );
-
-    if !output.status.success() {
-        return Err("not signed in".to_owned());
-    }
 
     // "Logged in to github.com account NAME (...)" on current versions, "as NAME" on older ones.
     for line in text.lines() {
@@ -168,11 +209,11 @@ fn github() -> Result<String, String> {
                     .trim_matches(|c: char| !c.is_ascii_alphanumeric() && c != '-' && c != '_');
 
                 if !name.is_empty() {
-                    return Ok(name.to_owned());
+                    return GitHub::SignedIn { who: name.to_owned(), on_path: gh.on_path };
                 }
             }
         }
     }
 
-    Ok("an account it did not name".to_owned())
+    GitHub::SignedIn { who: "an account it did not name".to_owned(), on_path: gh.on_path }
 }
