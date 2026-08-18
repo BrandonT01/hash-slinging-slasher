@@ -212,6 +212,7 @@ fn category_candidates(lines: &[String]) -> Vec<String> {
 }
 
 fn main() {
+    let began = std::time::Instant::now();
     let root = paths::root();
     let pool = pool_index("localizeentry").expect("the localize pool");
 
@@ -380,7 +381,16 @@ round {round} added nothing; saturated");
     results.write(paths::findings()).expect("the results");
 
     match results.write_run(paths::findings(), "localize") {
-        Ok(Some(folder)) => println!("this run's own names: {}", folder.display()),
+        Ok(Some(folder)) => {
+            println!("this run's own names: {}", folder.display());
+            let _ = Results::note_run(
+                &folder,
+                "localize category/key unfolding (confirm_localize)",
+                "known categories played against harvested words and known keys against \
+                 candidate words, completing CATEGORY/KEY pairs",
+                began.elapsed(),
+            );
+        }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
     }

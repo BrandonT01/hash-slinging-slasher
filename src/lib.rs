@@ -18,6 +18,7 @@ use std::path::{Path, PathBuf};
 pub mod loader;
 pub mod config;
 pub mod disk;
+pub mod github;
 pub mod tables;
 pub mod paths;
 pub mod snapshot;
@@ -521,6 +522,20 @@ pub fn endings_of(tables: &[&str]) -> Vec<String> {
 /// already in the map that gets written out, so a rule change that no longer reaches an old name
 /// does not take it away. Getting this wrong once silently replaced a whole result set, which is
 /// why it is one type with one way in.
+/// A duration the way people write them: `2h 14m 09s`, `14m 09s`, `42s`.
+pub fn human_duration(duration: std::time::Duration) -> String {
+    let seconds = duration.as_secs();
+    let (hours, minutes, seconds) = (seconds / 3600, (seconds % 3600) / 60, seconds % 60);
+
+    if hours > 0 {
+        format!("{hours}h {minutes:02}m {seconds:02}s")
+    } else if minutes > 0 {
+        format!("{minutes}m {seconds:02}s")
+    } else {
+        format!("{seconds}s")
+    }
+}
+
 #[derive(Default)]
 pub struct Results {
     by_kind: HashMap<String, HashMap<u64, String>>,
@@ -684,6 +699,27 @@ impl Results {
         }
 
         Ok(Some(folder))
+    }
+
+    /// Writes a short account of a run into its folder: which method ran, what that method
+    /// does, and how long it took. The submission carries it upstream, so a reviewer sees how
+    /// a batch of names was reached rather than only the names themselves.
+    ///
+    /// A `.md` rather than a `.txt`, because a submission gathers every `.txt` line in a run
+    /// folder as a name, and the account of a run is not a name.
+    pub fn note_run(
+        folder: &Path,
+        method: &str,
+        what: &str,
+        took: std::time::Duration,
+    ) -> std::io::Result<()> {
+        fs::write(
+            folder.join("notes.md"),
+            format!(
+                "- method: {method}\n- what it does: {what}\n- ran for: {}\n",
+                human_duration(took)
+            ),
+        )
     }
 
     /// Writes a file per type, sorted by name, and reports what each gained.

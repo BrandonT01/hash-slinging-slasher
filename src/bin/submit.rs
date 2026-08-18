@@ -19,9 +19,9 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 
-use slasher::{config, expected_by_chance, hash64, paths, stamp, tables, ID_MASK};
+use slasher::{config, expected_by_chance, github, hash64, paths, stamp, tables, ID_MASK};
 
 /// Where findings go. Set `submit_repo` in `config.toml` to override.
 const DEFAULT_REPO: &str = "KingslayerKyle/hash-slinging-slasher";
@@ -36,7 +36,13 @@ fn main() {
     // 1. Who we are. Without this the whole night has nowhere to go, which is why `preflight`
     //    checks it before any searching rather than leaving it until now.
     let Some(who) = github_user() else {
-        eprintln!("not signed in to GitHub. Run `gh auth login` and try again.");
+        match github::locate() {
+            Some(gh) => eprintln!("not signed in to GitHub. Sign in with:\n    {}", gh.login_hint()),
+            None => eprintln!(
+                "the GitHub CLI (`gh`) is not installed. On Windows: winget install --id \
+                 GitHub.cli (anywhere else, https://cli.github.com), then `gh auth login`."
+            ),
+        }
         eprintln!("(this is what `preflight` warns about before a grind starts.)");
         std::process::exit(1);
     };
@@ -147,6 +153,10 @@ fn main() {
     //    seeded method; it is worth carrying so a strange batch can be traced afterwards.
     let estimate = expected_by_chance(batch.len() as u64, known.len());
 
+    // What each run has to say for itself -- which method, and how long it ground for. Written
+    // by the run into its own folder; a folder without one is from an older or interrupted run.
+    let accounts = run_accounts(&pending);
+
     let notes = folder.join(format!("about_{when}.md"));
     let _ = fs::write(
         &notes,
@@ -159,7 +169,8 @@ fn main() {
              - searched: {}\n\
              - expected coincidental matches: {estimate:.6}\n\n\
              Every name here was confirmed against the game's own loaded assets, and checked \
-             against the community tables immediately before sending.\n",
+             against the community tables immediately before sending.\n\
+             \n## How these were found\n{accounts}",
             batch.len(),
             pending.len(),
             config::targets().describe(),
@@ -174,7 +185,7 @@ fn main() {
         .map(|path| path.display().to_string())
         .unwrap_or_else(|| DEFAULT_REPO.to_owned());
 
-    match open_pull_request(&repo, &folder, &when, &who, batch.len(), dropped) {
+    match open_pull_request(&repo, &folder, &when, &who, batch.len(), dropped, &accounts) {
         Ok(url) => {
             println!("\nsubmitted: {url}");
             record(&outbox, &pending);
@@ -185,6 +196,21 @@ fn main() {
             std::process::exit(1);
         }
     }
+}
+
+/// Each pending run's account of itself, as markdown: the folder, then whatever `notes.md` its
+/// run wrote about which method ran and for how long.
+fn run_accounts(pending: &[PathBuf]) -> String {
+    let mut accounts = String::new();
+
+    for folder in pending {
+        let name = folder.file_name().unwrap_or_default().to_string_lossy();
+        let note = fs::read_to_string(folder.join("notes.md"))
+            .unwrap_or_else(|_| "- method: not recorded (an older or interrupted run)\n".to_owned());
+        accounts.push_str(&format!("\n### {name}\n{note}"));
+    }
+
+    accounts
 }
 
 /// Every `run_*` folder in a findings tree, at any depth.
@@ -307,7 +333,7 @@ fn record(outbox: &Path, sent: &[PathBuf]) {
 }
 
 fn github_user() -> Option<String> {
-    let output = Command::new("gh")
+    let output = github::command()
         .args(["api", "user", "--jq", ".login"])
         .stderr(Stdio::null())
         .output()
@@ -340,6 +366,7 @@ fn open_pull_request(
     who: &str,
     names: usize,
     dropped: usize,
+    accounts: &str,
 ) -> Result<String, String> {
     let branch = format!("findings/{who}-{when}");
     let base = default_branch(repo)?;
@@ -391,7 +418,8 @@ fn open_pull_request(
          - submitted by: @{who}\n\n\
          Files are named with the time they were sent, so nothing collides with an earlier batch. \
          Every hash here is re-verified against the shipped snapshot by CI; nothing is taken on \
-         the word of the client that found it.",
+         the word of the client that found it.\n\n\
+         ## How these were found\n{accounts}",
     );
 
     // `who:branch` is how GitHub names a branch that lives in somebody else's fork.
@@ -539,7 +567,7 @@ fn make_branch(repo: &str, branch: &str, commit: &str) -> Result<String, String>
 /// Failures carry gh's own words rather than an exit code, because the useful part of a refused
 /// request is the sentence GitHub sent back with it.
 fn gh(args: &[&str], body: Option<&str>) -> Result<String, String> {
-    let mut command = Command::new("gh");
+    let mut command = github::command();
     command.args(args).stdout(Stdio::piped()).stderr(Stdio::piped());
 
     if body.is_some() {
