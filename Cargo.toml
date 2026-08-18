@@ -1,0 +1,108 @@
+[package]
+name = "hash-slinging-slasher"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85"
+description = "Recovers Call of Duty asset names by hashing candidates against what the game actually holds."
+license = "GPL-3.0-or-later"
+
+# Short enough to type in a `use` line, since every binary starts with one.
+[lib]
+name = "slasher"
+path = "src/lib.rs"
+
+[features]
+# Nothing by default. The whole point is that grinding needs no game, no loader and no
+# Windows: it reads a snapshot of asset ids someone else captured. A default-features build
+# is pure computation over two data files and compiles anywhere.
+default = []
+
+# Attaching to Cordycep to capture a snapshot. Only whoever owns the game needs this, and it
+# is the only part that is Windows-only. Everything under it is feature-gated so that a
+# contributor on Linux is never asked to build a process-memory reader they cannot use.
+cordycep = ["dep:windows", "dep:serde", "dep:serde_json"]
+
+[dependencies]
+windows = { version = "0.61", optional = true, features = [
+    "Win32_Foundation",
+    "Win32_System_Diagnostics_Debug",
+    "Win32_System_Diagnostics_ToolHelp",
+    "Win32_System_Threading",
+    "Win32_System_ProcessStatus",
+] }
+serde = { version = "1", optional = true, features = ["derive"] }
+serde_json = { version = "1", optional = true }
+
+# Grinding, and everything around it. These build with no features and no game: the searches
+# read the captured snapshot, which is the whole point of having captured one.
+[[bin]]
+name = "preflight"
+path = "src/bin/preflight.rs"
+
+[[bin]]
+name = "report"
+path = "src/bin/report.rs"
+
+[[bin]]
+name = "fetch-tables"
+path = "src/bin/fetch_tables.rs"
+
+[[bin]]
+name = "tidy"
+path = "src/bin/tidy.rs"
+
+[[bin]]
+name = "submit"
+path = "src/bin/submit.rs"
+
+# Re-verifies a submission against the committed snapshots, trusting nothing the sender said.
+# Runs on every pull request, and needs no game for exactly the reason grinding does not.
+[[bin]]
+name = "validate"
+path = "src/bin/validate.rs"
+
+[[bin]]
+name = "pool-counts"
+path = "src/bin/pool_counts.rs"
+
+# Capturing, and the tools that read the live loader. These are the only things that need the
+# game open, and none of them is needed to grind.
+[[bin]]
+name = "snapshot"
+path = "src/bin/snapshot.rs"
+required-features = ["cordycep"]
+
+[[bin]]
+name = "verify_against_loader"
+path = "src/bin/verify_against_loader.rs"
+required-features = ["cordycep"]
+
+[[bin]]
+name = "consolidate"
+path = "src/bin/consolidate.rs"
+required-features = ["cordycep"]
+
+[[bin]]
+name = "confirm_cw"
+path = "src/bin/confirm_cw.rs"
+
+[[bin]]
+name = "confirm_variants"
+path = "src/bin/confirm_variants.rs"
+
+[[bin]]
+name = "confirm_localize"
+path = "src/bin/confirm_localize.rs"
+
+[[bin]]
+name = "confirm_sounds"
+path = "src/bin/confirm_sounds.rs"
+
+[[bin]]
+name = "images_from_materials"
+path = "src/bin/images_from_materials.rs"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1

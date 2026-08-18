@@ -1,0 +1,90 @@
+# Re-verifies every submitted name on the server, and never trusts the client that sent it.
+#
+# The sender already checked these names, on their own machine with their own build. That check
+# is not evidence: a wrong name entered into the community tables is copied outward by everyone
+# downstream and is very hard to take back. So the whole claim is re-derived here, against the
+# snapshots committed in this repository, before a maintainer looks at anything.
+#
+# Nothing here needs the game. That is the same property that lets a contributor grind without
+# one, and it is why this can run on a plain Linux runner in under a minute.
+
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# A submission that has been superseded by a newer push is not worth finishing.
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build and test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # The default build is the one that matters: no features, no dependencies, no game. If this
+      # stops compiling on Linux then the project's central claim has quietly stopped being true.
+      #
+      # Warnings are caught in the same step as the build rather than a later one, because cargo
+      # only prints them while it is actually compiling -- a second `cargo build` reads the cache,
+      # says nothing, and would pass no matter what the first one printed.
+      - name: build with no features, and no warnings
+        run: |
+          set -o pipefail
+          cargo build --release --verbose 2>&1 | tee build.log
+          ! grep -q '^warning' build.log
+
+      - name: test
+        run: cargo test --release --verbose
+
+  submissions:
+    name: re-verify submitted names
+    runs-on: ubuntu-latest
+    steps:
+      # The full history, because which files a pull request added is a question about two commits.
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: which files this changes
+        id: changed
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base="origin/${{ github.base_ref }}"
+            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}" || true
+          else
+            base="${{ github.event.before }}"
+          fi
+
+          # Added and modified only. A submission being deleted is a maintainer tidying up.
+          files=$(git diff --name-only --diff-filter=AM "$base"...HEAD -- 'submissions/**/*.txt' || true)
+
+          if [ -z "$files" ]; then
+            echo "no submission files changed"
+            echo "any=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "$files"
+            echo "any=true" >> "$GITHUB_OUTPUT"
+            echo "$files" > changed.txt
+          fi
+
+      - name: build the validator
+        if: steps.changed.outputs.any == 'true'
+        run: cargo build --release --bin validate
+
+      # Wanted but not required. Anything the tables affect is a note rather than a rejection, so
+      # a fetch that fails leaves the verification itself intact -- which is why this cannot fail
+      # the run. What it adds is the count of names somebody else published mid-grind.
+      - name: pull the published tables
+        if: steps.changed.outputs.any == 'true'
+        continue-on-error: true
+        run: cargo run --release --bin fetch-tables
+
+      - name: re-verify
+        if: steps.changed.outputs.any == 'true'
+        run: xargs -a changed.txt ./target/release/validate

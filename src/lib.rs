@@ -1,0 +1,897 @@
+//! The pieces every search here shares: the hash, the lookup, the tables and the result files.
+//!
+//! Recovering a Call of Duty asset name is two halves. Harvesting produces candidate strings,
+//! from a build's own files or from the names that are already published. Confirming hashes
+//! those candidates and looks for the result among the assets the loader is holding, which turns
+//! a guess into a fact: a match means the game itself refers to that name.
+//!
+//! What every search then has in common is this module. The hash has to be the game's, computed
+//! the game's way. The lookup has to answer hundreds of billions of times, so it is a filter
+//! before it is a map. And a result is only worth keeping if it is written somewhere a previous
+//! run cannot be undone by.
+
+use std::collections::{HashMap, HashSet};
+use std::fs;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+pub mod loader;
+pub mod config;
+pub mod disk;
+pub mod tables;
+pub mod paths;
+pub mod snapshot;
+pub mod search;
+
+// Reading the loader's memory to capture a snapshot. Only whoever owns the game needs this, and
+// it is the only Windows-only part of the crate, so it is behind a feature that is off by
+// default. Grinding against a captured snapshot needs none of it.
+#[cfg(feature = "cordycep")]
+pub mod cordycep;
+#[cfg(feature = "cordycep")]
+pub mod memory;
+
+/// The hash the tools use: FNV-1a, 64 bit.
+pub const BASIS: u64 = 0xCBF2_9CE4_8422_2325;
+pub const PRIME: u64 = 0x0000_0100_0000_01B3;
+
+/// Every id the loader hands out has bit 63 clear, so a name matches under one spelling only.
+/// Narrowing further loses real matches and invents collisions.
+pub const ID_MASK: u64 = 0x7FFF_FFFF_FFFF_FFFF;
+
+/// The only game these pool indexes and tables describe.
+pub const GAME: &str = "BLKOPSCW";
+
+/// Cold War's asset types, by pool index -- the whole `BO5XAssetType` enum, since Cold War is
+/// "Black Ops 5" internally. Index 18 being the sound bank pool is what first confirmed the
+/// ordering; index 184 being `streamkey` is what identified the largest unnamed pool in the game.
+pub const POOLS: &[&str] = &[
+    "zone", "assetlist", "physpreset", "physconstraints", "destructibledef", "xanim", "xmodel",
+    "xcollision", "xskeleton", "xmodelmesh", "material", "csdef", "computeshaderset", "rtsdef",
+    "raytraceshaderset", "techset", "image", "sound", "sound_bank", "sound_asset", "sound_duck",
+    "sound_alias_modifier", "sound_acoustics", "col_map", "clip_map", "com_map", "game_map",
+    "gfx_map", "fonticon", "localizeentry", "gesture", "gesturetable", "cinematicmotion", "weapon",
+    "weaponfull", "weaponfrontend", "weaponblueprint", "weaponstylesettings",
+    "weaponsecondarymovement", "weapontunables", "cgmediatable", "playersoundstable",
+    "playerfxtable", "sharedweaponsounds", "attachment", "attachmentunique", "weaponcamo",
+    "weaponcamobinding", "customizationtable", "customizationtablefrontend", "snddriverglobals",
+    "fx", "tagfx", "klf", "impactsfxtable", "impactsoundstable", "aitype", "character",
+    "xmodelalias", "rawfile", "rawfilepreproc", "rawtextfile", "animtree", "stringtable",
+    "structuredtable", "leaderboarddef", "ddl", "glasses", "scriptparsetree", "scriptparsetreedbg",
+    "script_using", "script_using_cp", "script_using_mp", "script_using_wz", "script_using_zm",
+    "keyvaluepairs", "vehicle", "tracer", "surfacefxtable", "surfacesounddef", "footsteptable",
+    "entityfximpacts", "entitysoundimpacts", "zbarrier", "vehiclefxdef", "vehiclesounddef",
+    "typeinfo", "scriptbundle", "scriptbundlelist", "rumble", "bulletpenetration", "locdmgtable",
+    "aimtable", "shoottable", "playerglobaltunables", "overheadcameratunables", "animselectortable",
+    "animmappingtable", "animstatemachine", "behaviortree", "behaviorstatemachine", "ttf", "sanim",
+    "shellshock", "statuseffect", "cinematic_camera", "cinematic_sequence", "spectate_camera",
+    "xcam", "bgcache", "flametable", "bitfield", "maptable", "maptableentry", "maptablelist",
+    "objective", "objectivelist", "navmesh", "navvolume", "laser", "beam", "streamerhint",
+    "flowgraph", "postfxbundle", "luafile", "luafiledebug", "renderoverridebundle",
+    "staticlevelfxlist", "triggerlist", "playerroletemplate", "playerroletemplatefrontend",
+    "playerrolecategorytable", "playerrolecategory", "characterbodytype",
+    "characterbodytypefrontend", "playeroutfit", "gametypetable", "gametypetableentry", "feature",
+    "featuretable", "unlockableitem", "unlockableitemtable", "entitylist", "playlists",
+    "playlistglobalsettings", "playlistschedule", "motionmatchinginput", "blackboard",
+    "tacticalquery", "playermovementtunables", "hierarchicaltasknetwork", "ragdoll", "storagefile",
+    "storagefilelist", "charmixer", "storeproduct", "storecategory", "storecategorylist", "rank",
+    "ranktable", "prestige", "prestigetable", "firstpartyentitlement", "firstpartyentitlementlist",
+    "entitlement", "entitlementlist", "sku", "labelstore", "labelstorelist", "cpu_occlusion_data",
+    "lighting", "districts", "streamerworld", "talent", "playertalenttemplate", "playeranimation",
+    "unused", "terraingfx", "highlightreelinfodefines", "highlightreelprofileweighting",
+    "highlightreelstarlevels", "dlogevent", "rawstring", "ballisticdesc", "streamkey",
+    "rendertargets", "drawnodes", "grouplodmodel", "fxlibraryvolume", "arenaseasons",
+    "sprayorgestureitem", "sprayorgesturelist", "hwplatform", "attachmenttable", "navinput",
+    "uimodeldatastruct", "crafticon", "crafticonlist", "craftweaponsticker",
+    "craftweaponstickerlist", "craftbackground", "craftbackgroundlist", "craftmaterial",
+    "craftmateriallist", "craftcategory", "craftcategorylist", "craftweaponicontransform",
+    "craftweaponicontransformlist", "xanimcurve", "dynmodel", "vectorfield", "winddef",
+    "vehicleassembly", "milestone", "milestonetable", "triggereffectdesc", "triggeractions",
+    "playersettings", "compasstunables", "execution", "scenario",
+];
+
+/// Black Ops 4's asset types, by pool index. A different enum entirely -- xmodel is 6 in Cold
+/// War and 4 here -- which is why a find has to be labelled against the game it was found in
+/// rather than against whichever list happens to be compiled in.
+pub const BO4_POOLS: &[&str] = &[
+    "physpreset", "physconstraints", "destructibledef", "xanim", "xmodel", "xmodelmesh", "material",
+    "compute_shader_set", "technique_set", "image", "sound", "clipmap", "comworld", "gameworld",
+    "gfxworld", "fonticon", "localize_entry", "localize_list", "gesture", "gesture_table", "weapon",
+    "weapon_full", "weapon_tunables", "cgmedia", "playersounds", "playerfx", "sharedweaponsounds",
+    "attachment", "attachment_unique", "weapon_camo", "customization_table",
+    "customization_table_fe_images", "snddriver_globals", "fx", "tagfx", "klf", "impact_fx",
+    "impact_sound", "aitype", "character", "xmodelalias", "rawfile", "xanim_tree", "stringtable",
+    "structured_table", "leaderboard", "ddl", "glasses", "scriptparsetree", "scriptparsetreedbg",
+    "scriptparsetreeforced", "keyvaluepairs", "vehicledef", "tracer", "surfacefx_table",
+    "surfacesounddef", "footstep_table", "entityfximpacts", "entitysoundimpacts", "zbarrier",
+    "vehiclefxdef", "vehiclesounddef", "typeinfo", "scriptbundle", "scriptbundlelist", "rumble",
+    "bulletpenetration", "locdmgtable", "aimtable", "shoottable", "playerglobaltunables",
+    "animselectortableset", "animmappingtable", "animstatemachine", "behaviortree",
+    "behaviorstatemachine", "ttf", "sanim", "light_description", "shellshock", "status_effect",
+    "cinematic_camera", "cinematic_sequence", "spectate_camera", "xcam", "bg_cache",
+    "texture_combo", "flametable", "bitfield", "maptable", "maptable_list",
+    "maptable_loading_images", "maptable_preview_images", "maptableentry_level_assets", "objective",
+    "objective_list", "navmesh", "navvolume", "laser", "beam", "streamer_hint", "flowgraph",
+    "postfxbundle", "luafile", "luafile_dbg", "renderoverridebundle", "static_level_fx_list",
+    "trigger_list", "player_role_template", "player_role_category_table", "player_role_category",
+    "character_body_type", "player_outfit", "gametypetable", "feature", "featuretable",
+    "unlockable_item", "unlockable_item_table", "entity_list", "playlists",
+    "playlist_global_settings", "playlist_schedule", "motion_matching_input", "blackboard",
+    "tacticalquery", "player_movement_tunables", "hierarchical_task_network", "ragdoll",
+    "storagefile", "storagefilelist", "charmixer", "storeproduct", "storecategory",
+    "storecategorylist", "rank", "ranktable", "prestige", "prestigetable", "firstpartyentitlement",
+    "firstpartyentitlementlist", "entitlement", "entitlementlist", "sku", "labelstore",
+    "labelstorelist", "cpu_occlusion_data", "lighting", "streamerworld", "talent",
+    "playertalenttemplate", "playeranimation", "err_unused", "terraingfx",
+    "highlightreelinfodefines", "highlightreelprofileweighting", "highlightreelstarlevels",
+    "dlogevent", "rawstring", "ballisticdesc", "streamkey", "rendertargets", "drawnodes",
+    "grouplodmodel", "fxlibraryvolume", "arenaseasons", "sprayorgestureitem", "sprayorgesturelist",
+    "hwplatform", "assetlist", "report",
+];
+
+/// The pool names for the game being ground.
+pub fn pools() -> &'static [&'static str] {
+    match config::game().as_str() {
+        "BLKOPS04" => BO4_POOLS,
+        _ => POOLS,
+    }
+}
+
+/// What to file a find in this pool under.
+///
+/// The asset type when the pool numbering is known to apply to the game being ground, and
+/// `pool_NNN` when it is not. A name filed under the wrong type is wrong to publish even though
+/// the name itself is right, and `validate` rejects it -- so an unknown numbering says so rather
+/// than guessing.
+pub fn pool_label(index: usize) -> String {
+    match pools().get(index) {
+        Some(name) => (*name).to_owned(),
+        None => format!("pool_{index}"),
+    }
+}
+
+/// Which pool index an asset type name is, if it is one of them.
+/// The same asset type under the name the other game gives it.
+///
+/// The two games name several types differently, and a search asks for a type by *string*: the
+/// config says `sound_asset`, and `wanted_for_search` drops anything `pool_index` cannot resolve.
+/// Without this, switching to Black Ops 4 silently hunts nothing for those types -- the pool looks
+/// empty because it was never asked for, which is the worst way for this to fail.
+///
+/// Differences that are only underscores are handled by comparison rather than listed here. These
+/// are the ones where the games genuinely chose different words. Black Ops 4 has no separate
+/// `sound_asset` at all, so it falls back to its one `sound` pool.
+const ALIASES: &[&[&str]] = &[
+    &["sound_asset", "sound"],
+    &["com_map", "comworld"],
+    &["game_map", "gameworld"],
+    &["gfx_map", "gfxworld"],
+    &["techset", "technique_set"],
+    &["animtree", "xanim_tree"],
+];
+
+/// Which pool index an asset type name is, in the game being ground.
+///
+/// Tried three ways, most exact first: the name as given, the name ignoring underscores, and then
+/// the name the other game uses for the same thing.
+pub fn pool_index(kind: &str) -> Option<usize> {
+    let table = pools();
+
+    if let Some(found) = table.iter().position(|pool| *pool == kind) {
+        return Some(found);
+    }
+
+    let flattened = |name: &str| name.replace('_', "");
+    if let Some(found) = table.iter().position(|pool| flattened(pool) == flattened(kind)) {
+        return Some(found);
+    }
+
+    for group in ALIASES {
+        if !group.contains(&kind) {
+            continue;
+        }
+
+        for other in *group {
+            if let Some(found) = table.iter().position(|pool| pool == other) {
+                return Some(found);
+            }
+        }
+    }
+
+    None
+}
+
+/// The hash, taken as a fold rather than over a whole string.
+///
+/// A candidate is a beginning, a stem and an ending. Folding lets the beginning be hashed once
+/// for a whole run and the stem once per beginning, so an ending costs only the few bytes it is
+/// long. That is the difference between five million candidates a second and a billion.
+///
+/// The name is normalised as it goes: lower cased, and backslash folded to forward slash.
+/// Missing that normalisation makes everything fail to match.
+#[inline(always)]
+pub fn feed(mut hash: u64, text: &[u8]) -> u64 {
+    for &byte in text {
+        let byte = match byte {
+            b'A'..=b'Z' => byte + 32,
+            b'\\' => b'/',
+            other => other,
+        };
+
+        hash ^= byte as u64;
+        hash = hash.wrapping_mul(PRIME);
+    }
+
+    hash
+}
+
+/// The inverse of the prime, modulo 2^64. The prime is odd, so it has one.
+///
+/// This is what makes the hash reversible: a byte fed in can be taken back out again, exactly.
+pub const PRIME_INVERSE: u64 = {
+    // Newton's method doubles the number of correct bits each time, so six rounds from a
+    // three-bit seed is more than the sixty four needed.
+    let mut inverse: u64 = 1;
+    let mut round = 0;
+    while round < 6 {
+        inverse = inverse.wrapping_mul(2u64.wrapping_sub(PRIME.wrapping_mul(inverse)));
+        round += 1;
+    }
+    inverse
+};
+
+/// Takes a known ending back off a hash, giving the hash the name had before it.
+///
+/// The forward step is `h = (h ^ byte) * prime`, so the backward one is
+/// `h = (h * prime_inverse) ^ byte`, walking the bytes in reverse. It is exact, not a guess.
+///
+/// This is what lets a search cost the sum of its lists rather than the product. Instead of
+/// hashing every stem with every ending, each ending is peeled off each wanted id once, and what
+/// is left is the hash the stem alone would have to reach. A thousand endings then cost one pass
+/// over the wanted ids rather than a thousand passes over the stems.
+#[inline(always)]
+pub fn peel(mut hash: u64, text: &[u8]) -> u64 {
+    for &byte in text.iter().rev() {
+        let byte = match byte {
+            b'A'..=b'Z' => byte + 32,
+            b'\\' => b'/',
+            other => other,
+        };
+
+        hash = hash.wrapping_mul(PRIME_INVERSE) ^ byte as u64;
+    }
+
+    hash
+}
+
+/// The hash of a whole name.
+pub fn hash64(text: &str) -> u64 {
+    feed(BASIS, text.as_bytes())
+}
+
+/// The hash of a name as the loader would hold it.
+pub fn id_of(text: &str) -> u64 {
+    hash64(text) & ID_MASK
+}
+
+/// How the two stages are sized, in bits of the id each is indexed by.
+const COARSE_BITS: u32 = 24;
+const FINE_BITS: u32 = 26;
+
+/// A membership test over the ids still unnamed, in two stages.
+///
+/// Nearly every candidate is a miss, so the first question asked of one has to be cheap. Both
+/// stages are bitmaps read at disjoint parts of the id, which makes them independent: a miss
+/// usually stops at the small one, which stays in cache, and only a few candidates in ten
+/// thousand ever reach the map behind it.
+pub struct Filter {
+    coarse: Vec<u64>,
+    fine: Vec<u64>,
+    coarse_bits: u32,
+    fine_bits: u32,
+}
+
+impl Filter {
+    pub fn new<'a>(ids: impl Iterator<Item = &'a u64>) -> Self {
+        Self::with_bits(ids, COARSE_BITS, FINE_BITS)
+    }
+
+    /// A filter sized for how much is going into it.
+    ///
+    /// A bitmap holding far more entries than it has bits says yes to everything, which costs
+    /// the whole point of having one. Half a dozen bits per entry keeps the first stage a real
+    /// question, and the second stage is given the same again.
+    pub fn sized<'a>(ids: impl Iterator<Item = &'a u64> + Clone, count: usize) -> Self {
+        let wanted = (count.max(1) * 8).next_power_of_two().trailing_zeros();
+        let bits = wanted.clamp(COARSE_BITS, 32);
+
+        Self::with_bits(ids, bits, bits.min(30))
+    }
+
+    fn with_bits<'a>(ids: impl Iterator<Item = &'a u64>, coarse_bits: u32, fine_bits: u32) -> Self {
+        let mut filter = Self {
+            coarse: vec![0; 1 << (coarse_bits - 6)],
+            fine: vec![0; 1 << (fine_bits - 6)],
+            coarse_bits,
+            fine_bits,
+        };
+
+        for id in ids {
+            let (coarse, fine) = filter.slots(*id);
+            filter.coarse[coarse >> 6] |= 1 << (coarse & 63);
+            filter.fine[fine >> 6] |= 1 << (fine & 63);
+        }
+
+        filter
+    }
+
+    #[inline(always)]
+    fn slots(&self, id: u64) -> (usize, usize) {
+        let coarse = id & ((1 << self.coarse_bits) - 1);
+        let fine = (id >> self.coarse_bits) & ((1 << self.fine_bits) - 1);
+
+        (coarse as usize, fine as usize)
+    }
+
+    #[inline(always)]
+    pub fn may_hold(&self, id: u64) -> bool {
+        let (coarse, fine) = self.slots(id);
+
+        if self.coarse[coarse >> 6] & (1 << (coarse & 63)) == 0 {
+            return false;
+        }
+
+        self.fine[fine >> 6] & (1 << (fine & 63)) != 0
+    }
+}
+
+/// One 'hash,name' file, as pairs.
+pub fn read_rows(path: &Path) -> Vec<(u64, String)> {
+    fs::read_to_string(path)
+        .unwrap_or_default()
+        .lines()
+        .filter_map(|line| {
+            let (key, name) = line.trim().split_once(',')?;
+            Some((
+                u64::from_str_radix(key.trim(), 16).ok()? & ID_MASK,
+                name.to_owned(),
+            ))
+        })
+        .collect()
+}
+
+/// The names out of a 'hash,name' file, or the plain lines of one that is not.
+pub fn read_names(path: &Path) -> Vec<String> {
+    fs::read_to_string(path)
+        .unwrap_or_default()
+        .lines()
+        .map(|line| {
+            let line = line.trim();
+            match line.split_once(',') {
+                Some((key, name)) if u64::from_str_radix(key, 16).is_ok() => name.to_owned(),
+                _ => line.to_owned(),
+            }
+        })
+        .filter(|line| !line.is_empty())
+        .collect()
+}
+
+/// Every line of every text file in a folder.
+pub fn folder_names(directory: impl AsRef<Path>) -> Vec<String> {
+    let directory = directory.as_ref();
+    let mut names = Vec::new();
+
+    let Ok(entries) = fs::read_dir(directory) else {
+        return names;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) == Some("txt") {
+            names.extend(read_names(&path));
+        }
+    }
+
+    names
+}
+
+/// One line per item, which is how the generated lists are stored.
+pub fn read_list(path: &Path) -> Vec<String> {
+    fs::read_to_string(path)
+        .unwrap_or_else(|error| panic!("{} could not be read: {error}", path.display()))
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty())
+        .map(str::to_owned)
+        .collect()
+}
+
+/// The names one table holds.
+pub fn table_names(table: &str) -> Vec<String> {
+    read_names(&PathBuf::from(paths::tables()).join(format!("{table}.csv")))
+}
+
+/// Every name every table holds.
+///
+/// A newer game's table teaches the wrong conventions and must never be measured for the lists,
+/// but that is a different question from whether its names are worth cutting into pieces. Cold
+/// War carries a great deal of the games either side of it, reading a table costs one pass over
+/// a file, and missing a name costs the name -- so all of them are read here.
+pub fn all_table_names() -> Vec<String> {
+    let mut names = Vec::new();
+
+    let Ok(entries) = fs::read_dir(paths::tables()) else {
+        return names;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) == Some("csv") {
+            names.extend(read_names(&path));
+        }
+    }
+
+    names
+}
+
+/// Every hash any table already resolves.
+///
+/// Every table is read, including the newer games', because a name any of them resolves is not a
+/// new find whoever it belongs to. Both the stored key and the hash of the stored name are taken,
+/// since a table can hold one at a different width from the other.
+pub fn table_keys() -> HashSet<u64> {
+    let mut known = HashSet::new();
+
+    let Ok(entries) = fs::read_dir(paths::tables()) else {
+        return known;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.extension().and_then(|e| e.to_str()) != Some("csv") {
+            continue;
+        }
+
+        let Ok(text) = fs::read_to_string(&path) else {
+            continue;
+        };
+
+        for line in text.lines() {
+            let Some((key, name)) = line.split_once(',') else {
+                continue;
+            };
+
+            if let Ok(value) = u64::from_str_radix(key.trim(), 16) {
+                known.insert(value);
+                known.insert(value & ID_MASK);
+            }
+
+            let hash = hash64(name.trim());
+            known.insert(hash);
+            known.insert(hash & ID_MASK);
+        }
+    }
+
+    known
+}
+
+/// Whether a set of table hashes is big enough to be the real thing.
+///
+/// Without the tables every loaded asset looks unnamed, and a search would report a few million
+/// already published names as though they were finds. A short read means the tables moved, not
+/// that the game got bigger.
+pub fn tables_look_complete(known: &HashSet<u64>) -> bool {
+    known.len() >= 1_000_000
+}
+
+/// Every ending a table's names carry: one, two and three trailing segments, all of them.
+///
+/// No threshold, deliberately. Where a search is narrow enough to afford the whole set, a
+/// threshold would drop exactly the unusual endings that a published table cannot already name.
+pub fn endings_of(tables: &[&str]) -> Vec<String> {
+    let mut endings: HashSet<String> = HashSet::new();
+
+    for table in tables {
+        for name in table_names(table) {
+            let name = name.to_lowercase();
+            let marks: Vec<usize> = name
+                .bytes()
+                .enumerate()
+                .filter(|(_, byte)| *byte == b'_')
+                .map(|(index, _)| index)
+                .collect();
+
+            for depth in 1..=3 {
+                if marks.len() >= depth {
+                    let at = marks[marks.len() - depth];
+                    if at + 1 < name.len() {
+                        endings.insert(name[at..].to_owned());
+                    }
+                }
+            }
+        }
+    }
+
+    endings.into_iter().collect()
+}
+
+/// Results held as a file per asset type, each a list of 'hash,name'.
+///
+/// Loaded, added to, and written back. A run can only ever add: what a previous run wrote is
+/// already in the map that gets written out, so a rule change that no longer reaches an old name
+/// does not take it away. Getting this wrong once silently replaced a whole result set, which is
+/// why it is one type with one way in.
+#[derive(Default)]
+pub struct Results {
+    by_kind: HashMap<String, HashMap<u64, String>>,
+    before: HashMap<String, usize>,
+    added: HashMap<String, HashMap<u64, String>>,
+}
+
+impl Results {
+    /// Reads whatever is already in a folder, and in the per-run folders under it.
+    ///
+    /// A run writes what it found on its own into `run_<when>`, so that what is new is a folder
+    /// rather than a diff. Every one of them is read back here, because the question a run asks
+    /// is whether a name is new to *all* of them.
+    pub fn load(directory: impl AsRef<Path>) -> Self {
+        let directory = directory.as_ref();
+        let mut by_kind: HashMap<String, HashMap<u64, String>> = HashMap::new();
+
+        let mut folders = vec![PathBuf::from(directory)];
+
+        if let Ok(entries) = fs::read_dir(directory) {
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.is_dir() {
+                    folders.push(path);
+                }
+            }
+        }
+
+        for folder in folders {
+            let Ok(entries) = fs::read_dir(&folder) else {
+                continue;
+            };
+
+            for entry in entries.flatten() {
+                let path = entry.path();
+                if path.extension().and_then(|e| e.to_str()) != Some("txt") {
+                    continue;
+                }
+
+                let Some(kind) = path.file_stem().and_then(|s| s.to_str()) else {
+                    continue;
+                };
+
+                by_kind
+                    .entry(kind.to_owned())
+                    .or_default()
+                    .extend(read_rows(&path));
+            }
+        }
+
+        let before = by_kind
+            .iter()
+            .map(|(kind, rows)| (kind.clone(), rows.len()))
+            .collect();
+
+        Self {
+            by_kind,
+            before,
+            added: HashMap::new(),
+        }
+    }
+
+    /// Every id already held, whatever type it is filed under.
+    pub fn ids(&self) -> HashSet<u64> {
+        self.by_kind
+            .values()
+            .flat_map(|rows| rows.keys().copied())
+            .collect()
+    }
+
+    /// Every name held, whatever type it is filed under.
+    ///
+    /// These are proven patterns, so they go back in as seeds: each one suggests siblings the
+    /// same rules can now reach.
+    pub fn all_names(&self) -> Vec<String> {
+        self.by_kind
+            .values()
+            .flat_map(|rows| rows.values().cloned())
+            .collect()
+    }
+
+    /// The names held under one type.
+    pub fn names(&self, kind: &str) -> Vec<String> {
+        self.by_kind
+            .get(kind)
+            .map(|rows| rows.values().cloned().collect())
+            .unwrap_or_default()
+    }
+
+    pub fn len(&self) -> usize {
+        self.by_kind.values().map(HashMap::len).sum()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+
+    pub fn kinds(&self) -> usize {
+        self.by_kind.len()
+    }
+
+    /// Adds a name, keeping the first spelling that reached an id.
+    ///
+    /// A name already held is not an addition, however it was arrived at, so a run's own folder
+    /// stays a list of what that run was the first to reach.
+    pub fn add(&mut self, kind: &str, id: u64, name: String) {
+        // A scraped line may separate its directories with backslashes. The hash folds those to
+        // forward slashes, so the two spellings reach the same asset, but only one of them is
+        // the spelling the published tables use and it is the one worth writing down.
+        let name = if name.contains('\\') {
+            name.replace('\\', "/")
+        } else {
+            name
+        };
+
+        let rows = self.by_kind.entry(kind.to_owned()).or_default();
+
+        if rows.contains_key(&id) {
+            return;
+        }
+
+        rows.insert(id, name.clone());
+        self.added
+            .entry(kind.to_owned())
+            .or_default()
+            .insert(id, name);
+    }
+
+    /// What this run added, and nothing else.
+    pub fn added(&self) -> usize {
+        self.added.values().map(HashMap::len).sum()
+    }
+
+    /// Writes only what this run found, into a folder of its own named for when it ran.
+    ///
+    /// The merged set says what is known; this says what is new, which is what gets submitted.
+    /// Nothing is written at all when a run found nothing, because an empty folder per barren
+    /// pass buries the ones that were not.
+    pub fn write_run(&self, directory: impl AsRef<Path>, label: &str) -> std::io::Result<Option<PathBuf>> {
+        let directory = directory.as_ref();
+        if self.added.is_empty() {
+            return Ok(None);
+        }
+
+        let folder = PathBuf::from(directory).join(format!("run_{}_{}", stamp(), label));
+        fs::create_dir_all(&folder)?;
+
+        let mut kinds: Vec<&String> = self.added.keys().collect();
+        kinds.sort();
+
+        for kind in kinds {
+            let rows = &self.added[kind];
+
+            let mut ordered: Vec<(&u64, &String)> = rows.iter().collect();
+            ordered.sort_by(|a, b| a.1.to_lowercase().cmp(&b.1.to_lowercase()));
+
+            let mut file = fs::File::create(folder.join(format!("{kind}.txt")))?;
+            for (id, name) in &ordered {
+                writeln!(file, "{id:x},{name}")?;
+            }
+        }
+
+        Ok(Some(folder))
+    }
+
+    /// Writes a file per type, sorted by name, and reports what each gained.
+    pub fn write(&self, directory: impl AsRef<Path>) -> std::io::Result<()> {
+        let directory = directory.as_ref();
+        fs::create_dir_all(directory)?;
+
+        println!("\n{:<24} {:>10} {:>10}", "type", "rows", "added");
+
+        let mut kinds: Vec<&String> = self.by_kind.keys().collect();
+        kinds.sort();
+
+        let mut total = 0;
+        let mut added_all = 0;
+
+        for kind in kinds {
+            let rows = &self.by_kind[kind];
+            let added = rows.len() - self.before.get(kind).copied().unwrap_or(0);
+
+            let mut ordered: Vec<(&u64, &String)> = rows.iter().collect();
+            ordered.sort_by(|a, b| a.1.to_lowercase().cmp(&b.1.to_lowercase()));
+
+            let path = PathBuf::from(directory).join(format!("{kind}.txt"));
+            let mut file = fs::File::create(&path)?;
+            for (id, name) in &ordered {
+                writeln!(file, "{id:x},{name}")?;
+            }
+
+            total += rows.len();
+            added_all += added;
+            println!("{kind:<24} {:>10} {:>10}", rows.len(), added);
+        }
+
+        println!("\ntotal: {total} (this run added {added_all})");
+
+        Ok(())
+    }
+}
+
+/// The moment a run started, as `yyyymmdd-hhmmss` in UTC, for naming the folder it writes.
+///
+/// Written out by hand rather than by pulling in a calendar crate, since the whole of what is
+/// wanted is a name that sorts in the order the runs happened.
+pub fn stamp() -> String {
+    let seconds = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|since| since.as_secs())
+        .unwrap_or(0);
+
+    let (days, rest) = (seconds / 86_400, seconds % 86_400);
+    let (hour, minute, second) = (rest / 3600, (rest % 3600) / 60, rest % 60);
+
+    // Days since 1970 to a civil date, counting from March so a leap day lands at the end of a
+    // four hundred year era rather than in the middle of one.
+    let era_days = days as i64 + 719_468;
+    let era = era_days.div_euclid(146_097);
+    let day_of_era = era_days.rem_euclid(146_097);
+    let year_of_era =
+        (day_of_era - day_of_era / 1460 + day_of_era / 36_524 - day_of_era / 146_096) / 365;
+    let day_of_year = day_of_era - (365 * year_of_era + year_of_era / 4 - year_of_era / 100);
+    let month_of = (5 * day_of_year + 2) / 153;
+
+    let day = day_of_year - (153 * month_of + 2) / 5 + 1;
+    let month = if month_of < 10 { month_of + 3 } else { month_of - 9 };
+    let year = year_of_era + era * 400 + i64::from(month <= 2);
+
+    format!("{year:04}{month:02}{day:02}-{hour:02}{minute:02}{second:02}")
+}
+
+/// What a run of this size is expected to match by coincidence rather than because the game has
+/// the name. Worth printing: it is the one cost of widening the rules that does not show up as
+/// time.
+pub fn expected_by_chance(candidates: u64, wanted: usize) -> f64 {
+    candidates as f64 * wanted as f64 / 9.223e18
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// The five default types must resolve in Cold War, which is the game the defaults describe.
+    #[test]
+    fn the_default_types_resolve_in_cold_war() {
+        for kind in config::DEFAULT_POOLS {
+            assert!(pool_index(kind).is_some(), "{kind} did not resolve");
+        }
+    }
+
+    /// Cold War must never be answered with an alias when it has the exact name itself.
+    #[test]
+    fn an_exact_name_wins_over_an_alias() {
+        assert_eq!(pool_index("sound_asset"), Some(19), "sound_asset is 19, not sound at 17");
+        assert_eq!(pool_index("sound"), Some(17));
+        assert_eq!(pool_index("xmodel"), Some(6));
+        assert_eq!(pool_index("streamkey"), Some(184));
+    }
+
+    /// The lookup used against Black Ops 4's table, which is where the mismatches bite. Written
+    /// against BO4_POOLS directly so it does not depend on this machine's config.toml.
+    #[test]
+    fn every_default_type_reaches_something_in_black_ops_4() {
+        let find = |kind: &str| -> Option<usize> {
+            let flattened = |name: &str| name.replace('_', "");
+
+            BO4_POOLS
+                .iter()
+                .position(|pool| *pool == kind)
+                .or_else(|| BO4_POOLS.iter().position(|pool| flattened(pool) == flattened(kind)))
+                .or_else(|| {
+                    ALIASES
+                        .iter()
+                        .filter(|group| group.contains(&kind))
+                        .find_map(|group| {
+                            group.iter().find_map(|other| {
+                                BO4_POOLS.iter().position(|pool| pool == other)
+                            })
+                        })
+                })
+        };
+
+        // Named the same in both, and the reason Black Ops 4 is worth grinding at all.
+        assert_eq!(find("xmodel"), Some(4), "xmodel is 4 in Black Ops 4, not 6");
+        assert_eq!(find("xanim"), Some(3));
+        assert_eq!(find("image"), Some(9));
+        assert_eq!(find("material"), Some(6));
+
+        // Named differently. These are the ones that silently resolved to nothing before.
+        assert_eq!(find("sound_asset"), Some(10), "falls back to Black Ops 4's one sound pool");
+        assert_eq!(find("localizeentry"), Some(16), "spelled localize_entry there");
+        assert_eq!(find("gesturetable"), Some(19), "spelled gesture_table there");
+        assert_eq!(find("clip_map"), Some(11), "spelled clipmap there");
+        assert_eq!(find("gfx_map"), Some(14), "called gfxworld there");
+        assert_eq!(find("techset"), Some(8), "called technique_set there");
+        assert_eq!(find("xmodelmesh"), Some(5), "unreachable in both, and must still be found");
+    }
+
+    /// The hash has to be the game's, and the normalisation is half of it: these reproduce
+    /// published table keys exactly, and dropping the lower casing or the slash folding makes
+    /// every one of them miss.
+    #[test]
+    fn the_hash_reproduces_published_table_keys() {
+        assert_eq!(
+            id_of("mc/mtl_c_t9_gloves_02_nylon_green_darkstripe"),
+            0x1630_1bbd_eda1_638c
+        );
+        assert_eq!(
+            id_of("p9_mal_clothes_tshirt_crew_mens_hanging_electriccow_full"),
+            0x4e09_38e3_6d88_3dcd
+        );
+    }
+
+    /// A material name is a path and the directory is part of what is hashed. Dropping it was
+    /// what kept materials unreachable, so it is worth a test rather than a comment.
+    #[test]
+    fn the_directory_is_part_of_a_material_name() {
+        assert_ne!(
+            id_of("mc/mtl_c_t9_gloves_02_nylon_green_darkstripe"),
+            id_of("mtl_c_t9_gloves_02_nylon_green_darkstripe")
+        );
+    }
+
+    #[test]
+    fn a_name_hashes_the_same_however_it_is_written() {
+        assert_eq!(id_of("MC\\Mtl_Test"), id_of("mc/mtl_test"));
+    }
+
+    /// Folding has to give the same answer as hashing the whole string, or every search built on
+    /// it is quietly wrong.
+    #[test]
+    fn folding_a_name_in_pieces_matches_hashing_it_whole() {
+        let whole = hash64("i_mtl_wpn_t9_ak47_barrel_c");
+        let folded = feed(feed(hash64("i_mtl_"), b"wpn_t9_ak47_barrel"), b"_c");
+
+        assert_eq!(whole, folded);
+    }
+
+    /// The filter may say yes wrongly, which the map behind it catches. It may never say no
+    /// wrongly, because nothing looks at a candidate it rejects.
+    #[test]
+    fn the_filter_never_rejects_an_id_it_holds() {
+        let ids: Vec<u64> = (0..5_000).map(|n| id_of(&format!("test_{n}"))).collect();
+        let filter = Filter::new(ids.iter());
+
+        for id in &ids {
+            assert!(filter.may_hold(*id));
+        }
+    }
+
+    /// A rule change that no longer reaches an old name must not delete it.
+    /// The two spellings of a path reach the same asset, and the one written down should be the
+    /// one the published tables use.
+    #[test]
+    fn a_backslash_path_is_written_with_forward_slashes() {
+        let mut results = Results::default();
+        results.add("sound_asset", 1, r"amb\animals\crow_00.rn75.pc.all.snd".to_owned());
+
+        assert_eq!(results.names("sound_asset")[0], "amb/animals/crow_00.rn75.pc.all.snd");
+    }
+
+    #[test]
+    fn results_only_ever_grow() {
+        let mut results = Results::default();
+        results.add("image", 1, "first".to_owned());
+        results.add("image", 1, "second".to_owned());
+        results.add("image", 2, "third".to_owned());
+
+        assert_eq!(results.len(), 2);
+        assert_eq!(results.names("image").len(), 2);
+        assert!(results.names("image").contains(&"first".to_owned()));
+    }
+}

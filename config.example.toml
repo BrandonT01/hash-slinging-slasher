@@ -1,0 +1,44 @@
+# Copy this to `config.toml` and edit. `config.toml` is gitignored, so nothing about your
+# machine is ever committed.
+
+[search]
+
+# Which game to grind. Both use the same hash and the same normalisation, so the only difference
+# is which captured ids a search is hunting -- and that is a snapshot, which is why this is a
+# setting rather than a build.
+#
+#   BLKOPSCW   Black Ops Cold War, 1,626,209 assets. The game most of the work has gone into.
+#   BLKOPS04   Black Ops 4, 1,023,902 assets, and nearly untouched. Far more xanim and xmodel
+#              than Cold War, and almost no material or sound_asset -- a model and animation
+#              goldmine, and close to worthless for materials.
+#
+# Finds are labelled with the pool names of whichever game is set here, because the two number
+# their asset types differently: xmodel is 6 in Cold War and 4 in Black Ops 4.
+game = "BLKOPSCW"
+
+# The asset types to hunt. A pass costs what it costs because of how many ids it is looking
+# for, so hunting every pool when five hold what you want makes every pass several times
+# slower for names nobody needs yet.
+pools = ["xmodel", "xanim", "image", "material", "sound_asset"]
+
+# Hunt every pool the game holds, including the ones nobody has identified. Worth turning on
+# once the five above are close to done.
+all_pools = false
+
+[paths]
+
+# All of these default to folders inside the repository, so a fresh clone works untouched.
+# Set them only if you keep things somewhere else.
+# tables      = "tables"
+# snapshots   = "snapshots"
+# findings    = "findings"
+# submissions = "submissions"
+
+# --- Only needed if you own a game build and are capturing snapshots yourself. ---
+# Everyone else grinds against a snapshot someone already captured and needs none of this.
+
+# Strings scraped out of a game build, if you have one unpacked.
+# harvest = "C:/path/to/your/harvest"
+
+# Names borrowed from another title, used as candidates but never measured for conventions.
+# borrowed = "C:/path/to/other-game-names"

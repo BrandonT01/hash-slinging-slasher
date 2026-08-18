@@ -1,0 +1,23 @@
+/target
+
+# This machine's paths and settings. config.example.toml is the committed template.
+/config.toml
+
+# The captured asset ids are committed, not fetched. They are 26 MB for both games and cost the
+# history that once, because a snapshot is only ever re-cut when a game is patched and neither of
+# these games will be again. A clone is therefore able to confirm names with nothing downloaded.
+
+# The hash tables, which go stale in a day and are fetched rather than committed.
+/tables/
+
+# This machine's own results and whatever is queued to send.
+/findings/
+/submissions/
+/logs/
+
+# IDE and Python caches.
+/.idea/
+__pycache__/
+
+# Previous-run backups written by derive_lists.py.
+*.prev
