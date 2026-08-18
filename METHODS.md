@@ -137,17 +137,20 @@ numbers a family, this walks it.
 known categories against every harvested word yields keys; known keys against every candidate word
 yields categories.
 
-**Reaches** `localizeentry`, which nothing else here touches — and this is the least contested
-pool in either game. **13,780 found, roughly 86,000 still open, and no published table holds even
-one of them.** Every name here is uncontested ground.
+**Reaches** `localizeentry`, which nothing else here touches. **But the pool is not worth
+hunting at all.** A localize entry is a 16-byte struct: the hash, and a pointer to the
+*unhashed* string. The plain text is already in the build, which is why no published table
+bothers to hold even one of these names — uncontested because worthless, not because unnoticed.
+Recovering them proves nothing anyone needs.
 
 **Run it with** `cargo run --release --bin confirm_localize`.
 
 **Spent when** neither direction of the unfold adds a category or a key.
 
-> **This is currently switched off.** `localizeentry` is not one of the five important types in
-> `config.toml`, so the narrowing turns it off. Turning it on is one line. Given the numbers
-> above, it is the strongest argument in this file for changing a setting.
+> **This is switched off, and should stay off.** An earlier version of this file called turning
+> it on the strongest argument here for changing a setting, and a pass run that way confirmed
+> 8,000+ localize names inside twenty minutes — every one of them pointless, for the reason
+> above. The section is kept so the next assistant knows *why* it is off, not so it gets run.
 
 ## 5. Sound dotted tails
 
@@ -249,6 +252,7 @@ Do not spend a night rediscovering these. Each cost real time.
 | Training a name classifier on the `_v2` tables | Those are MW2022/BO6 and teach the wrong conventions. |
 | Stripping `_geo_rigid_bs_` as its own rule | Underscore truncation already covers it, and mesh names are unobtainable anyway. |
 | Feeding the hash tables in as candidate input | A closed loop. 87% of `consolidate`'s work, zero names found. |
+| Hunting `localizeentry` | The entry is a 16-byte struct holding its own unhashed string pointer — the plain text is already in the build. 8,667 confirmed in one pass, all worthless. |
 
 ---
 

@@ -8,9 +8,10 @@
 # setting rather than a build.
 #
 #   BLKOPSCW   Black Ops Cold War, 1,626,209 assets. The game most of the work has gone into.
-#   BLKOPS04   Black Ops 4, 1,023,902 assets, and nearly untouched. Far more xanim and xmodel
-#              than Cold War, and almost no material or sound_asset -- a model and animation
-#              goldmine, and close to worthless for materials.
+#   BLKOPS04   Black Ops 4, 1,023,902 assets, and nearly untouched. Image and material rich
+#              and animation poor -- close to the opposite of Cold War. Its largest nameable
+#              pools are streamkey, image, material and xmodel; xanim is small. (See
+#              METHODS.md -- an earlier description here had the pools mislabelled.)
 #
 # Finds are labelled with the pool names of whichever game is set here, because the two number
 # their asset types differently: xmodel is 6 in Cold War and 4 in Black Ops 4.
