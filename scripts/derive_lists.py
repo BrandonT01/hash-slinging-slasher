@@ -25,7 +25,7 @@ import settings
 import collections, os, sys, glob
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TABLES = settings.path("tables", "tables")
+TABLES = settings.tables_csv()
 CONFIRMED = settings.path("findings", "findings")
 FROM_MATERIALS = settings.path("findings", "findings")
 DATA = os.path.join(HERE, "data")
@@ -77,6 +77,10 @@ def found_names():
     for folder in (CONFIRMED, FROM_MATERIALS):
         for path in glob.glob(os.path.join(folder, "*.txt")) + \
                     glob.glob(os.path.join(folder, "run_*", "*.txt")):
+            # localizeentry is never measured: those names are CATEGORY/KEY pairs whose plain
+            # text already ships in the build, and their conventions belong to no hunted pool.
+            if os.path.basename(path).startswith("localizeentry"):
+                continue
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line in handle:
                     line = line.strip()
@@ -116,7 +120,19 @@ def measure(names):
                 directories=directories, rooted=rooted)
 
 
-published = measure(name for table in COLD_WAR for name in table_names(table))
+# Measured per table as well as all together. The tables differ in size by an order of
+# magnitude, and a single global popularity ranking lets the biggest pool's conventions crowd
+# every other pool's out of the ceiling -- the committed lists once carried 9 xanim-shaped
+# endings out of 4,800 against 47,859 published xanim names. Each table's own commonest
+# beginnings and endings are guaranteed a place first; global popularity fills the rest.
+per_table = {table: measure(table_names(table)) for table in COLD_WAR}
+
+published = {key: collections.Counter() for key in
+             ("one", "two", "three", "prefixes", "directories", "rooted")}
+for measured in per_table.values():
+    for key in published:
+        published[key].update(measured[key])
+
 confirmed = measure(found_names())
 
 print(f"measured {sum(published['one'].values())} published names and "
@@ -125,10 +141,10 @@ print(f"measured {sum(published['one'].values())} published names and "
 suffixes, seen = [], set()
 
 
-def take(counter, threshold, note):
+def take(counter, threshold, note, cap=None):
     added = 0
     for key, count in counter.most_common():
-        if count < threshold:
+        if count < threshold or (cap is not None and added >= cap):
             break
         if key not in seen:
             seen.add(key)
@@ -143,6 +159,15 @@ print("endings", file=sys.stderr)
 take(confirmed["one"], FOUND_ENDING_MIN, f"confirmed, one segment at >={FOUND_ENDING_MIN}")
 take(confirmed["two"], FOUND_ENDING_MIN, f"confirmed, two segments at >={FOUND_ENDING_MIN}")
 take(confirmed["three"], FOUND_ENDING_MIN, f"confirmed, three segments at >={FOUND_ENDING_MIN}")
+
+# Each pool's own conventions next, held to a share each, so that what xanim names end in
+# cannot be crowded out of the ceiling by the long tail of a table five times its size.
+for table in COLD_WAR:
+    pool = table.replace("fnv1a_", "")
+    take(per_table[table]["one"], ONE_MIN, f"{pool}, one segment", cap=400)
+    take(per_table[table]["two"], TWO_MIN, f"{pool}, two segments", cap=200)
+    take(per_table[table]["three"], THREE_MIN, f"{pool}, three segments", cap=100)
+
 take(published["one"], ONE_MIN, f"published, one segment at >={ONE_MIN}")
 take(published["two"], TWO_MIN, f"published, two segments at >={TWO_MIN}")
 take(published["three"], THREE_MIN, f"published, three segments at >={THREE_MIN}")
@@ -154,10 +179,10 @@ for item in EXTRA:
 prefixes, seen_prefix = [], set()
 
 
-def take_prefix(counter, threshold, note):
+def take_prefix(counter, threshold, note, cap=None):
     added = 0
     for key, count in counter.most_common():
-        if count < threshold:
+        if count < threshold or (cap is not None and added >= cap):
             break
         if key not in seen_prefix:
             seen_prefix.add(key)
@@ -173,6 +198,13 @@ print("beginnings", file=sys.stderr)
 take_prefix(confirmed["directories"], 1, "every confirmed directory")
 take_prefix(published["directories"], 1, "every published directory")
 take_prefix(confirmed["prefixes"], FOUND_PREFIX_MIN, f"confirmed at >={FOUND_PREFIX_MIN}")
+
+# Each pool's own commonest beginnings, held to a share each, for the same reason as the
+# endings above.
+for table in COLD_WAR:
+    pool = table.replace("fnv1a_", "")
+    take_prefix(per_table[table]["prefixes"], PREFIX_MIN, f"{pool} beginnings", cap=60)
+
 take_prefix(published["prefixes"], PREFIX_MIN, f"published at >={PREFIX_MIN}")
 take_prefix(published["rooted"], ROOTED_MIN, f"published directory plus token at >={ROOTED_MIN}")
 for item in EXTRA_PREFIX:

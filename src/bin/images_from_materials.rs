@@ -82,6 +82,7 @@ fn stems_of(name: &str) -> Vec<String> {
 }
 
 fn main() {
+    let began = std::time::Instant::now();
     let (assets, _) = match loaded_assets() {
         Ok(loaded) => loaded,
         Err(reason) => {
@@ -132,7 +133,16 @@ fn main() {
     results.write(paths::findings()).expect("the results");
 
     match results.write_run(paths::findings(), "images") {
-        Ok(Some(folder)) => println!("this run's own names: {}", folder.display()),
+        Ok(Some(folder)) => {
+            println!("this run's own names: {}", folder.display());
+            let _ = Results::note_run(
+                &folder,
+                "images derived from materials (images_from_materials)",
+                "each confirmed material name stripped of mtl_ and retried as an image name \
+                 with every semantic suffix, both prefixed and bare",
+                began.elapsed(),
+            );
+        }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
     }

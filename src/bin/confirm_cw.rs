@@ -147,6 +147,7 @@ fn stems(lines: &[String]) -> Vec<Box<str>> {
 }
 
 fn main() {
+    let began = Instant::now();
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let sources = if arguments.iter().any(|value| value == "seeds") {
         Sources::Seeds
@@ -273,7 +274,19 @@ fn main() {
         Sources::All => "all",
         Sources::Seeds => "seeds",
     }) {
-        Ok(Some(folder)) => println!("this run's own names: {}", folder.display()),
+        Ok(Some(folder)) => {
+            println!("this run's own names: {}", folder.display());
+            let _ = Results::note_run(
+                &folder,
+                match sources {
+                    Sources::All => "general search (confirm_cw)",
+                    Sources::Seeds => "general search, confirmed seeds only (confirm_cw seeds)",
+                },
+                "every seed cut to pieces at its marks and recombined as beginning + stem + \
+                 ending, each candidate hashed and looked up among the game's unnamed ids",
+                began.elapsed(),
+            );
+        }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
     }

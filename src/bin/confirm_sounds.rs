@@ -82,6 +82,7 @@ fn stems(names: &[String]) -> Vec<String> {
 }
 
 fn main() {
+    let began = std::time::Instant::now();
     let searched: Vec<usize> = POOLS_SEARCHED.iter().filter_map(|kind| pool_index(kind)).collect();
 
     let (assets, strings) = match loaded_assets() {
@@ -134,7 +135,16 @@ fn main() {
     results.write(paths::findings()).expect("the results");
 
     match results.write_run(paths::findings(), "sounds") {
-        Ok(Some(folder)) => println!("this run's own names: {}", folder.display()),
+        Ok(Some(folder)) => {
+            println!("this run's own names: {}", folder.display());
+            let _ = Results::note_run(
+                &folder,
+                "sound dotted tails (confirm_sounds)",
+                "confirmed sound stems recombined with every observed dotted tail, which the \
+                 general search cannot reach because it treats a dot as the end of a name",
+                began.elapsed(),
+            );
+        }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
     }

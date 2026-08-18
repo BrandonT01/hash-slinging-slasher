@@ -201,6 +201,7 @@ fn swaps(name: &str, tokens: &[String], mut visit: impl FnMut(&str)) {
 }
 
 fn main() {
+    let began = Instant::now();
     let (assets, strings) = match loaded_assets() {
         Ok(loaded) => loaded,
         Err(reason) => {
@@ -358,7 +359,21 @@ fn main() {
     results.write(paths::findings()).expect("the results");
 
     match results.write_run(paths::findings(), if swapping { "swaps" } else { "variants" }) {
-        Ok(Some(folder)) => println!("this run's own names: {}", folder.display()),
+        Ok(Some(folder)) => {
+            println!("this run's own names: {}", folder.display());
+            let _ = Results::note_run(
+                &folder,
+                if swapping { "family walking, whole words (swaps)" } else { "family walking, numbers in place (variants)" },
+                if swapping {
+                    "each token of a name already known to be real replaced in turn by every \
+                     common token the game uses elsewhere"
+                } else {
+                    "each number or letter field of a name already known to be real counted \
+                     through in place, keeping the width of what was there"
+                },
+                began.elapsed(),
+            );
+        }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
     }

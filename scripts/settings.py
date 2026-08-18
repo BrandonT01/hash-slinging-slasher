@@ -3,6 +3,7 @@
 Understands only the subset the file uses -- comments, `key = value`, and arrays of strings --
 rather than needing a TOML library for thirty lines.
 """
+import glob
 import os
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -36,6 +37,25 @@ def path(key, default=None):
     if default is None:
         return None
     return os.path.join(ROOT, default)
+
+
+def tables_csv():
+    """The folder actually holding the table csv.
+
+    Mirrors src/tables.rs::csv_folder: a folder already full of csv is taken as it is, and an
+    empty or missing one resolves to the `cod-name-db` checkout the fetch leaves beside it.
+    Without this, a fresh clone reads zero tables from the default `tables/` and measures
+    nothing.
+    """
+    folder = path("tables", "tables")
+    if glob.glob(os.path.join(folder, "*.csv")):
+        return folder
+
+    checkout = os.path.join(os.path.dirname(folder) or ROOT, "cod-name-db", "csv")
+    if glob.glob(os.path.join(checkout, "*.csv")):
+        return checkout
+
+    return folder
 
 
 def require(key):
