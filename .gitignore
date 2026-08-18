@@ -7,8 +7,10 @@
 # history that once, because a snapshot is only ever re-cut when a game is patched and neither of
 # these games will be again. A clone is therefore able to confirm names with nothing downloaded.
 
-# The hash tables, which go stale in a day and are fetched rather than committed.
+# The hash tables, which go stale in a day and are fetched rather than committed. The checkout
+# itself lands beside the tables folder, at the repository root.
 /tables/
+/cod-name-db/
 
 # This machine's own results and whatever is queued to send.
 /findings/

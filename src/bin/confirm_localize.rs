@@ -14,7 +14,6 @@
 //! happened to reach. Everything here is an unfolding of those.
 
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 
 use slasher::loader::{loaded_assets, unnamed_in};
 use slasher::search::run_best;
@@ -213,7 +212,7 @@ fn category_candidates(lines: &[String]) -> Vec<String> {
 }
 
 fn main() {
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = paths::root();
     let pool = pool_index("localizeentry").expect("the localize pool");
 
     let (assets, strings) = match loaded_assets() {

@@ -408,7 +408,7 @@ pub fn read_list(path: &Path) -> Vec<String> {
 
 /// The names one table holds.
 pub fn table_names(table: &str) -> Vec<String> {
-    read_names(&PathBuf::from(paths::tables()).join(format!("{table}.csv")))
+    read_names(&tables::csv_folder(&paths::tables()).join(format!("{table}.csv")))
 }
 
 /// Every name every table holds.
@@ -420,7 +420,7 @@ pub fn table_names(table: &str) -> Vec<String> {
 pub fn all_table_names() -> Vec<String> {
     let mut names = Vec::new();
 
-    let Ok(entries) = fs::read_dir(paths::tables()) else {
+    let Ok(entries) = fs::read_dir(tables::csv_folder(&paths::tables())) else {
         return names;
     };
 
@@ -442,7 +442,7 @@ pub fn all_table_names() -> Vec<String> {
 pub fn table_keys() -> HashSet<u64> {
     let mut known = HashSet::new();
 
-    let Ok(entries) = fs::read_dir(paths::tables()) else {
+    let Ok(entries) = fs::read_dir(tables::csv_folder(&paths::tables())) else {
         return known;
     };
 

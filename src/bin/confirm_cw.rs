@@ -23,7 +23,6 @@
 //! unless it matches.
 
 use std::collections::HashSet;
-use std::path::Path;
 use std::time::{Duration, Instant};
 
 use slasher::loader::{loaded_assets, unnamed, wanted_for_search};
@@ -156,7 +155,7 @@ fn main() {
     };
     let every_table = arguments.iter().any(|value| value == "all-tables");
 
-    let root = Path::new(env!("CARGO_MANIFEST_DIR"));
+    let root = paths::root();
     let endings = read_list(&root.join(paths::SUFFIX_LIST));
     let prefixes = read_list(&root.join(paths::PREFIX_LIST));
 

@@ -48,6 +48,32 @@ pub fn submissions() -> PathBuf {
 pub const SUFFIX_LIST: &str = "data/suffixes.txt";
 pub const PREFIX_LIST: &str = "data/prefixes.txt";
 
+/// The repository the tools are running in, found at runtime.
+///
+/// Never baked in at compile time: a binary built on one machine must still find `data/` on
+/// another, and the committed `bin/windows/` executables are exactly that. Run from the
+/// repository -- as every documented command is -- the working directory is it; otherwise the
+/// executable's own ancestors are tried, because `bin/windows/` and `target/release/` both sit
+/// two levels inside.
+pub fn root() -> PathBuf {
+    let here = PathBuf::from(".");
+    if here.join(SUFFIX_LIST).exists() {
+        return here;
+    }
+
+    if let Ok(exe) = std::env::current_exe() {
+        let mut ancestor = exe.parent();
+        while let Some(directory) = ancestor {
+            if directory.join(SUFFIX_LIST).exists() {
+                return directory.to_path_buf();
+            }
+            ancestor = directory.parent();
+        }
+    }
+
+    here
+}
+
 // --- Only needed by whoever owns a game build. Absent for everyone else. ---
 
 /// Strings scraped out of a game build. The only source of real asset names for a title whose
