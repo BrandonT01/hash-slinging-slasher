@@ -30,6 +30,12 @@ Point your agent at the repo and say:
 
 That's it. It handles the rest.
 
+Don't worry about burning through your usage either.
+
+The actual hash searching is handled by compiled Rust code running directly on your CPU. The AI is only used to decide what to try and process the results.
+
+You can leave it grinding for hours or overnight without chewing through your usage.
+
 ---
 
 ### 📤 Found hashes are submitted automatically
