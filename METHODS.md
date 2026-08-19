@@ -50,6 +50,43 @@ Nobody has come close to finishing either. But the two games are not the same pr
 Both games use the same hash and the same normalisation, so one implementation and one table set
 serves both. See `AGENTS.md` — do not re-derive it.
 
+## Mandatory duplicate check before submission
+
+**Never submit a finding without first checking the existing `/submissions/` directory.**
+
+The `/submissions/` directory contains findings that other contributors have already submitted. These submissions are part of the project's accumulated knowledge and **must be treated as already claimed**, even if the current search independently rediscovers the same names.
+
+Before preparing a submission:
+
+1. Search the existing contributor submission directories under `/submissions/` for every candidate name you intend to submit.
+2. **Ignore the `_submitted` directory in `/submissions/` when performing this check.** `_submitted` data is already represented in the CDBs and is handled by the normal published/known-name exclusion process.
+3. Remove any candidate that already appears in another contributor's submission.
+4. Only submit names that are genuinely absent from the relevant existing contributor submissions.
+5. Do this check **before creating the PR**, not after.
+6. If a search produces many results, perform the duplicate check programmatically rather than manually checking a small sample.
+
+**Independent rediscovery is not a new finding.**
+
+For example, if another contributor previously submitted:
+
+```text id="9e8b31"
+2d08ef78aae60a52,attach_t9_body_mount_loot_sniper_accurate_unicorn_view
+```
+
+and a later search finds `2d08ef78aae60a52,attach_t9_body_mount_loot_sniper_accurate_unicorn_view` again, the later search must discard it. It must **not** submit the same model again simply because it was found using a different method, seed, naming pattern, or search pass.
+
+This is especially important for model searches. Multiple methods can converge on the same model families, so **finding the same models as another contributor is not evidence that the search was successful**.
+
+The correct workflow is:
+
+`search → verify → check /submissions → remove duplicates → submit only new findings`
+
+The `/submissions/` directory is therefore a **mandatory exclusion list for previous contributor submissions**, while `_submitted` data should continue to be handled through the existing CDB/table exclusion process.
+
+**Do not submit a PR containing findings that are already present in another contributor's submission.**
+
+A submission with zero new findings is preferable to submitting hundreds of duplicates. The objective is to expand the project's known asset names, not repeatedly rediscover the same names.
+
 ### What is not reachable, and why the counts shrink
 
 Two things are removed before any search starts, and both are deliberate.
