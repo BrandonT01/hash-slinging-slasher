@@ -186,6 +186,10 @@ fn main() {
         Sources::All
     };
     let every_table = arguments.iter().any(|value| value == "all-tables");
+    let no_fold = arguments.iter().any(|value| value == "--no-fold");
+    if no_fold {
+        println!("hashing without folding backslashes (Black Ops 4 SAB sound names)");
+    }
 
     let root = paths::root();
     let endings = read_list(&root.join(paths::SUFFIX_LIST));
@@ -311,6 +315,7 @@ fn main() {
     .with("game", &config::game())
     .with("pools", &config::targets().describe())
     .with("all-tables", if every_table { "yes" } else { "no" })
+    .with("fold", if no_fold { "no" } else { "yes" })
     .with_list("beginnings", &prefixes)
     .with_list("endings", &endings)
     .with_count("seed lines", seeds)
@@ -327,7 +332,13 @@ fn main() {
     // Every batch's names are taken, but the file is only rewritten once a minute: a full write
     // is several megabytes and a batch is a few seconds, so writing every batch would churn
     // gigabytes over a pass to protect work that is at most sixty seconds old.
-    let search = Meet::new(&prefixes, &endings);
+    // Black Ops 4's SAB sound names keep their backslashes and their ids are the hash of exactly
+    // that, so folding matches nothing. `Meet::unfolded` switches the peel and the feed together.
+    let search = if no_fold {
+        Meet::unfolded(&prefixes, &endings)
+    } else {
+        Meet::new(&prefixes, &endings)
+    };
     let mut last_saved = Instant::now();
 
     let found = search.run_checkpointed(&pieces, &wanted, &mut |batch| {

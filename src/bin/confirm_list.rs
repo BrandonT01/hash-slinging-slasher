@@ -30,7 +30,7 @@ use std::time::{Duration, Instant};
 use slasher::fingerprint::Fingerprint;
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::{
-    config, feed, low_value_reason, paths, pool_label, readiness, recon, table_keys,
+    config, feed, feed_raw, low_value_reason, paths, pool_label, readiness, recon, table_keys,
     tables_look_complete, Filter, Results, RunNote, BASIS, ID_MASK,
 };
 
@@ -68,6 +68,15 @@ fn main() {
     // and it is the difference between the next contributor inheriting a method and inheriting a
     // list of names -- which is the whole compounding argument this project rests on.
     let script = argument(&arguments, "--script");
+
+    // Black Ops 4's SAB sound names keep their backslashes, and their ids are the hash of exactly
+    // that. Folding them -- what every other asset type wants -- produces a hash that matches
+    // nothing, for ever, while the run looks entirely normal. Measured: 8,385 of 8,385 known
+    // names reproduce unfolded, 0 folded. See `slasher::feed_raw`.
+    let fold = !arguments.iter().any(|argument| argument == "--no-fold");
+    if !fold {
+        println!("hashing without folding backslashes (Black Ops 4 SAB sound names)");
+    }
 
     // Everything that is not a flag and not the value belonging to one. Positional, so that a
     // file which happens to be named the same as the label is still read -- comparing against the
@@ -179,7 +188,7 @@ fn main() {
             carry.clear();
             carry.extend_from_slice(&buffer[end..filled]);
 
-            let (hits, counted, chunk_digest) = sweep(&text, &filter, &wanted, threads);
+            let (hits, counted, chunk_digest) = sweep(&text, &filter, &wanted, threads, fold);
             digest = digest.wrapping_add(chunk_digest);
             seen.fetch_add(counted, Ordering::Relaxed);
             matched += file_them(hits, &wanted, &mut results);
@@ -197,7 +206,7 @@ fn main() {
 
         if !carry.is_empty() {
             carry.push(b'\n');
-            let (hits, counted, chunk_digest) = sweep(&carry, &filter, &wanted, threads);
+            let (hits, counted, chunk_digest) = sweep(&carry, &filter, &wanted, threads, fold);
             digest = digest.wrapping_add(chunk_digest);
             seen.fetch_add(counted, Ordering::Relaxed);
             matched += file_them(hits, &wanted, &mut results);
@@ -318,6 +327,7 @@ fn sweep(
     filter: &Filter,
     wanted: &HashMap<u64, usize>,
     threads: usize,
+    fold: bool,
 ) -> (Vec<(u64, String)>, u64, u64) {
     // Split the text into as many pieces as there are threads, each ending on a line boundary.
     let mut bounds = vec![0_usize];
@@ -360,9 +370,13 @@ fn sweep(
 
                     lines += 1;
 
-                    // `feed` normalises as it goes -- lower cased, backslashes folded -- so the
-                    // hash is the game's however the generator spelled it.
-                    let hash = feed(BASIS, candidate);
+                    // Lower cased always; backslashes folded unless this is the one pool whose
+                    // names keep them. See `slasher::feed_raw`.
+                    let hash = if fold {
+                        feed(BASIS, candidate)
+                    } else {
+                        feed_raw(BASIS, candidate)
+                    };
                     digest = digest.wrapping_add(hash);
 
                     let id = hash & ID_MASK;

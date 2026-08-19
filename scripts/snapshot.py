@@ -55,6 +55,20 @@ def fnv1a(name):
     return h
 
 
+def fnv1a_nofold(name):
+    """The same hash, leaving backslashes alone.
+
+    Black Ops 4's SAB sound names are stored with literal backslashes and their ids are the hash
+    of exactly that. Measured against the 8,385 of them cod-name-db already names: 8,385 reproduce
+    this way, 0 with the usual fold. Every other table folds harmlessly, because its names already
+    use forward slashes.
+    """
+    h = BASIS
+    for byte in name.strip().lower().encode("utf-8", "replace"):
+        h = ((h ^ byte) * PRIME) & 0xFFFFFFFFFFFFFFFF
+    return h
+
+
 def _pool_lists():
     """The two asset-type enums, read out of src/lib.rs so there is one copy of them anywhere."""
     source = open(os.path.join(ROOT, "src", "lib.rs"), encoding="utf-8").read()

@@ -49,14 +49,16 @@ Per pool, the five types, unnamed / total:
 | `material` | 37,758 / 158,158 | 50,551 / 122,750 |
 | `xmodel` | 20,826 / 85,612 | 20,922 / 61,139 |
 | `xanim` | 12,386 / 28,468 | 10,001 / 21,968 |
-| sound | 19,301 / 97,217 | **99 / 100** |
+| `sound_asset` (files) | 19,301 / 97,217 | **70,878 / 79,263** |
+| `sound` (banks) | — | 99 / 100 |
 
 Nobody has come close to finishing either, and the two games are not the same problem:
 
-- **Cold War** is where the work has been done. Its sound pool is worth 19,301 names; Black Ops 4's
-  holds a hundred assets in total, so a night of sound work there is a night thrown away.
-- **Black Ops 4 is image and material rich and less than 60% named** — a larger absolute prize
-  than Cold War in both, and less picked over.
+- **Cold War** is where most of the work has been done, and its sound pool is worth 19,301 names.
+- **Black Ops 4 is now the bigger prize outright.** It is image and material rich and under 60%
+  named in both, and its `sound_asset` pool — injected from the SAB files, since the loader never
+  sees those sounds — is **70,878 unnamed of 79,263, only 10.6% named**. That is the single largest
+  untouched pool in either game. Grind it with `--no-fold`.
 
 Both games use the same hash and the same normalisation, so one implementation serves both, and
 `--game BLKOPS04` on any search is all it takes to switch.
@@ -350,13 +352,20 @@ anything.
 available, and the two use *different* tail conventions — `.ln75.pc.all.snd` against
 `.rn75.pc.<lang>.snd`. Cold War's `sound_asset` has 19,301 unnamed.
 
-**Do not run it on Black Ops 4, and the reason is not that its sounds are all named.** Its sound
-pool holds a hundred assets because Saluki cannot read Black Ops 4 sounds from the game at all —
-they live in SAB files that have to be loaded separately, so they never enter the loader and never
-entered the snapshot. Confirmed against a live Cordycep session on 2026-08-19 with a full load:
-1,023,902 assets, matching the committed snapshot exactly, and still only ~100 sound assets. The
-rest are not missing from the capture; they are not there to capture. Black Ops 4 sound work needs
-a different source entirely.
+**Black Ops 4's sounds were invisible and now are not.** Its `sound` pool holds a hundred assets
+because that pool is *banks* — the one entry of it that resolves is `mp_embassy.all` — while the
+individual sounds live in SAB files the loader never opens. Confirmed against a live Cordycep
+session with a full 1,023,902-asset load, matching the committed snapshot exactly.
+
+Those SAB files have since been read and their ids injected as **`sound_asset`, index 170**:
+**79,263 sound ids, 70,878 of them unnamed**, which makes it the largest single opportunity in
+either game. Three things about them are not optional:
+
+- **They are `sound_asset`, never `sound`.** Files and banks go to different tables upstream.
+- **Their names keep their backslashes**, and the id is the hash of exactly that. Grind them with
+  `--no-fold`. Measured: 8,385 of 8,385 known names reproduce unfolded, **0** folded. Without the
+  flag the search matches nothing and looks completely healthy doing it.
+- **The dotted-tail method still applies** — these names end `.ln100.pc.snd` and the like.
 
 ## 8. Reading the tables and extending them
 

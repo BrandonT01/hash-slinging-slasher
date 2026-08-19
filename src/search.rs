@@ -11,7 +11,7 @@ use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
-use crate::{expected_by_chance, feed, hash64, peel, Filter, BASIS, ID_MASK};
+use crate::{expected_by_chance, feed, feed_raw, hash64, hash64_raw, peel, peel_raw, Filter, BASIS, ID_MASK};
 
 /// How many entries a batch of peeled endings is allowed to reach.
 ///
@@ -42,6 +42,13 @@ pub struct Meet<'a> {
     openings: Vec<(String, u64)>,
     endings: &'a [String],
     bare: bool,
+    /// Whether backslashes are folded to forward slashes, as every asset type but one wants.
+    ///
+    /// Carried on the search rather than chosen at each call site, because the peel and the feed
+    /// **must** agree: peeling with one normalisation and hashing with the other produces a
+    /// search that matches nothing at all and looks entirely healthy doing it. One flag, six
+    /// places derived from it, no way for them to drift apart.
+    fold: bool,
 }
 
 /// One batch of endings, peeled off every wanted id.
@@ -58,7 +65,7 @@ impl Peeled {
     /// ending on it. That is a separate question from whether a stem may stand with no beginning:
     /// one is about the end of a name and the other about its start, and a search that treats
     /// them as one loses every name that carries a beginning and no ending.
-    fn build(wanted: &HashMap<u64, usize>, endings: &[&String], no_ending: bool) -> Self {
+    fn build(wanted: &HashMap<u64, usize>, endings: &[&String], no_ending: bool, fold: bool) -> Self {
         let mut hashes: Vec<u64> =
             Vec::with_capacity(wanted.len() * (endings.len() + usize::from(no_ending)) * 2);
 
@@ -70,7 +77,11 @@ impl Peeled {
                 }
 
                 for ending in endings {
-                    hashes.push(peel(spelling, ending.as_bytes()));
+                    hashes.push(if fold {
+                        peel(spelling, ending.as_bytes())
+                    } else {
+                        peel_raw(spelling, ending.as_bytes())
+                    });
                 }
             }
         }
@@ -91,13 +102,29 @@ impl Peeled {
 
 impl<'a> Meet<'a> {
     pub fn new(openings: &[String], endings: &'a [String]) -> Self {
+        Self::with_fold(openings, endings, true)
+    }
+
+    /// A search over names whose backslashes are **not** folded to forward slashes.
+    ///
+    /// Black Ops 4's SAB sound names are the only ones like this, and their ids are the hash of
+    /// the unfolded string. See `slasher::feed_raw` for the measurement.
+    pub fn unfolded(openings: &[String], endings: &'a [String]) -> Self {
+        Self::with_fold(openings, endings, false)
+    }
+
+    fn with_fold(openings: &[String], endings: &'a [String], fold: bool) -> Self {
         Self {
             openings: openings
                 .iter()
-                .map(|opening| (opening.clone(), hash64(opening)))
+                .map(|opening| {
+                    let hash = if fold { hash64(opening) } else { hash64_raw(opening) };
+                    (opening.clone(), hash)
+                })
                 .collect(),
             endings,
             bare: true,
+            fold,
         }
     }
 
@@ -183,7 +210,7 @@ impl<'a> Meet<'a> {
 
             // The bare stem is a candidate in its own right, and only needs asking once.
             // The ending-less candidate is asked once, on the first batch.
-            let peeled = Peeled::build(wanted, &slice, number == 0);
+            let peeled = Peeled::build(wanted, &slice, number == 0, self.fold);
 
             let done = AtomicUsize::new(0);
             let finished = AtomicBool::new(false);
@@ -265,6 +292,16 @@ impl<'a> Meet<'a> {
         collected
     }
 
+    /// The fold this search was built with, applied. Every hash in the engine goes through here.
+    #[inline(always)]
+    fn feed(&self, hash: u64, text: &[u8]) -> u64 {
+        if self.fold {
+            feed(hash, text)
+        } else {
+            feed_raw(hash, text)
+        }
+    }
+
     /// One worker's share of the stems, reporting the index of every stem-and-beginning that
     /// landed in the peeled set. The index carries both which stem and which beginning.
     fn sweep<S: AsRef<str>>(
@@ -284,14 +321,14 @@ impl<'a> Meet<'a> {
 
             if self.bare {
                 counted += 1;
-                if peeled.holds(feed(BASIS, piece)) {
+                if peeled.holds(self.feed(BASIS, piece)) {
                     reached.push(Self::mark(base + offset, BARE));
                 }
             }
 
             for (index, (_, opening)) in self.openings.iter().enumerate() {
                 counted += 1;
-                if peeled.holds(feed(*opening, piece)) {
+                if peeled.holds(self.feed(*opening, piece)) {
                     reached.push(Self::mark(base + offset, index));
                 }
             }
@@ -348,7 +385,7 @@ impl<'a> Meet<'a> {
                 (text.as_str(), *hash)
             };
 
-            let start = feed(base, stem.as_bytes());
+            let start = self.feed(base, stem.as_bytes());
 
             if bare_batch {
                 let id = start & ID_MASK;
@@ -358,7 +395,7 @@ impl<'a> Meet<'a> {
             }
 
             for ending in endings {
-                let id = feed(start, ending.as_bytes()) & ID_MASK;
+                let id = self.feed(start, ending.as_bytes()) & ID_MASK;
                 if wanted.contains_key(&id) {
                     named.push((id, format!("{prefix}{stem}{ending}")));
                 }
@@ -630,6 +667,15 @@ mod tests {
     /// before it, byte for byte, including the normalisation.
     #[test]
     fn peeling_undoes_feeding() {
+        // The unfolded pair must round-trip too, or a Black Ops 4 SAB search peels with one
+        // normalisation and hashes with the other and matches nothing while looking healthy.
+        let back = hash64_raw(r"amb\environment\water");
+        assert_eq!(peel_raw(feed_raw(back, br"\wave_01"), br"\wave_01"), back);
+
+        // And the two normalisations must genuinely differ on a backslash, or the flag is a lie.
+        assert_ne!(hash64(r"a\b"), hash64_raw(r"a\b"));
+        assert_eq!(hash64("a/b"), hash64_raw("a/b"), "no backslash, no difference");
+
         let before = hash64("mc/mtl_wpn_t9_ak47");
         assert_eq!(peel(feed(before, b"_barrel_c"), b"_barrel_c"), before);
         assert_eq!(peel(feed(before, b"_BARREL_C"), b"_barrel_c"), before);

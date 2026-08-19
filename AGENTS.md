@@ -143,6 +143,30 @@ Search these and nothing else unless the user says otherwise:
 model     material     image     anim     sound file
 ```
 
+**"Sound file" means the `sound_asset` pool, not `sound`.** The two are different things and they
+go to different tables upstream, so getting it wrong contaminates the community database:
+
+| pool | what it holds | goes to |
+|---|---|---|
+| **`sound_asset`** | **individual sounds — the ones we want** | `fnv1a_xsounds.csv` |
+| `sound` | sound *banks*, like `mp_embassy.all` | `fnv1a_soundbanks*.csv` |
+
+In Cold War that split is `sound_asset` (19) against `sound_bank` (18). Black Ops 4's own enum has
+only the bank pool, because its individual sounds live in SAB files the loader never opens — so
+`sound_asset` was **added at index 170** and its ids injected from those files. It is now the
+largest single opportunity in either game: **70,878 unnamed of 79,263**.
+
+**Black Ops 4 sound names keep their backslashes**, and their ids are the hash of exactly that.
+Pass `--no-fold` when grinding them, or the search matches nothing at all while looking perfectly
+healthy:
+
+```
+bin\windows\confirm_cw.exe --game BLKOPS04 --no-fold
+```
+
+Measured: 8,385 of 8,385 known names reproduce unfolded, 0 folded. Every other pool folds and must
+not use the flag.
+
 `config.toml` already targets exactly these. **Do not widen it.** Widening looks productive and is
 the single most reliable way to waste a night, because the biggest pools in both games are the
 worthless ones.

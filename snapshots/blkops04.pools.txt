@@ -1,4 +1,4 @@
-BLKOPS04 -- 1023902 assets in 156 filled pools
+BLKOPS04 -- 1103165 assets in 157 filled pools
 
 index  asset type                             assets
 0      physpreset                                344
@@ -157,3 +157,4 @@ index  asset type                             assets
 165    sprayorgestureitem                        404
 166    sprayorgesturelist                          2
 167    hwplatform                                  5
+170    sound_asset                             79263

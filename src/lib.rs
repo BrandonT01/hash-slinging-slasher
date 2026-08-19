@@ -230,6 +230,21 @@ pub const BO4_POOLS: &[&str] = &[
     "dlogevent", "rawstring", "ballisticdesc", "streamkey", "rendertargets", "drawnodes",
     "grouplodmodel", "fxlibraryvolume", "arenaseasons", "sprayorgestureitem", "sprayorgesturelist",
     "hwplatform", "assetlist", "report",
+    // Index 170, past the end of the real enum, and deliberately so.
+    //
+    // Black Ops 4's own `sound` pool at index 10 holds sound **banks** -- the one entry of its
+    // hundred that resolves is `mp_embassy.all`, out of `fnv1a_soundbanks_v2.csv`. The individual
+    // sounds are not loader assets at all: they live inside SAB files that Cordycep never opens,
+    // which is why that pool has a hundred entries and not eighty thousand.
+    //
+    // Those SAB entries can be added to a snapshot, and when they are they need a type of their
+    // own. Filing them under `sound` would mix bank names and file names in one results file, and
+    // the two go to *different* tables upstream -- banks to `fnv1a_soundbanks`, files to
+    // `fnv1a_xsounds`. Whoever copies a submission into cod-name-db could not tell them apart.
+    //
+    // The name is Cold War's, because Cold War already draws exactly this distinction:
+    // `sound_bank` at 18 for the banks, `sound_asset` at 19 for the files. Same split, same words.
+    "sound_asset",
 ];
 
 /// The pool names for the game being ground.
@@ -332,11 +347,37 @@ pub fn pool_index_in(table: &'static [&'static str], kind: &str) -> Option<usize
 /// The name is normalised as it goes: lower cased, and backslash folded to forward slash.
 /// Missing that normalisation makes everything fail to match.
 #[inline(always)]
-pub fn feed(mut hash: u64, text: &[u8]) -> u64 {
+pub fn feed(hash: u64, text: &[u8]) -> u64 {
+    feed_with::<true>(hash, text)
+}
+
+/// The same fold, leaving backslashes alone.
+///
+/// **One table needs this, and getting it wrong costs the entire search.** Black Ops 4's sound
+/// entries live in SAB files and are named with literal backslashes, and their ids are the hash
+/// of exactly that. Measured against the 8,385 of them cod-name-db already names: **8,385
+/// reproduce without folding, 0 with it.** Every other table folds harmlessly, because its names
+/// already use forward slashes and the fold is a no-op there.
+///
+/// A search that hashes those candidates the ordinary way matches nothing at all, for ever, while
+/// looking exactly like ordinary unnamed work — which is the most expensive way for this project
+/// to be wrong.
+#[inline(always)]
+pub fn feed_raw(hash: u64, text: &[u8]) -> u64 {
+    feed_with::<false>(hash, text)
+}
+
+/// The fold, with the normalisation chosen at compile time.
+///
+/// A const parameter rather than a runtime flag: this runs hundreds of billions of times a pass,
+/// and a branch per byte would be paid on every candidate in the project for the sake of the one
+/// table that wants the other behaviour.
+#[inline(always)]
+pub fn feed_with<const FOLD: bool>(mut hash: u64, text: &[u8]) -> u64 {
     for &byte in text {
         let byte = match byte {
             b'A'..=b'Z' => byte + 32,
-            b'\\' => b'/',
+            b'\\' if FOLD => b'/',
             other => other,
         };
 
@@ -372,11 +413,22 @@ pub const PRIME_INVERSE: u64 = {
 /// is left is the hash the stem alone would have to reach. A thousand endings then cost one pass
 /// over the wanted ids rather than a thousand passes over the stems.
 #[inline(always)]
-pub fn peel(mut hash: u64, text: &[u8]) -> u64 {
+pub fn peel(hash: u64, text: &[u8]) -> u64 {
+    peel_with::<true>(hash, text)
+}
+
+/// Peeling that matches [`feed_raw`], for the one table whose names keep their backslashes.
+#[inline(always)]
+pub fn peel_raw(hash: u64, text: &[u8]) -> u64 {
+    peel_with::<false>(hash, text)
+}
+
+#[inline(always)]
+pub fn peel_with<const FOLD: bool>(mut hash: u64, text: &[u8]) -> u64 {
     for &byte in text.iter().rev() {
         let byte = match byte {
             b'A'..=b'Z' => byte + 32,
-            b'\\' => b'/',
+            b'\\' if FOLD => b'/',
             other => other,
         };
 
@@ -389,6 +441,11 @@ pub fn peel(mut hash: u64, text: &[u8]) -> u64 {
 /// The hash of a whole name.
 pub fn hash64(text: &str) -> u64 {
     feed(BASIS, text.as_bytes())
+}
+
+/// The hash of a whole name, keeping its backslashes. See [`feed_raw`].
+pub fn hash64_raw(text: &str) -> u64 {
+    feed_raw(BASIS, text.as_bytes())
 }
 
 /// The hash of a name as the loader would hold it.
@@ -1038,7 +1095,12 @@ mod tests {
         assert_eq!(pool_index_in(BO4_POOLS, "xmodel"), Some(4));
         assert_eq!(pool_index_in(BO4_POOLS, "material"), Some(6));
         assert_eq!(pool_index_in(BO4_POOLS, "image"), Some(9));
-        assert_eq!(pool_index_in(BO4_POOLS, "sound_asset"), Some(10), "aliases to `sound`");
+        // 170, the SAB sound pool, not 10. Index 10 is Black Ops 4's *bank* pool -- its hundred
+        // entries are names like `mp_embassy.all` -- and the individual sounds live in SAB files
+        // that never reach the loader. This mirrors Cold War, where `sound_asset` is the files
+        // (19) and `sound_bank` the banks (18).
+        assert_eq!(pool_index_in(BO4_POOLS, "sound_asset"), Some(170), "the SAB sound pool");
+        assert_eq!(pool_index_in(BO4_POOLS, "sound"), Some(10), "the bank pool");
     }
 
     /// The lookup used against Black Ops 4's table, which is where the mismatches bite. Written
@@ -1071,7 +1133,11 @@ mod tests {
         assert_eq!(find("material"), Some(6));
 
         // Named differently. These are the ones that silently resolved to nothing before.
-        assert_eq!(find("sound_asset"), Some(10), "falls back to Black Ops 4's one sound pool");
+        // 170, the SAB sound pool appended past the real enum, not 10. Index 10 is the *bank*
+        // pool -- its hundred entries are names like `mp_embassy.all` -- and the individual sounds
+        // live in SAB files the loader never opens. Same split Cold War already makes.
+        assert_eq!(find("sound_asset"), Some(170), "the SAB sound pool, not the bank pool");
+        assert_eq!(find("sound"), Some(10), "the bank pool");
         assert_eq!(find("localizeentry"), Some(16), "spelled localize_entry there");
         assert_eq!(find("gesturetable"), Some(19), "spelled gesture_table there");
         assert_eq!(find("clip_map"), Some(11), "spelled clipmap there");
