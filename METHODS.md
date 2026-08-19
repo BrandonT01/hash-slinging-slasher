@@ -156,7 +156,7 @@ them has almost nothing in common.
 **Run it with**
 
 ```
-python scripts/continuations.py --depth 2 --cap 24 | confirm_list - --label "per-prefix continuations"
+python scripts/continuations.py --depth 2 --cap 24 \n    | confirm_list - --label "per-prefix continuations" --script scripts/continuations.py
 ```
 
 **Measured**, first run, Cold War, 2026-08-19:
@@ -344,11 +344,16 @@ covers is not a new method, it is a slower one.
 
 When you add one:
 
-1. Put the generator in `contrib/`. `submit` carries it into the pull request under
-   `scripts/contributed/`, with the docstring requirements in `scripts/README.md`.
-2. Add a section here in the same shape, with the numbers your run measured.
-3. Say honestly what it is spent by.
-4. **If it did not work, put it in the dead ends below.** A measured negative is worth as much as
+1. **Name the generator when you confirm:** `confirm_list - --label "..." --script <path>`. It is
+   copied into the run and `submit` puts it in the pull request under `scripts/contributed/`.
+   Anything in `contrib/`, and any new file in `scripts/`, is carried too. Give it the docstring
+   `scripts/README.md` asks for.
+2. **Read the library first.** `start` prints every script and what it is for, so that inventing
+   something that already exists under another name takes a deliberate effort rather than an
+   ordinary lapse of memory.
+3. Add a section here in the same shape, with the numbers your run measured.
+4. Say honestly what it is spent by.
+5. **If it did not work, put it in the dead ends below.** A measured negative is worth as much as
    a find, and costs the next person nothing.
 
 ---

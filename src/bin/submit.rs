@@ -320,7 +320,70 @@ fn contributed_scripts(pending: &[PathBuf]) -> Vec<PathBuf> {
     let mut folders = vec![paths::findings().join(CONTRIBUTED), PathBuf::from(CONTRIBUTED)];
     folders.extend(pending.iter().map(|run| run.join(CONTRIBUTED)));
 
-    scripts_in(&folders)
+    let mut found = scripts_in(&folders);
+
+    // And anything new sitting in `scripts/` itself.
+    //
+    // Told "add your generator to the script library", somebody writes it into `scripts/`, which
+    // is the obvious and arguably correct place. Under the folder rule alone that script is then
+    // silently not sent -- and silently not sent is exactly how the seven generators named in
+    // past submission notes (`attachments.py`, `pathmine.py`, `crosspool.py` and the rest) came
+    // to exist nowhere. Being right about where it *should* go must not be the thing that loses
+    // it. Untracked only, so the library's own files are not re-sent every time.
+    let mut seen: HashSet<String> = found
+        .iter()
+        .filter_map(|path| Some(path.file_name()?.to_str()?.to_owned()))
+        .collect();
+
+    for path in untracked_scripts() {
+        let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+
+        if seen.insert(name.to_owned()) {
+            found.push(path);
+        }
+    }
+
+    found.sort();
+    found
+}
+
+/// Files in `scripts/` that git does not know about yet: somebody's new generator.
+///
+/// Asked of git rather than judged by timestamps, because "new" here means "not part of the
+/// library yet", which is a question only git can answer.
+fn untracked_scripts() -> Vec<PathBuf> {
+    let Ok(output) = std::process::Command::new("git")
+        .args(["status", "--porcelain", "--untracked-files=all", "--", "scripts"])
+        .stderr(Stdio::null())
+        .output()
+    else {
+        return Vec::new();
+    };
+
+    let mut found = Vec::new();
+
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let Some(path) = line.strip_prefix("?? ") else {
+            continue;
+        };
+
+        let path = PathBuf::from(path.trim().trim_matches('"'));
+
+        let sensible = matches!(
+            path.extension().and_then(|extension| extension.to_str()),
+            Some("py" | "rs" | "sh" | "ps1")
+        );
+
+        let has_content = path.metadata().map(|data| data.len() > 0).unwrap_or(false);
+
+        if sensible && has_content {
+            found.push(path);
+        }
+    }
+
+    found
 }
 
 /// The contributable files in a set of folders, first spelling of a name winning.

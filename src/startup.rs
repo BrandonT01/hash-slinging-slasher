@@ -318,12 +318,86 @@ fn report(landscape: &recon::Landscape) {
         );
     }
 
+    library();
     suggest();
 
     println!(
         "\nSubmit after each job rather than at the end of the night, and do not ask first --\n\
          `submit` re-checks all of this at the moment of sending and drops anything already taken."
     );
+}
+
+/// Everything already in the script library, printed before anything suggests inventing.
+///
+/// "Invent a new method" is the instruction this repository leans on hardest, and it has an
+/// obvious failure mode: an assistant with no memory of last night invents a method that already
+/// exists, under a different name, and spends the evening re-deriving `continuations.py`. Telling
+/// it to "read `scripts/README.md` first" is another instruction competing for the same
+/// attention, and instructions are what this project keeps discovering do not survive.
+///
+/// So the inventory is printed rather than referenced. Every assistant reads this output --
+/// it is the one command they are told to run -- so the list of what exists lands in front of
+/// them before the word "invent" appears, which is the only ordering that helps.
+///
+/// The one-line purpose is the first line of each script's own docstring, so a contributed script
+/// describes itself here the moment it lands and nobody has to maintain a second list.
+fn library() {
+    let mut listed: Vec<(String, String)> = Vec::new();
+
+    for folder in ["scripts", "scripts/contributed"] {
+        let Ok(entries) = std::fs::read_dir(folder) else {
+            continue;
+        };
+
+        let mut here: Vec<(String, String)> = Vec::new();
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|extension| extension.to_str()) != Some("py") {
+                continue;
+            }
+
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+
+            // `settings.py` is a library the others read config through, not a method.
+            if name == "settings.py" {
+                continue;
+            }
+
+            if let Some(purpose) = first_docstring_line(&path) {
+                here.push((format!("{folder}/{name}"), purpose));
+            }
+        }
+
+        here.sort();
+        listed.extend(here);
+    }
+
+    if listed.is_empty() {
+        return;
+    }
+
+    println!("the script library -- read this before inventing anything, so you do not invent it twice:\n");
+
+    for (path, purpose) in &listed {
+        let purpose: String = purpose.chars().take(88).collect();
+        println!("  {path:<34} {purpose}");
+    }
+
+    println!("\n  scripts/README.md says which are reconnaissance and which are methods.");
+    println!("  METHODS.md says what each one reaches and when it is spent.\n");
+}
+
+/// The first line of a Python file's module docstring, which is where these scripts state what
+/// they are for.
+fn first_docstring_line(path: &Path) -> Option<String> {
+    let text = std::fs::read_to_string(path).ok()?;
+    let rest = text.split_once("\"\"\"")?.1;
+    let line = rest.lines().next()?.trim();
+
+    (!line.is_empty()).then(|| line.trim_end_matches("\"\"\"").trim().to_owned())
 }
 
 /// What to run tonight, chosen from what this clone has *not* run.

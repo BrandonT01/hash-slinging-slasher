@@ -50,8 +50,15 @@ a program that prints names; anything that can print names is a method.
 
 ## Contributing a script
 
-If you wrote something during a run that would help the next person, **put it in `contrib/` and
-`submit` carries it into the pull request** under `scripts/contributed/`. This is not politeness.
+The easiest way is to name it when you confirm:
+
+```
+python my_generator.py | confirm_list - --label "what it is" --script my_generator.py
+```
+
+`--script` copies it into the run, and `submit` puts it in the pull request under
+`scripts/contributed/`. Two other routes work as well, so getting this wrong is hard: anything in
+`contrib/` is carried, and so is any **new** file in `scripts/` itself. This is not politeness.
 The names you found go into a table and are finished; the thing that found them makes every later
 contributor faster, and that compounding is the only reason this project can outrun the size of
 the problem.

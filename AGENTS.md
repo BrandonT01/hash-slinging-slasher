@@ -174,11 +174,14 @@ later contributor faster.** So:
   it is *spent by*.
 - If it did not work, add it to the dead ends table. A measured negative is worth as much as a
   find and costs the next person nothing.
-- Before choosing what to run, read what has been done:
+- **Before inventing anything, read what already exists.** `start` prints the whole script
+  library with each script's purpose, precisely so nobody spends an evening re-deriving
+  `continuations.py` under a new name. If you skipped that output, get it back with:
   ```
   python scripts/methods_report.py --by-method     what has been run, and what it returned
   python scripts/coverage.py --five                where the unnamed assets actually are
   ```
+  and read `scripts/README.md`, which says which scripts are reconnaissance and which are methods.
 
 ## Inventing a method is now cheap — this is the important part
 
@@ -187,12 +190,20 @@ input and does the whole careful half: the game's hash, the unnamed set, exclusi
 tables, the run notes, results that only ever grow.
 
 ```
-python scripts/continuations.py | bin\windows\confirm_list.exe - --label "per-prefix continuations"
+python scripts/continuations.py | bin\windows\confirm_list.exe - ^
+    --label "per-prefix continuations" --script scripts/continuations.py
 ```
 
-A method is now a script that prints names. Generate them any way you like. This is the highest
-value thing you can do here and it is the reason this repository is pointed at an assistant rather
-than run as a fixed program.
+A method is now a script that prints names. Generate them any way you like.
+
+**Always pass `--script`.** It copies your generator into the run, and `submit` puts it in the
+pull request. Without it the method dies with your session -- seven generators are named in past
+submissions here and **not one of them exists**, so every contributor since has started without
+them. `submit` also picks up anything new you left in `scripts/`, so being right about where it
+belongs cannot lose it either.
+
+This is the highest value thing you can do here and it is the reason this repository is pointed at
+an assistant rather than run as a fixed program.
 
 ---
 

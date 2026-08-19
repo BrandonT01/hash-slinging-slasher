@@ -23,6 +23,7 @@
 
 use std::collections::HashMap;
 use std::io::{Read, Write};
+use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
@@ -62,6 +63,12 @@ fn main() {
         "a candidate list generated outside the search and confirmed here".to_owned()
     });
 
+    // The generator that produced the candidates, so it can ride along without anybody having to
+    // remember a copy step afterwards. Naming it is one flag on a command already being typed,
+    // and it is the difference between the next contributor inheriting a method and inheriting a
+    // list of names -- which is the whole compounding argument this project rests on.
+    let script = argument(&arguments, "--script");
+
     // Everything that is not a flag and not the value belonging to one. Positional, so that a
     // file which happens to be named the same as the label is still read -- comparing against the
     // label's text would silently drop it, and a candidate file not read is a run that reports
@@ -76,7 +83,7 @@ fn main() {
         }
 
         if argument.starts_with("--") {
-            skip_next = matches!(argument.as_str(), "--label" | "--describe");
+            skip_next = matches!(argument.as_str(), "--label" | "--describe" | "--script");
             continue;
         }
 
@@ -91,7 +98,10 @@ fn main() {
              python scripts/continuations.py | confirm_list - --label \"per-prefix continuations\"\n\n\
              One candidate name per line. A `hash,name` line is accepted too and the name is \
              taken.\nEverything the tables already resolve is excluded, so what comes out is \
-             only what is new."
+             only what is new.\n\n\
+             `--script <path>` names the generator that produced them. `submit` then carries it \
+             into the\npull request, so the next contributor inherits the method rather than only \
+             its output."
         );
         std::process::exit(2);
     }
@@ -245,16 +255,38 @@ fn main() {
                     ),
             );
 
-            // The generator that produced this is the reusable part. Say so, once, where it will
-            // be read: a script in a submission makes the next contributor's first hour better,
-            // and a list of names does not.
-            println!(
-                "\nif a script generated these, drop it in `contrib/` and `submit` will carry it \
-                 into the pull request."
-            );
+            // The generator that produced this is the reusable part, and this is the moment it is
+            // in somebody's hand. Carried automatically when it was named.
+            if let Some(path) = &script {
+                match carry_along(&folder, Path::new(path)) {
+                    Ok(()) => {
+                        println!("carrying {path}; `submit` will put it in the pull request")
+                    }
+                    Err(why) => eprintln!("{path} could not be carried along: {why}"),
+                }
+            }
         }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
+    }
+
+    // Said whether or not anything was found, because both outcomes leave something behind that
+    // is worth more than this run's names, and both are forgotten by default.
+    match (&script, results.added()) {
+        (None, _) => println!(
+            "\nNo generator was named, so nothing reusable comes out of this run.\n\
+             If a script produced these candidates, re-run it with `--script <path>` -- or drop \
+             the script\nin `contrib/` -- and `submit` carries it into the pull request. Seven \
+             generators are named in\npast submissions here and exist nowhere; every contributor \
+             since has started without them."
+        ),
+        (Some(path), 0) => println!(
+            "\n{path} found nothing new. That is a result, and it is only worth something if it \
+             is\nwritten down: add a row to the dead ends table in METHODS.md saying what it \
+             tried and what\nit returned. A measured negative costs the next contributor nothing \
+             and saves them a night."
+        ),
+        (Some(_), _) => {}
     }
 
     let _ = std::io::stdout().flush();
@@ -438,6 +470,19 @@ fn candidate_bytes(line: &[u8]) -> &[u8] {
     line
 }
 
+/// Copies the generator into the run's own folder, where `submit` looks for it.
+fn carry_along(folder: &Path, script: &Path) -> std::io::Result<()> {
+    let name = script.file_name().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "that is not a file")
+    })?;
+
+    let into = folder.join("contrib");
+    std::fs::create_dir_all(&into)?;
+    std::fs::copy(script, into.join(name))?;
+
+    Ok(())
+}
+
 fn argument(arguments: &[String], flag: &str) -> Option<String> {
     let at = arguments.iter().position(|argument| argument == flag)?;
     arguments.get(at + 1).cloned()
@@ -463,6 +508,32 @@ mod tests {
     #[test]
     fn a_comma_in_a_name_is_not_mistaken_for_a_key() {
         assert_eq!(candidate_of("not_hex,thing"), "not_hex,thing");
+    }
+
+    /// The generator has to land where `submit` looks for it, which is `contrib/` inside the
+    /// run's own folder. Getting this path wrong loses the script silently, which is exactly how
+    /// seven of them came to exist nowhere.
+    #[test]
+    fn a_named_generator_lands_where_submit_looks() {
+        let dir = std::env::temp_dir().join(format!("carry_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+
+        let script = dir.join("mine.py");
+        std::fs::write(&script, b"print('candidates')
+").unwrap();
+
+        let run = dir.join("run_20260819-000000_list");
+        std::fs::create_dir_all(&run).unwrap();
+
+        carry_along(&run, &script).unwrap();
+
+        let landed = run.join("contrib").join("mine.py");
+        assert!(landed.is_file(), "the generator should be at {}", landed.display());
+        assert_eq!(std::fs::read(&landed).unwrap(), b"print('candidates')
+");
+
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     /// A file written on Windows carries a trailing carriage return, which hashes into the name
