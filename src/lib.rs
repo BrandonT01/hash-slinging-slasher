@@ -1044,6 +1044,34 @@ impl Results {
     }
 }
 
+/// A name with any trailing `stamp()` taken off: `xmodel_20260819-174052` to `xmodel`.
+///
+/// Lives here, beside the function that writes the stamp, because it has been got wrong before
+/// and the two have to agree. `validate` used to strip only trailing runs of *pure digits*, which
+/// matches nothing on a real filename -- the stamp has a dash in it -- so it read the asset type
+/// of every submitted file as `xmodel_20260819-174052`, resolved that to no pool, and quietly
+/// passed every name as untypeable. A second copy of the rule is how that happens twice.
+///
+/// Written as a trailing trim rather than a split on the first underscore, because plenty of pool
+/// names carry one: `sound_asset` would otherwise come back as `sound`.
+pub fn strip_stamp(stem: &str) -> &str {
+    let mut cut = stem;
+
+    while let Some((before, last)) = cut.rsplit_once('_') {
+        let stamp_like = !last.is_empty()
+            && last.bytes().all(|byte| byte.is_ascii_digit() || byte == b'-')
+            && last.bytes().any(|byte| byte.is_ascii_digit());
+
+        if !stamp_like {
+            break;
+        }
+
+        cut = before;
+    }
+
+    cut
+}
+
 /// The moment a run started, as `yyyymmdd-hhmmss` in UTC, for naming the folder it writes.
 ///
 /// Written out by hand rather than by pulling in a calendar crate, since the whole of what is

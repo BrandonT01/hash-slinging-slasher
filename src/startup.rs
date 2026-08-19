@@ -578,6 +578,27 @@ fn suggest(game: &str) {
     println!("suggested next, given what this clone has already run:\n");
 
     let mut offered = 0;
+
+    // Sound is offered ahead of the ladder rather than inside it, because only two entries are
+    // ever printed and sound would sit at the bottom of a list it can never reach the top of.
+    //
+    // It is also the largest unnamed ground in either game by a wide margin -- 70,878 of Black
+    // Ops 4's 79,263 `sound_asset` ids, and 43,603 of Cold War's 50,890 `sound_alias` ids -- and
+    // it is the one pass nobody runs by accident, because it needs a flag. That combination is
+    // exactly how Black Ops 4 itself went unground for months: not a hard problem, just never the
+    // default. The turn-taking fixed that for the game; this fixes it for the pass.
+    if !ran.iter().any(|label| label == "soundfiles") {
+        let fold = if game == "BLKOPS04" { " --no-fold" } else { "" };
+
+        println!(
+            "  confirm_cw --sounds{fold}{on}\n      sound files and aliases: the largest unnamed \
+             ground in either game, and the one pass that needs a flag rather than happening by \
+             default. Its own measured lists (`data/sound.*.txt`) and its own vocabulary.\n"
+        );
+
+        offered += 1;
+    }
+
     for (label, command, what) in ladder {
         if ran.contains(&(*label).to_owned()) {
             continue;

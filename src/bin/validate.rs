@@ -23,7 +23,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use slasher::snapshot::Snapshot;
-use slasher::{id_of, paths, tables};
+use slasher::{id_of, paths, strip_stamp, tables};
 
 fn main() {
     let targets: Vec<PathBuf> = std::env::args().skip(1).map(PathBuf::from).collect();
@@ -322,39 +322,6 @@ fn published_hashes() -> Option<HashSet<u64>> {
 }
 
 /// The asset type out of a submission's filename: `xmodel_20260818_213000` is `xmodel`.
-///
-/// Written as a trailing-stamp trim rather than a split on the first underscore, because plenty
-/// of pool names have one in them -- `sound_asset` would otherwise arrive as `sound`.
-/// The asset type out of a submitted filename, with the timestamp taken off.
-///
-/// `submit` names files `<type>_<stamp>.txt` where the stamp is `yyyymmdd-hhmmss` -- **with a
-/// dash in it**. This used to strip only trailing runs of pure digits, so it matched nothing on
-/// a real filename and returned `xmodel_20260819-174052` as the asset type. Nothing then resolved
-/// that to a pool, so the type check below quietly counted every name as untypeable and passed.
-/// It had never worked on a real submission.
-///
-/// The test that was supposed to catch this built its stamp as `_20260818_213000`, a shape
-/// `stamp()` does not produce, so it agreed with the bug. Both are fixed; the test now uses
-/// `stamp()`'s own output.
-fn strip_stamp(stem: &str) -> &str {
-    let mut cut = stem;
-
-    while let Some((before, last)) = cut.rsplit_once('_') {
-        let stamp_like = !last.is_empty()
-            && last.bytes().all(|byte| byte.is_ascii_digit() || byte == b'-')
-            && last.bytes().any(|byte| byte.is_ascii_digit());
-
-        if !stamp_like {
-            break;
-        }
-
-        cut = before;
-    }
-
-    cut
-}
-
-
 /// A path short enough to read in a log, since CI prints an absolute one.
 fn short(path: &Path) -> String {
     let parts: Vec<String> =

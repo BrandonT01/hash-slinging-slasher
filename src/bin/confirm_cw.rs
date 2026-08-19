@@ -365,9 +365,10 @@ fn main() {
     // come out goes in; nothing about this machine or this moment does. If somebody has already
     // run and submitted this exact configuration, it will find precisely what they found, and
     // saying so now is worth more than an hour of confirming it.
-    let fingerprint = Fingerprint::of(match sources {
-        Sources::All => "confirm_cw/all",
-        Sources::Seeds => "confirm_cw/seeds",
+    let fingerprint = Fingerprint::of(match (sounds, sources) {
+        (true, _) => "confirm_cw/sounds",
+        (false, Sources::All) => "confirm_cw/all",
+        (false, Sources::Seeds) => "confirm_cw/seeds",
     })
     .with("game", &config::game())
     .with("pools", &config::targets().describe())
@@ -428,18 +429,18 @@ fn main() {
 
     results.write(paths::findings()).expect("the results");
 
-    match results.write_run(paths::findings(), match sources {
-        Sources::All => "all",
-        Sources::Seeds => "seeds",
-    }) {
+    match results.write_run(paths::findings(), run_label(sounds, sources)) {
         Ok(Some(folder)) => {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
                 &RunNote::new(
-                    match sources {
-                        Sources::All => "general search (confirm_cw)",
-                        Sources::Seeds => "general search, confirmed seeds only (confirm_cw seeds)",
+                    match (sounds, sources) {
+                        (true, _) => "sound files and aliases (confirm_cw --sounds)",
+                        (false, Sources::All) => "general search (confirm_cw)",
+                        (false, Sources::Seeds) => {
+                            "general search, confirmed seeds only (confirm_cw seeds)"
+                        }
                     },
                     "every seed cut to pieces at its marks and recombined as beginning + stem + \
                      ending, each candidate hashed and looked up among the game's unnamed ids",
@@ -466,5 +467,52 @@ fn main() {
         }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
+    }
+}
+
+/// The name a run folder carries, which is also how `start` knows what this clone has run.
+///
+/// A sound pass must not answer to the same label as a general one. It used to: both wrote `all`,
+/// so one general pass marked sound as already done, `start` stopped offering it, and the largest
+/// unnamed ground in either game -- 70,878 of Black Ops 4's 79,263 `sound_asset` ids -- quietly
+/// retired itself. `soundfiles` rather than `sounds` because `confirm_sounds` already owns that
+/// one, and two methods sharing a label is the same bug wearing a different hat.
+fn run_label(sounds: bool, sources: Sources) -> &'static str {
+    match (sounds, sources) {
+        (true, _) => "soundfiles",
+        (false, Sources::All) => "all",
+        (false, Sources::Seeds) => "seeds",
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every pass this binary can run must be distinguishable on disk from every other, and from
+    /// the other binaries' labels. `start` reads nothing but these strings to decide what is left
+    /// to try, so a collision does not look like a bug -- it looks like a finished job.
+    #[test]
+    fn every_pass_has_its_own_label() {
+        let labels = [
+            run_label(false, Sources::All),
+            run_label(false, Sources::Seeds),
+            run_label(true, Sources::All),
+            run_label(true, Sources::Seeds),
+        ];
+
+        assert_eq!(run_label(true, Sources::All), run_label(true, Sources::Seeds));
+
+        // The general pair, and the sound pass, must not collide.
+        assert_ne!(labels[0], labels[1]);
+        assert_ne!(labels[0], labels[2]);
+        assert_ne!(labels[1], labels[2]);
+
+        // Nor with the labels the other binaries write, which `start` reads from the same folder.
+        for taken in ["sounds", "list", "localize", "swaps", "variants", "images", "techsets"] {
+            for label in labels {
+                assert_ne!(label, taken, "{label} collides with another method's run label");
+            }
+        }
     }
 }

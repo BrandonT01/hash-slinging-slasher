@@ -26,6 +26,8 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 7 | sound dotted tails | everything past the first dot | `confirm_sounds` | reopened — see the sound vocabulary note |
 | 8 | reading the tables and extending | whatever the community half-finished | any generator → `confirm_list` | never exhausts; depends on noticing |
 | 9 | cross-game techset pairs | `techset` / `technique_set` | `techset_probe`, `techset_pair` | BO4 productive; Cold War conclusively ruled out |
+| 10 | sibling token substitution | one **non-numeric** token in the *middle*, both sides kept | `scripts/contributed/slotswap_20260819-225818.py` → `confirm_list` | productive: 2,789 names over four runs. Widen with `--cap`, `--context` |
+| 11 | family column cross product | names differing in **two or more** places at once | `scripts/contributed/templates_20260819-220821.py` → `confirm_list` | 115 on top of a freshly-swept slotswap. Narrow ground, real ground |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ---
@@ -445,6 +447,95 @@ Established 2026-08-18/19:
 
 > These names currently have **nowhere upstream to land** — cod-name-db has no techset table.
 > Proposing one is worth more than another night of grinding. See `docs/HASHES.md`.
+
+---
+
+## 10. Sibling token substitution
+
+**Contributed by GoastcraftHD**, 2026-08-19. This is the first method in this registry that an
+assistant invented, wrote and submitted rather than one that shipped with the repository.
+
+**Builds from** the corpus's own vote on what may stand in a given place. For every known name and
+every token slot in it, the slot's *context* is the token before and the token after; every name
+in the corpus votes on what has been seen in that context, and each word so measured is then
+offered to every other name carrying the same two neighbours. Numbers fold to `#` when forming a
+context, so `_01_` and `_07_` count as the same neighbour and a family shares one vocabulary
+instead of splitting it per member.
+
+**Reaches** the commonest kind of sibling in this game's naming, and the one the first three
+methods structurally cannot produce: two names identical but for a single **non-numeric** word in
+the middle. The general search recombines `beginning + stem + ending`, so it can replace a head or
+a tail but never a middle with both sides intact. `confirm_variants` does change a middle token,
+but only a numeric one -- `_01` becomes `_02`, `_wood` never becomes `_metal`. Continuations grow a
+prefix rightwards, so a known tail cannot be preserved.
+
+**Run it with**
+
+```
+python scripts/contributed/slotswap_20260819-225818.py | bin\windows\confirm_list.exe - ^
+    --label "sibling token substitution" --script scripts/contributed/slotswap_20260819-225818.py
+```
+
+Measured, all Black Ops 4 unless stated:
+
+| run | form | names |
+|---|---|---|
+| `20260819-215128` | slot alphabets, both neighbours | **1,081** |
+| `20260819-215527` | same, Cold War | **76** |
+| `20260819-222734` | widened: `--cap 40`, digits allowed | **972** |
+| `20260819-225513` | `--context left` only | **660** |
+
+**Spent by** its own success at one setting, and reopened by loosening the context. Keying a slot
+on *both* neighbours is precise and cannot reach a name whose other neighbour is also unknown --
+it requires the pair to have been seen together already. `--context left` or `--context right`
+keys on one side, which is looser and less certain but reaches names the two-sided form cannot;
+that change alone returned 660 more after the two-sided form had stopped paying.
+
+---
+
+## 11. Family column cross product
+
+**Contributed by GoastcraftHD**, 2026-08-19.
+
+**Builds from** a family treated as a table. Names are bucketed by their leading tokens and token
+count so that members line up column for column, each column's alphabet is measured across the
+bucket, and columns with a *small* measured alphabet are taken to be the family's axes. Every
+member is then re-emitted with the full cross product of those alphabets.
+
+**Reaches** names that differ from everything known in **two or more places at once** -- the slice
+no other method here can produce, because every one of them moves a single degree of freedom:
+the general search varies the stem, `confirm_variants` a number, method 10 one token, family gap
+filling one numeric axis. One degree of freedom cannot reach two, however long it runs, and a grid
+is mostly more than one step from any published corner of it.
+
+**Run it with**
+
+```
+python scripts/contributed/templates_20260819-220821.py | bin\windows\confirm_list.exe - ^
+    --label "family column cross product" --script scripts/contributed/templates_20260819-220821.py
+```
+
+Returned **115** on Black Ops 4 (`20260819-220550`) — immediately after method 10 had swept the
+same corpus, so that number is what multi-axis reached *on top of* single-axis, which is the only
+honest way to read it.
+
+**The guard that makes it safe, and why it is not optional.** Columns with a *large* alphabet are
+deliberately left alone: they identify the individual asset rather than offering a choice. Drop
+that rule and the method walks straight into the largest trap in the repository. The image table's
+highest-scoring grid is
+
+```
+volume0_state0_gi_xyz_texture_mip2_f788ac97_3        187,200 cells
+```
+
+where `f788ac97` is a **content hash**. Treated as an axis it has 32 attested values and looks
+perfectly healthy, and the grid is densely populated, so a fill-ratio check passes it too. The
+result would be 187,200 candidates spent guessing hash tails — unpredictable by construction. That
+is `streamkey` in a new costume, and an upper bound on column alphabet is the only thing that
+stops it.
+
+**Spent by** the bucket key. `--key 3` fixes three leading tokens; families that share a shape but
+not a prefix are never compared. Re-run with a different `--key` before calling it exhausted.
 
 ---
 

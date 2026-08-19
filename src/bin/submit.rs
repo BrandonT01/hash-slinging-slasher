@@ -22,8 +22,8 @@ use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
 use slasher::{
-    config, expected_by_chance, github, hash64, low_value_reason, paths, recon, stamp, tables,
-    ID_MASK,
+    config, expected_by_chance, github, hash64, low_value_reason, paths, recon, stamp, strip_stamp,
+    tables, ID_MASK,
 };
 
 /// Where findings go. Set `submit_repo` in `config.toml` to override.
@@ -388,6 +388,60 @@ fn contributed_scripts(pending: &[PathBuf]) -> Vec<PathBuf> {
     found
 }
 
+/// Where a contributed script lands in the shared library: stamped, like everything beside it.
+///
+/// Five pull requests once carried five different versions of `slotswap.py` under that one bare
+/// name. Four of them merged only because the contributor's branches happened to build on each
+/// other; the fifth was an add/add conflict that had to be resolved by hand. That is a bad thing
+/// to hand a maintainer -- resolving a conflict inside somebody else's method means reading two
+/// versions of a script you did not write and picking one, and picking wrong silently discards
+/// the newer work. The submission files never had this problem, because they have carried a
+/// `yyyymmdd-hhmmss` stamp from the beginning. The scripts now get the same treatment.
+///
+/// A script that has not changed keeps the name it already has, rather than gaining a fresh
+/// stamped copy every run: the point is to stop collisions, not to accumulate one file per
+/// submission. So an evolving generator leaves a readable trail of versions, and a stable one
+/// leaves a single file.
+fn library_name(name: &str, when: &str, bytes: &[u8]) -> String {
+    let (stem, extension) = name.rsplit_once('.').unwrap_or((name, "py"));
+    let base = strip_stamp(stem);
+
+    match already_in_library(base, extension, bytes) {
+        Some(existing) => existing,
+        None => format!("{base}_{when}.{extension}"),
+    }
+}
+
+/// The library's own copy of this script, byte for byte, under whatever stamp it carries.
+///
+/// Best effort: the library is only as current as the clone, and `start` refreshes that. Missing
+/// a match costs one redundant file, which is why this is allowed to give up quietly. Claiming a
+/// match that is not one would overwrite somebody's version, so the comparison is exact bytes.
+fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<String> {
+    let folder = paths::root().join("scripts").join("contributed");
+
+    for entry in fs::read_dir(folder).ok()?.flatten() {
+        let path = entry.path();
+
+        let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+        let Some((stem, ending)) = name.rsplit_once('.') else {
+            continue;
+        };
+
+        if ending != extension || strip_stamp(stem) != base {
+            continue;
+        }
+
+        if fs::read(&path).is_ok_and(|held| held == bytes) {
+            return Some(name.to_owned());
+        }
+    }
+
+    None
+}
+
 /// Files in `scripts/` that git does not know about yet: somebody's new generator.
 ///
 /// Asked of git rather than judged by timestamps, because "new" here means "not part of the
@@ -666,15 +720,20 @@ fn open_pull_request(
     }
 
     // Scripts go to the shared library rather than into the submission folder, because a method
-    // nobody can find is a method nobody inherits.
+    // nobody can find is a method nobody inherits. Each is stamped like the submission files
+    // beside it -- see `library_name`.
+    let mut landed: Vec<String> = Vec::new();
+
     for script in scripts {
         let Some(name) = script.file_name().and_then(|name| name.to_str()) else {
             continue;
         };
 
         let bytes = fs::read(script).map_err(|error| format!("could not read {name}: {error}"))?;
+        let target = library_name(name, &when, &bytes);
         let blob = make_blob(&fork, &bytes)?;
-        entries.push((format!("scripts/contributed/{name}"), blob));
+        entries.push((format!("scripts/contributed/{target}"), blob));
+        landed.push(target);
     }
 
     if entries.is_empty() {
@@ -689,12 +748,11 @@ fn open_pull_request(
     let commit = make_commit(&fork, &title, &tree, &parent)?;
     make_branch(&fork, &branch, &commit)?;
 
-    let contributed = if scripts.is_empty() {
+    let contributed = if landed.is_empty() {
         String::new()
     } else {
-        let listed: Vec<String> = scripts
+        let listed: Vec<String> = landed
             .iter()
-            .filter_map(|path| path.file_name()?.to_str())
             .map(|name| format!("- `scripts/contributed/{name}`"))
             .collect();
 
@@ -969,6 +1027,34 @@ mod tests {
     fn base64_carries_bytes_that_are_not_text() {
         assert_eq!(base64(&[0xff, 0xfe, 0xfd]), "//79");
         assert_eq!(base64(&[0x00]), "AA==");
+    }
+
+    /// A contributed script is stamped, and re-stamping never compounds.
+    ///
+    /// The compounding case is the one worth pinning: a contributor pulls the library, edits
+    /// `slotswap_20260819-225818.py` and submits it. Naively appending would give
+    /// `slotswap_20260819-225818_20260820-0130.py`, and the run after that would add a third.
+    /// The stamp is replaced, not accumulated, so the base name stays readable for ever.
+    #[test]
+    fn contributed_scripts_are_stamped_once() {
+        let when = "20260820-013000";
+
+        assert_eq!(library_name("slotswap.py", when, b"x"), "slotswap_20260820-013000.py");
+        assert_eq!(
+            library_name("slotswap_20260819-225818.py", when, b"x"),
+            "slotswap_20260820-013000.py",
+            "an already-stamped script must not gain a second stamp"
+        );
+
+        // A name with underscores of its own keeps them: only the stamp comes off.
+        assert_eq!(
+            library_name("image_siblings.py", when, b"x"),
+            "image_siblings_20260820-013000.py"
+        );
+
+        // Extensionless, and non-python, both survive.
+        assert_eq!(library_name("gen", when, b"x"), "gen_20260820-013000.py");
+        assert_eq!(library_name("gen.sh", when, b"x"), "gen_20260820-013000.sh");
     }
 
     /// The rules a contributed script has to pass, asserted rather than trusted: a folder that

@@ -14,13 +14,38 @@ which are real names of the kind we are hunting, and asks what share of them the
 reconstruct. The unnamed ones are the same shape as the named ones, so the share is a fair estimate
 of the best a pass could possibly do.
 
+**It is a floor to clear, not a score to maximise**, and the difference is the whole point of this
+repository. Every name measured here is one cod-name-db already holds, so reconstructing it is by
+definition not a find. A *low* share means a pass is losing names it should already be reaching,
+and is worth acting on immediately. A *high* share means only that the lists are not the thing
+standing in the way -- it does not predict that a pass will return anything, and it is blind to
+any naming family with no published example at all, since such a family is absent from the very
+corpus being measured.
+
+So tuning lists until this number is high is not the work, and an assistant that spends its night
+doing so has measured itself busy. The work is inventing a method that reaches ground the corpus
+does not describe. `METHODS.md` methods 10 and 11 were both invented, written and submitted by a
+contributor rather than shipped here, which is the intended shape of a contribution.
+
 Reads the tables and `data/`. Needs no game, no network and no snapshot.
 """
 import collections
 import os
+import re
 import sys
 
 import snapshot
+
+# A mesh name: 26 base32 characters that are a hash of the mesh itself, so the tail cannot be
+# predicted by anything and never will be. `AGENTS.md` lists `xmodelmesh` as unreachable for
+# exactly this reason -- but 81,381 of `fnv1a_xmodels`' 286,501 names carry the same tail, because
+# the published table holds mesh entries alongside model names.
+#
+# Counting them dragged the measured xmodel ending reach down to 64.3% when the reach over real
+# model names is 89.9%. That is not a rounding difference, it is the difference between a ceiling
+# worth a night of work and one that is not there at all -- and chasing a phantom ceiling is the
+# precise failure this script exists to prevent, so it had better not cause one.
+UNREACHABLE = re.compile(r"_[a-z0-9]{26}$")
 
 # Which lists serve which tables, mirroring how the searches choose. A sound pass reads the sound
 # pair, everything else reads the general pair -- see `paths::SOUND_SUFFIX_LIST`.
@@ -88,7 +113,7 @@ def main(argv):
         endings = set(load(suffix_file))
 
         print("\n=== %s lists: %d beginnings, %d endings ===" % (title, len(prefixes), len(endings)))
-        print("%-28s %9s %9s %9s" % ("table", "names", "beginning", "ending"))
+        print("%-28s %9s %9s %9s %9s" % ("table", "names", "beginning", "ending", "skipped"))
 
         want_begin = collections.Counter()
         want_end = collections.Counter()
@@ -99,11 +124,19 @@ def main(argv):
                 continue
 
             have_begin = have_end = 0
+            counted = skipped = 0
             for name in names:
                 name = name.strip().lower().replace("\\", "/")
                 if not name:
                     continue
 
+                # Never counted against the lists: no list can ever express it, so including it
+                # would report a ceiling that no amount of work could raise.
+                if UNREACHABLE.search(name):
+                    skipped += 1
+                    continue
+
+                counted += 1
                 bs = beginnings_of(name)
                 es = endings_of(name)
 
@@ -117,10 +150,10 @@ def main(argv):
                 elif es:
                     want_end[es[0]] += 1
 
-            total = max(len(names), 1)
-            print("%-28s %9d %8.1f%% %8.1f%%"
-                  % (table.replace("fnv1a_", ""), len(names),
-                     100.0 * have_begin / total, 100.0 * have_end / total))
+            total = max(counted, 1)
+            print("%-28s %9d %8.1f%% %8.1f%% %9d"
+                  % (table.replace("fnv1a_", ""), counted,
+                     100.0 * have_begin / total, 100.0 * have_end / total, skipped))
 
         if show_missing:
             print("\n  commonest beginnings not carried:")
@@ -130,9 +163,16 @@ def main(argv):
             for key, count in want_end.most_common(8):
                 print("    %-42s %d names" % (key, count))
 
+    print("\n`skipped` is names no list can ever express -- a mesh tail is 26 base32 characters")
+    print("hashed from the mesh itself. They are left out of the shares rather than counted as")
+    print("failures, because a ceiling nothing can raise is not a ceiling worth reporting.")
+
     print("\nA low share is a ceiling, not a yield: it is the most a pass could find even if it")
     print("ran for ever. Raise it by measuring more (`derive_lists.py`) or by a method that does")
     print("not build names end-first at all -- see METHODS.md.")
+    print("\nA high share is not a result. Every name measured here is already published, so")
+    print("rebuilding one finds nothing; a high share only says the lists are not what is in")
+    print("the way. What finds names is a method that reaches ground this corpus cannot describe.")
 
 
 if __name__ == "__main__":
