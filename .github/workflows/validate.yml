@@ -42,6 +42,26 @@ jobs:
       - name: test
         run: cargo test --release --verbose
 
+      # The markdown here is executable instructions for another program: an assistant reads
+      # AGENTS.md and does what it says. A binary that has been renamed or a script that has
+      # moved is a bug that wastes somebody's night, and nothing else in this pipeline would
+      # catch it -- so it is checked like any other bug.
+      - name: the documentation describes the repository that exists
+        run: python3 scripts/check_docs.py
+
+      # Every reconnaissance script must at least run. They are what an assistant reads before
+      # choosing a method, so one that has quietly broken sends the whole night the wrong way.
+      #
+      # Only the ones that need nothing but the repository. `coverage.py`, `continuations.py`,
+      # `cross_type.py` and `families.py` all read the hash tables, which is a few hundred
+      # megabytes to fetch -- too much to pay on every push for a smoke test.
+      - name: the reconnaissance scripts still run
+        run: |
+          cd scripts
+          python3 -c "import snapshot; print(len(snapshot.read('../snapshots/blkopscw.ids')), 'assets')"
+          python3 methods_report.py --by-method
+          python3 methods_report.py --duplicates
+
   submissions:
     name: re-verify submitted names
     runs-on: ubuntu-latest

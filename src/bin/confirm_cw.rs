@@ -25,27 +25,53 @@
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
+use slasher::fingerprint::Fingerprint;
 use slasher::loader::{loaded_assets, unnamed, wanted_for_search};
 use slasher::search::Meet;
 use slasher::{
-    all_table_names, folder_names, hash64, paths, read_list, table_keys,
-    table_names, tables_look_complete, Results, pool_label,
+    all_table_names, config, folder_names, hash64, paths, read_list, readiness, recon, table_keys,
+    table_names, tables_look_complete, Results, RunNote, pool_label,
 };
 
 /// The shortest piece of a line worth trying. Anything shorter matches by accident as often as
 /// it matches for a reason.
 const SHORTEST: usize = 3;
 
-/// The tables that are this game rather than a newer one, judged by how thick they are with its
-/// marker. A newer game's names teach the wrong conventions and mostly yield nothing.
+/// The tables that are this game rather than a newer one. A newer game's names teach the wrong
+/// conventions and mostly yield nothing.
+///
+/// Which files belong to which game is not a guess: it is Saluki's own loading code, written down
+/// in `docs/HASHES.md`. Everything without a `_v2` suffix is Black Ops 4 and Cold War.
+///
+/// **The twelve per-language sound tables matter and were missing.** This list used to name only
+/// `fnv1a_xsounds`, the legacy file, which holds 57,593 names in the older `.ln75.pc.all.snd`
+/// shape. The twelve files Saluki actually loads hold **825,316 distinct names** between them, in
+/// the `.rn75.pc.<lang>.snd` shape, and they share *nothing* with the legacy file -- the overlap
+/// is exactly zero rows. Sound names are also the richest seed material in the set: they carry
+/// full directory paths, speaker codes and dotted tails that no other table has. Leaving them out
+/// cost every general pass ever run here fourteen times its sound vocabulary.
 const COLD_WAR_TABLES: &[&str] = &[
     "fnv1a_xmodels",
     "fnv1a_xmaterials",
     "fnv1a_ximages",
     "fnv1a_xanims",
-    "fnv1a_xsounds",
     "fnv1a_soundbanks_aliases",
     "fnv1a_strings",
+    // The legacy sound file, still worth reading: zero of its names appear in the twelve below.
+    "fnv1a_xsounds",
+    // The twelve Saluki loads, one per shipped language.
+    "fnv1a_english_xsounds",
+    "fnv1a_french_xsounds",
+    "fnv1a_german_xsounds",
+    "fnv1a_italian_xsounds",
+    "fnv1a_spanish_xsounds",
+    "fnv1a_americanspanish_xsounds",
+    "fnv1a_brazilianportugese_xsounds",
+    "fnv1a_russian_xsounds",
+    "fnv1a_polish_xsounds",
+    "fnv1a_japanese_xsounds",
+    "fnv1a_korean_xsounds",
+    "fnv1a_chinese_xsounds",
 ];
 
 /// Pools this search cannot reach, and so should not be asked about.
@@ -147,6 +173,11 @@ fn stems(lines: &[String]) -> Vec<Box<str>> {
 }
 
 fn main() {
+    // Refuses to start on a clone that has not been brought up to date and checked against what
+    // other people already have in flight. This is the whole of the duplicate problem, and it is
+    // enforced here rather than requested in a document because requesting it did not work.
+    readiness::require();
+
     let began = Instant::now();
     let arguments: Vec<String> = std::env::args().skip(1).collect();
     let sources = if arguments.iter().any(|value| value == "seeds") {
@@ -186,14 +217,29 @@ fn main() {
         return;
     }
 
-    let before_pruning = unnamed(&assets, &known).len();
+    // Counted apart, because these are two different reasons for an id not to be hunted and
+    // reporting them as one has already misled this project once.
+    //
+    // The old line here subtracted the wanted set from *every* unnamed id and attributed the
+    // whole difference to `xmodelmesh`. Most of that difference is nothing of the kind: it is
+    // every pool this machine was not asked to search -- `streamkey` alone is 420,229 ids in Cold
+    // War. The figure it printed, 827,933, went into METHODS.md as the size of the mesh pool,
+    // which actually holds 271,840. Say which is which.
+    let all_unnamed = unnamed(&assets, &known);
+    let mesh: Vec<usize> = UNREACHABLE.iter().filter_map(|kind| slasher::pool_index(kind)).collect();
+    let unreachable = all_unnamed.values().filter(|pool| mesh.contains(pool)).count();
+
     let wanted = wanted_for_search(&assets, &known, UNREACHABLE);
+    let not_targeted = all_unnamed.len() - unreachable - wanted.len();
+    drop(all_unnamed);
 
     println!(
-        "loaded assets: {}, of which unnamed by the tables: {} ({} of them in {UNREACHABLE:?},          which no rule here can reach, left out)",
+        "loaded assets: {}, unnamed by the tables: {}\n  hunting {} of them\n  {unreachable} left \
+         out as unreachable {UNREACHABLE:?}\n  {not_targeted} left out as pools this machine is \
+         not set to search",
         assets.len(),
+        unreachable + not_targeted + wanted.len(),
         wanted.len(),
-        before_pruning - wanted.len()
     );
 
     // Held only long enough to say which ids are still wanted, and let go before the scan, which
@@ -233,6 +279,7 @@ fn main() {
         lines.extend(pool);
     }
 
+    let seeds = lines.len();
     let started = Instant::now();
     let pieces = stems(&lines);
     println!(
@@ -241,6 +288,27 @@ fn main() {
         started.elapsed().as_secs_f64()
     );
     drop(lines);
+
+    // What this search *is*, reduced to sixteen characters. Everything that decides which names
+    // come out goes in; nothing about this machine or this moment does. If somebody has already
+    // run and submitted this exact configuration, it will find precisely what they found, and
+    // saying so now is worth more than an hour of confirming it.
+    let fingerprint = Fingerprint::of(match sources {
+        Sources::All => "confirm_cw/all",
+        Sources::Seeds => "confirm_cw/seeds",
+    })
+    .with("game", &config::game())
+    .with("pools", &config::targets().describe())
+    .with("all-tables", if every_table { "yes" } else { "no" })
+    .with_list("beginnings", &prefixes)
+    .with_list("endings", &endings)
+    .with_count("seed lines", seeds)
+    .with_count("pieces", pieces.len())
+    .with_count("wanted", wanted.len())
+    .finish();
+
+    println!("fingerprint: {fingerprint}");
+    recon::warn_if_swept(&fingerprint);
 
     // Saved as the search goes rather than after it. A pass is an hour and the thing driving it
     // may not last that long, so what has been found is on disk long before the end.
@@ -278,13 +346,30 @@ fn main() {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
-                match sources {
-                    Sources::All => "general search (confirm_cw)",
-                    Sources::Seeds => "general search, confirmed seeds only (confirm_cw seeds)",
-                },
-                "every seed cut to pieces at its marks and recombined as beginning + stem + \
-                 ending, each candidate hashed and looked up among the game's unnamed ids",
-                began.elapsed(),
+                &RunNote::new(
+                    match sources {
+                        Sources::All => "general search (confirm_cw)",
+                        Sources::Seeds => "general search, confirmed seeds only (confirm_cw seeds)",
+                    },
+                    "every seed cut to pieces at its marks and recombined as beginning + stem + \
+                     ending, each candidate hashed and looked up among the game's unnamed ids",
+                    began.elapsed(),
+                )
+                .measured("game", config::game())
+                .measured("pools searched", config::targets().describe())
+                .measured("seed lines", seeds)
+                .measured("distinct pieces", pieces.len())
+                .measured("beginnings", prefixes.len())
+                .measured("endings", endings.len())
+                .measured("ids hunted", wanted.len())
+                .measured("names found", found.len())
+                .fingerprint(&fingerprint)
+                .next_step(
+                    "this configuration is now exhausted. Re-measure the lists with \
+                     `python scripts/derive_lists.py` so the confirmed names widen them, which \
+                     changes the fingerprint and reopens the method -- or run a method that \
+                     reaches somewhere else entirely (METHODS.md).",
+                ),
             );
         }
         Ok(None) => println!("this run found nothing new"),

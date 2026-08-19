@@ -70,7 +70,41 @@ pub fn count(folder: &Path) -> usize {
         .unwrap_or(0)
 }
 
-/// How long since the tables were last written, if they are here at all.
+/// What the checkout is actually holding: the upstream commit, and when upstream made it.
+///
+/// [`age`] cannot answer this and reads as though it can. It measures file modification times,
+/// which are set by *our* fetch -- so a freshly fetched checkout of month-old data reports itself
+/// as zero hours old, which is exactly backwards from what the reader wants to know. This asks
+/// git what it actually has.
+///
+/// Returned as `(short sha, ISO date)`. `None` when the folder is not a checkout, which is the
+/// case when somebody has pointed `tables` straight at a folder of csv they maintain themselves.
+pub fn upstream_version(tables: &Path) -> Option<(String, String)> {
+    let checkout = checkout(tables);
+    if !checkout.join(".git").exists() {
+        return None;
+    }
+
+    let output = Command::new("git")
+        .args(["log", "-1", "--format=%h %cs"])
+        .current_dir(&checkout)
+        .output()
+        .ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let said = String::from_utf8_lossy(&output.stdout);
+    let (sha, date) = said.trim().split_once(' ')?;
+
+    Some((sha.to_owned(), date.to_owned()))
+}
+
+/// How long since the tables were last *written on this machine*, if they are here at all.
+///
+/// This is a question about the local files, not about upstream -- see [`upstream_version`] for
+/// that. It is what decides whether to re-fetch, and nothing else should use it.
 pub fn age(folder: &Path) -> Option<Duration> {
     let newest = std::fs::read_dir(folder)
         .ok()?

@@ -31,6 +31,13 @@ Point your agent at the repo and say:
 
 That's it. It handles the rest.
 
+**Setup is one command now.** `bin\windows\start.exe` installs git and the GitHub CLI if you
+haven't got them, updates everything, and tells you exactly what to type if anything's missing.
+The only bit it can't do for you is signing in to GitHub, because that opens a browser — and it
+prints the exact command for *your* machine, full path and all. If you've been stuck on that
+before, that's why: the installer adds `gh` to your PATH, but a terminal that was already open
+doesn't know about it yet.
+
 Don't worry about burning through your usage either.
 
 The actual hash searching is handled by compiled Rust code running directly on your CPU. The AI is only used to decide what to try and process the results.

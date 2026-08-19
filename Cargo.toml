@@ -36,6 +36,19 @@ serde_json = { version = "1", optional = true }
 # Grinding, and everything around it. These build with no features and no game: the searches
 # read the captured snapshot, which is the whole point of having captured one.
 [[bin]]
+name = "start"
+path = "src/bin/start.rs"
+
+# Confirms a plain list of candidate names. The piece that makes inventing a method cheap: a
+# generator in any language prints candidates, this does the careful half.
+[[bin]]
+name = "confirm_list"
+path = "src/bin/confirm_list.rs"
+
+# The same program as `start`, under the name the older documentation uses. Kept so an assistant
+# working from a stale memory of this repo still gets the full startup rather than a check that
+# no longer exists.
+[[bin]]
 name = "preflight"
 path = "src/bin/preflight.rs"
 

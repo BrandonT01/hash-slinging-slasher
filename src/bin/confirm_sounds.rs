@@ -19,16 +19,25 @@ use std::collections::HashSet;
 
 use slasher::loader::{loaded_assets, unnamed_in};
 use slasher::search::Meet;
-use slasher::{
-    all_table_names, folder_names, paths, pool_index, table_keys, tables_look_complete, Results,
-    pool_label,
-};
+use slasher::fingerprint::Fingerprint;
+use slasher::{all_table_names, config, folder_names, paths, pool_index, pool_label, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
 
 /// What marks the end of a sound name's own part and the start of the tail.
 const TAIL: char = '.';
 
-/// The pools a sound name can land in. `sound_asset` is the one with thousands unnamed; the
-/// others are small, but a name is a name and they cost nothing to ask about.
+/// The pools a sound name can land in.
+///
+/// Four pools rather than one, and a submission saying "searched 4 pools: sound, sound_asset,
+/// sound_bank, sound_duck" has been read as scope drift. It is not, and the numbers are the whole
+/// argument: in Cold War `sound_asset` holds 97,217 ids while `sound_bank` holds 107 and
+/// `sound_duck` 191, and `sound` is not a filled pool at all. Adding the other three widens the
+/// wanted set by **0.3%**, which is free -- they are peeled in the same batch as the rest -- and
+/// they are real sound names when they land.
+///
+/// The rule this illustrates is worth keeping: widening is only cheap when the pools being added
+/// are small. Widening into `streamkey` would add 420,229 ids, quadrupling the wanted set and the
+/// coincidence rate with it. `python scripts/coverage.py` is how to tell the two cases apart, and
+/// it should be run before adding anything here.
 const POOLS_SEARCHED: &[&str] = &["sound_asset", "sound", "sound_bank", "sound_duck"];
 
 /// Every tail any sound name carries, as everything from its first dot.
@@ -82,6 +91,8 @@ fn stems(names: &[String]) -> Vec<String> {
 }
 
 fn main() {
+    readiness::require();
+
     let began = std::time::Instant::now();
     let searched: Vec<usize> = POOLS_SEARCHED.iter().filter_map(|kind| pool_index(kind)).collect();
 
@@ -122,6 +133,15 @@ fn main() {
     let pieces = stems(&vocabulary);
     println!("tails measured: {}, stems: {}", endings.len(), pieces.len());
 
+    let fingerprint = Fingerprint::of("confirm_sounds")
+        .with("game", &config::game())
+        .with_list("tails", &endings)
+        .with_count("stems", pieces.len())
+        .with_count("wanted", wanted.len())
+        .finish();
+    println!("fingerprint: {fingerprint}");
+    recon::warn_if_swept(&fingerprint);
+
     let mut results = Results::load(paths::findings());
 
     // A sound name is a path in its own right and carries no beginning, so the only opening is
@@ -139,10 +159,14 @@ fn main() {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
-                "sound dotted tails (confirm_sounds)",
-                "confirmed sound stems recombined with every observed dotted tail, which the \
-                 general search cannot reach because it treats a dot as the end of a name",
-                began.elapsed(),
+                &RunNote::new(
+                    "sound dotted tails (confirm_sounds)",
+                    "confirmed sound stems recombined with every observed dotted tail, which the \
+                     general search cannot reach because it treats a dot as the end of a name",
+                    began.elapsed(),
+                )
+                .measured("game", config::game())
+                .fingerprint(&fingerprint),
             );
         }
         Ok(None) => println!("this run found nothing new"),

@@ -17,6 +17,15 @@
 /submissions/
 /logs/
 
+# What `start` learned about the world: which names are already claimed by a merged submission or
+# an open pull request, and which searches have already been run to exhaustion. Regenerated every
+# time `start` runs, and specific to this clone's moment, so it is never committed.
+/state/
+
+# Scripts this machine wants to contribute. `submit` reads them from here and puts them in the
+# pull request itself, so they do not need to be committed locally first.
+/contrib/
+
 # IDE and Python caches.
 /.idea/
 __pycache__/

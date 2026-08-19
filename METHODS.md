@@ -1,301 +1,355 @@
 # Methods
 
-`AGENTS.md` lists the methods in a paragraph each, as a springboard. This is the long form: how
-each one actually builds candidates, **what it reaches that nothing else does**, and how to tell
-when it is spent.
+`AGENTS.md` says how to run. This says **what to run, what it reaches that nothing else does, and
+how to tell when it is spent** — so that a fresh assistant with no memory of last night does not
+run whichever method is listed first and re-sweep ground that is already bare.
 
-That middle question is the one that matters. Every method exhausts, and a fresh assistant
-arriving at this repo has no memory of last night — so without a map of what each method covers,
-it will run whichever is listed first and re-sweep ground that is already bare. Read this before
-choosing what to run.
+Read this before choosing. Then check what has already been done:
+
+```
+python scripts/methods_report.py --by-method     what has been run here, and what it returned
+python scripts/coverage.py --five                where the unnamed assets actually are
+```
+
+---
+
+## The registry
+
+| # | method | reaches | run it with | status |
+|---|---|---|---|---|
+| 1 | general search | anything as *beginning + stem + ending* | `confirm_cw` | **exhausted at the committed lists.** Re-measure first — see below |
+| 2 | per-prefix continuations | families the global lists cannot express | `scripts/continuations.py` → `confirm_list` | **productive.** 496 new in 51 s, first run |
+| 3 | materials → images | `image`, through the strongest measured cross-type seam | `images_from_materials` | productive after any material gain |
+| 4 | numbers in place | family members whose number sits mid-name | `confirm_variants` | productive; widen with `swaps` |
+| 5 | family gap filling | holes between confirmed family members | `scripts/families.py --gaps` → `confirm_list` | thin (1 new in 22,594) — mostly covered by 4 |
+| 6 | cross-type spelling | one type's cores spelled as another's | `scripts/cross_type.py` → `confirm_list` | **measure the seam first.** Only 2 of 12 pairs are worth it |
+| 7 | sound dotted tails | everything past the first dot | `confirm_sounds` | reopened — see the sound vocabulary note |
+| 8 | reading the tables and extending | whatever the community half-finished | any generator → `confirm_list` | never exhausts; depends on noticing |
+| 9 | cross-game techset pairs | `techset` / `technique_set` | `techset_probe`, `techset_pair` | BO4 productive; Cold War conclusively ruled out |
+| — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ---
 
 ## The shape of the problem
 
-The snapshots say exactly how much is left.
+**Regenerate these rather than trusting them:** `python scripts/coverage.py --five`.
 
 | | Cold War | Black Ops 4 |
 |---|---|---|
 | assets captured | 1,626,209 | 1,023,902 |
 | filled pools | 202 | 156 |
-| unnamed, every pool | 745,544 | **not recomputed** |
-| unnamed, the five important types | 158,080 | **not recomputed** |
+| unnamed in pools worth searching | 204,407 | 185,686 |
+| **unnamed in the five types that matter** | **136,467** | **141,889** |
 
-> **The two Black Ops 4 figures are missing rather than wrong.** They were originally worked out
-> while the pool counts were labelled with Cold War's asset type enum, so they narrowed to the
-> wrong pools -- the numbers that were there (731,051 and 363,524) counted types the game does not
-> have at those indexes. `snapshots/blkops04.pools.txt` is now correct, so recomputing them is a
-> matter of running a pass and reading what it reports as wanted. Do that before quoting a Black
-> Ops 4 total anywhere.
+Per pool, the five types, unnamed / total:
 
-Nobody has come close to finishing either. But the two games are not the same problem:
+| | Cold War | Black Ops 4 |
+|---|---|---|
+| `image` | 46,198 / 245,235 | 60,316 / 167,360 |
+| `material` | 37,758 / 158,158 | 50,551 / 122,750 |
+| `xmodel` | 20,826 / 85,612 | 20,922 / 61,139 |
+| `xanim` | 12,386 / 28,468 | 10,001 / 21,968 |
+| sound | 19,301 / 97,217 | **99 / 100** |
 
-- **Cold War** is where the work has been done, and its `material` and `sound_asset` pools are
-  rich — those are the types with the most published prior art to seed from.
-- **Black Ops 4 is nearly untouched.** A sample of 8,378 of its names resolved 25 into
-  `fnv1a_xmaterials` and the other 8,353 nowhere at all. Its largest nameable pools are
-  `streamkey` 292,133, `image` 167,360, `material` 122,750, `xmodel` 61,139 and `localize_entry`
-  52,232 -- with `xanim` only 21,968. It is image and material rich and animation poor, which is
-  close to the opposite of Cold War, so a method tuned to Cold War's animation families has less
-  room there and one tuned to its material naming has more.
+Nobody has come close to finishing either, and the two games are not the same problem:
 
-  > An earlier version of this file called Black Ops 4 a model and animation goldmine, nearly
-  > worthless for materials, citing xanim 259,051 and material 100. That was wrong. The pool
-  > counts had been labelled with Cold War's asset type enum, and Black Ops 4 numbers its pools
-  > differently -- index 5 is `xanim` there and `xmodelmesh` here. The 259,051 is `xmodelmesh`,
-  > the one pool no rule can ever name. `pool-counts` regenerates the labels from each
-  > snapshot's own game, and `snapshots/*.pools.txt` is now correct for both.
+- **Cold War** is where the work has been done. Its sound pool is worth 19,301 names; Black Ops 4's
+  holds a hundred assets in total, so a night of sound work there is a night thrown away.
+- **Black Ops 4 is image and material rich and less than 60% named** — a larger absolute prize
+  than Cold War in both, and less picked over.
 
-Both games use the same hash and the same normalisation, so one implementation and one table set
-serves both. See `AGENTS.md` — do not re-derive it.
+Both games use the same hash and the same normalisation, so one implementation serves both.
 
-## Mandatory duplicate check before submission
+### Two figures that were wrong, and are corrected here
 
-**Never submit a finding without first checking the existing `/submissions/` directory.**
+> **`xmodelmesh` in Cold War is 271,840 ids, not 827,935.** The larger figure came from a line in
+> `confirm_cw` that subtracted the wanted set from *every* unnamed id and attributed the whole
+> difference to the mesh pool. Most of that difference was pools the machine simply was not asked
+> to search — `streamkey` alone is 420,229. The line now reports the two separately.
 
-The `/submissions/` directory contains findings that other contributors have already submitted. These submissions are part of the project's accumulated knowledge and **must be treated as already claimed**, even if the current search independently rediscovers the same names.
-
-Before preparing a submission:
-
-1. Search the existing contributor submission directories under `/submissions/` for every candidate name you intend to submit.
-2. **Ignore the `_submitted` directory in `/submissions/` when performing this check.** `_submitted` data is already represented in the CDBs and is handled by the normal published/known-name exclusion process.
-3. Remove any candidate that already appears in another contributor's submission.
-4. Only submit names that are genuinely absent from the relevant existing contributor submissions.
-5. Do this check **before creating the PR**, not after.
-6. If a search produces many results, perform the duplicate check programmatically rather than manually checking a small sample.
-
-**Independent rediscovery is not a new finding.**
-
-For example, if another contributor previously submitted:
-
-```text id="9e8b31"
-2d08ef78aae60a52,attach_t9_body_mount_loot_sniper_accurate_unicorn_view
-```
-
-and a later search finds `2d08ef78aae60a52,attach_t9_body_mount_loot_sniper_accurate_unicorn_view` again, the later search must discard it. It must **not** submit the same model again simply because it was found using a different method, seed, naming pattern, or search pass.
-
-This is especially important for model searches. Multiple methods can converge on the same model families, so **finding the same models as another contributor is not evidence that the search was successful**.
-
-The correct workflow is:
-
-`search → verify → check /submissions → remove duplicates → submit only new findings`
-
-The `/submissions/` directory is therefore a **mandatory exclusion list for previous contributor submissions**, while `_submitted` data should continue to be handled through the existing CDB/table exclusion process.
-
-**Do not submit a PR containing findings that are already present in another contributor's submission.**
-
-A submission with zero new findings is preferable to submitting hundreds of duplicates. The objective is to expand the project's known asset names, not repeatedly rediscover the same names.
+> **An earlier version called Black Ops 4 an animation goldmine, worthless for materials, citing
+> xanim 259,051 and material 100.** The pool counts had been labelled with Cold War's enum, and
+> the games number their types differently. The 259,051 was `xmodelmesh`. `snapshots/*.pools.txt`
+> is now correct for both, and the table above is generated from the snapshots themselves.
 
 ### What is not reachable, and why the counts shrink
 
-Two things are removed before any search starts, and both are deliberate.
+**`xmodelmesh`.** A mesh name is `<model>_s1_geo_rigid_bs_` plus twenty-six characters of base32
+that are a hash of the mesh itself. No rule can produce it, and leaving these in *doubles* the ids
+a candidate can hit by coincidence, so they are dropped as unreachable rather than counted as work
+remaining.
 
-**`xmodelmesh` — 827,935 ids in Cold War.** A mesh name is `<model>_s1_geo_rigid_bs_` plus
-twenty-six characters of base32, and that tail is a hash of the mesh itself. No rule can produce
-it. Leaving them in cannot yield a name and *doubles* the ids a candidate can hit by coincidence,
-so they are dropped as unreachable rather than counted as remaining work.
+**Everything the tables resolve.** By far the largest saving: 1,626,209 Cold War assets narrow to
+136,467 actually hunted.
 
-**Everything the tables already resolve.** `loader::unnamed()` removes every id the published
-tables can name before a single candidate is hashed. This is by far the largest saving in the
-pipeline: 1,626,209 assets narrow to 158,080 actually hunted. A name any table resolves is
-already known to the community, whoever found it.
+---
+
+## Duplicates are now handled by the software
+
+The long instruction that used to live here — check `submissions/`, remove what somebody else
+already sent — was correct and did not work, because a contributor cannot see a pull request that
+is still open. It is now enforced instead of requested:
+
+- `start` reads every open pull request and every merged submission, and writes what is claimed.
+- `submit` re-reads them at the moment of sending and drops anything already claimed.
+- Every run carries a **fingerprint** of its inputs, and a search whose fingerprint has already
+  been submitted refuses to start.
+
+Independent rediscovery is still not a finding. You no longer have to remember that.
 
 ---
 
 ## How to read a method
 
-Each one below gives:
-
-- **Builds from** — what raw material it recombines. Never thin air; see the seeding principle.
-- **Reaches** — the slice of unnamed ids only this method can get at. The reason to run it.
-- **Run it with** — the binary.
-- **Spent when** — the signal that it has stopped paying.
+- **Builds from** — what raw material it recombines. Never thin air.
+- **Reaches** — the slice of unnamed ids only this gets at. The reason to run it.
+- **Run it with** — the command.
+- **Spent when** — the signal it has stopped paying.
 
 ---
 
 ## 1. The general search
 
-**Builds from** every seed there is: the published tables, every name already confirmed, strings
-scraped from the build, names borrowed from Black Ops 4, and the images derived from materials.
-A recent pass counted 97,022 confirmed names as seeds and 13,701,182 distinct pieces.
+**Builds from** every seed there is: the published tables for this game, every name already
+confirmed, everybody's merged submissions, strings scraped from a build, names borrowed from the
+other game.
 
-**Reaches** anything expressible as *beginning + stem + ending*. This is the workhorse and the
-widest net — a single pass evaluates tens of trillions of candidates. The measured lists it draws
-on are 700 beginnings and 4,800 endings, regenerated by `scripts/derive_lists.py`.
+**Reaches** anything expressible as *beginning + stem + ending*. The workhorse and the widest net.
 
-The lists are measured with a **per-pool guarantee**: each Cold War table's own commonest
-beginnings and endings get a place before global popularity fills the rest. A single global
-ranking lets the biggest pool's conventions crowd every other pool's out of the ceiling — the
-committed lists once held 9 xanim-shaped endings out of 4,800, against 47,859 published xanim
-names. The same failure the twelve material directories teach, one level up.
+**Run it with** `confirm_cw`. `confirm_cw seeds` uses only confirmed names, which is small enough
+to run in minutes and worth repeating after a long pass to pick up siblings.
 
-**Run it with** `cargo run --release --bin confirm_cw`.
+**Measured**, 2026-08-19, Cold War, committed lists (700 beginnings, 4,800 endings), fresh clone:
 
-**Spent when** a pass adds names in the low hundreds and re-measuring the lists afterwards does
-not change them. Note that "spent" is temporary here: every confirmed name is a new beginning, a
-new ending and a new numbered family, so the method reopens itself as other methods feed it. That
-is the compounding loop — **run a pass, re-measure, run again** — and it is why a single pass
-judged alone is meaningless.
+```
+12,395,196 distinct pieces   41.72 T equivalent candidates   1058 s   430 names
+```
+
+**Spent — and this is the important part.** That 430 is the same 430 for everybody. Five
+contributors have submitted it, **byte for byte identical in every file**, because the method is
+deterministic and a fresh clone gives everyone identical inputs. Two more submitted the same 372
+from method 3 the same way. The fingerprint now stops the sixth.
+
+"Spent" here is temporary, and reopening it is one command: **`python scripts/derive_lists.py`**
+folds every name confirmed since into the beginnings and endings. New lists are a new fingerprint
+and a genuinely different search. That is the compounding loop — **run a pass, re-measure, run
+again** — and it is why a single pass judged alone means nothing.
+
+**The sound vocabulary was missing and is now not.** `COLD_WAR_TABLES` named only the legacy
+`fnv1a_xsounds.csv` (57,593 names). The twelve per-language files Saluki actually loads hold
+**825,316 distinct names**, with *zero* rows in common with the legacy file. Every general pass
+before this had one fourteenth of the sound vocabulary. See `docs/HASHES.md`. **The first pass
+after this fix is a different search with a much larger corpus; expect it to pay.**
 
 The engine peels endings off the wanted ids rather than appending them to stems, because the hash
 runs backwards. Read the comments in `src/search.rs` before touching any of it.
 
-## 2. Materials to images
+## 2. Per-prefix continuations
 
-**Builds from** confirmed material names.
+**Builds from** every prefix that occurs in a known name, and the tokens measured to follow *that
+prefix* — not the tokens that are common overall.
 
-**Reaches** the `image` pool specifically, through a relationship no general rule can express:
-images are frequently named for the material that uses them. Strip `mtl_`, then try `i_` plus
-every semantic suffix — `_c _n _s _g _o _m` and the rest — and also try it with **no prefix at
-all**. A recent pass had 71,160 names in hand from this route alone.
+**Reaches** the families the global lists structurally cannot express. The general search offers
+`mc/` and `i_c_t8_mp_spe_` the same 700 beginnings and 4,800 endings, when what actually follows
+them has almost nothing in common.
 
-**Run it with** `cargo run --release --bin images_from_materials`.
+**Run it with**
 
-**Spent when** the confirmed material set has not grown since the last run. This method is purely
-derivative, so it yields exactly nothing on unchanged input — run it *after* a general pass, never
-before.
+```
+python scripts/continuations.py --depth 2 --cap 24 | confirm_list - --label "per-prefix continuations"
+```
 
-Material names are paths, and there are **twelve** directories, not one: `mc/ wc/ clt/ splm/ vd/
-mcs/ ei/ cltp/ vdd/ el/ mcp/ ec/`. Ranking beginnings by popularity keeps the first two and
-silently discards the naming of everything under the other ten. Carry all twelve.
+**Measured**, first run, Cold War, 2026-08-19:
 
-## 3. Numbers in place
+```
+39,490,781 candidates   51 s   1,837 matched   496 new   0.0000 expected by chance
+```
 
-**Builds from** confirmed names that contain a number.
+**496 new names in 51 seconds, against 430 from an 18-minute exhaustive general pass.** The
+generator was the bottleneck, not the search — `confirm_list` sustains 64.3 M candidates/s from a
+file and saw 0.8 M/s through a Python pipe.
 
-**Reaches** family members that beginning-stem-ending rules structurally cannot, because the
-number usually sits in the *middle* of the name. `p7_jun_brick_pillar_128` and
-`p7_jun_brick_pillar_32` differ at a point no prefix or suffix rule can vary. Wherever the game
-numbers a family, this walks it.
+Directory prefixes are given the entire vocabulary rather than a capped list, because there are
+only about fifty of them and they head a large share of what this recovers.
 
-**Run it with** `cargo run --release --bin confirm_variants`.
+**Spent when** a round adds little *and* re-running after folding the finds back in adds little.
+It is self-feeding like the general search: each new name is a new prefix and a new continuation.
+Then raise `--depth` or `--cap`, which is a different search again.
 
-**This is the method that fits `xanim`.** Published xanim names run to ten and more underscore
-segments — `vm_ar_season6_t9_sprint_in` — so an ends-only rule structurally under-reaches them:
-the middle of a ten-segment name only exists as a stem if a nearly identical sibling was already
-cut. But the tables hold 47,859 whole xanim names, and walking their numbered fields in place and
-swapping their tokens is exactly what this method does. It seeds from the published tables as
-well as the confirmed names, so the xanim corpus is already its raw material.
+## 3. Materials to images
+
+**Builds from** confirmed and published material names.
+
+**Reaches** `image`, through the strongest cross-type relationship there is. **Measured**:
+material and image share **15,770 cores — 11.7% of material's, 12.8% of image's**, far above any
+other pair. Strip `mtl_`, try `i_` plus every semantic suffix (`_c _n _g _o _m _s _r`, which are
+image's seven commonest trailing tokens by a distance), and also try it with no prefix at all.
+
+**Run it with** `images_from_materials`.
+
+**Spent when** the confirmed material set has not grown. Purely derivative — it yields exactly
+nothing on unchanged input, so run it *after* a general pass, never before.
+
+Material names are paths, and there are **twelve** directories: `mc/ wc/ clt/ splm/ vd/ mcs/ ei/
+cltp/ vdd/ el/ mcp/ ec/`. Verified against the tables — `mc/` heads 496,666 names and `ec/` heads
+25. Popularity ranking keeps the first two and discards the naming of everything under the other
+ten. Carry all twelve.
+
+## 4. Numbers in place
+
+**Builds from** confirmed names containing a number.
+
+**Reaches** family members that beginning-stem-ending rules structurally cannot, because the number
+usually sits in the *middle*. `p7_jun_brick_pillar_128` and `p7_jun_brick_pillar_32` differ where
+no prefix or suffix rule can vary.
+
+**Run it with** `confirm_variants`, or `confirm_variants swaps` to substitute whole tokens.
+
+**This is the method that fits `xanim`.** Published xanim names run to ten and more segments, so
+an ends-only rule under-reaches them badly — the middle of a ten-segment name only exists as a
+stem if a nearly identical sibling was already cut. The tables hold 50,427 whole xanim names, and
+walking their numbered fields in place is exactly what this does.
 
 **Spent when** the ranges around known members have been walked past their natural end. Widen with
 `swaps` before concluding it is finished.
 
-## 4. Localize category and key unfolding
+## 5. Family gap filling
 
-**Builds from** the two halves of a `CATEGORY/KEY` localize name, played against each other:
-known categories against every harvested word yields keys; known keys against every candidate word
-yields categories.
+**Builds from** numbered families with two or more confirmed members, across *everybody's*
+submissions rather than one run's.
 
-**Reaches** `localizeentry`, which nothing else here touches. **But the pool is not worth
-hunting at all.** A localize entry is a 16-byte struct: the hash, and a pointer to the
-*unhashed* string. The plain text is already in the build, which is why no published table
-bothers to hold even one of these names — uncontested because worthless, not because unnoticed.
-Recovering them proves nothing anyone needs.
+**Reaches** the holes. A family with `_01`, `_02` and `_04` confirmed is evidence about `_03` that
+no popularity-ranked ending list can match.
 
-**Run it with** `cargo run --release --bin confirm_localize`.
+**Run it with** `python scripts/families.py --gaps | confirm_list - --label "family gap filling"`.
 
-**Spent when** neither direction of the unfold adds a category or a key.
+**Measured**: 22,594 candidates, under a second, **1 new name**. Thin, because method 4 already
+walks numbered families thoroughly. Worth running anyway — it costs a second and it works across
+contributors, which `confirm_variants` does not. Do not spend a night on it.
 
-> **This is switched off, and should stay off.** An earlier version of this file called turning
-> it on the strongest argument here for changing a setting, and a pass run that way confirmed
-> 8,000+ localize names inside twenty minutes — every one of them pointless, for the reason
-> above. The section is kept so the next assistant knows *why* it is off, not so it gets run.
+`python scripts/families.py` with no arguments is the more valuable half: it reports the shape of
+what has been found, which is what suggests the next generator.
 
-## 5. Sound dotted tails
+## 6. Cross-type spelling
+
+**Builds from** the *cores* of one asset type's names — the name with its own type's decorations
+stripped — spelled with another type's decorations.
+
+**Reaches** assets whose sibling in another type is already named. **Measure the seam first**, with
+`python scripts/cross_type.py --measure`. Measured shared cores, 2026-08-19:
+
+| from → to | shared cores | share of source |
+|---|---|---|
+| material ↔ image | 15,770 | 11.7% / 12.8% |
+| xmodel ↔ material | 3,318 | 3.5% / 2.5% |
+| xanim → xmodel | 478 | 3.7% |
+| xmodel → image | 195 | 0.2% |
+| material ↔ xanim | 22 | 0.0% |
+| image ↔ xanim | 13 | 0.0% |
+
+**Two pairs are worth mining and the rest are not.** A model→image method or anything involving
+`xanim` and a non-model type would be a night thrown away, and that is now a measurement rather
+than an opinion.
+
+**Run it with** `python scripts/cross_type.py --from xmodel --to material | confirm_list - --label
+"model to material"`.
+
+**Spent when** the source type stops gaining names.
+
+## 7. Sound dotted tails
 
 **Builds from** confirmed sound names and their tails, like `.rn75.pc.en.snd`.
 
 **Reaches** sound names the general search structurally cannot, because it treats a dot as the end
-of a name and can therefore never put one back on. Everything past the first dot is invisible to
-every other method here.
+of a name and can never put one back on. Everything past the first dot is invisible to every other
+method.
 
-**Run it with** `cargo run --release --bin confirm_sounds`.
+**Run it with** `confirm_sounds`.
 
-**Spent when** the set of observed tails stops growing. Note the pool sizes before spending a night
-on this: Cold War's `sound_asset` is worth working, Black Ops 4's holds **88 assets** in total.
+It searches four pools -- `sound_asset`, `sound`, `sound_bank`, `sound_duck` -- and that has been
+read as scope drift. It is not. In Cold War `sound_asset` holds 97,217 ids against `sound_bank`'s
+107 and `sound_duck`'s 191, so the other three widen the wanted set by **0.3%** and are peeled in
+the same batch. Widening is cheap exactly when the added pools are small; widening into
+`streamkey` would add 420,229 ids and quadruple the coincidence rate. `python
+scripts/coverage.py` is how to tell those two cases apart, and it is what to run before widening
+anything.
 
-## 6. Reading the tables for patterns and extending them
+**Reopened.** The tail vocabulary was measured from a table holding 57,593 names when 825,316 were
+available, and the two use *different* tail conventions — `.ln75.pc.all.snd` against
+`.rn75.pc.<lang>.snd`. Cold War's `sound_asset` has 19,301 unnamed. Black Ops 4's sound pool has
+99; do not run it there.
 
-**Builds from** what the published tables already resolve — read for shape, then generate the
-neighbours that are missing.
+## 8. Reading the tables and extending them
 
-**Reaches** whatever the community has half-finished. If a table holds `..._01` through `..._07`
-and the game has more, this finds them. It is the most open-ended method here and the least
-automated: it is a person or an assistant *looking* at the tables and noticing something.
+**Builds from** what the tables already resolve — read for shape, then generate the neighbours that
+are missing.
 
-**Run it** by generating a candidate list and feeding it through the general search.
+**Reaches** whatever the community half-finished. If a table holds `..._01` through `..._07` and
+the game has more, this finds them. The most open-ended method here and the least automated: it is
+somebody *looking* and noticing.
 
-**Spent when** — it does not exhaust in the way the others do, because it depends on noticing, and
-the tables grow. It is the natural thing to do when the mechanical methods have all gone quiet.
+**Run it** by writing a generator that prints the neighbours and piping it into `confirm_list`.
+That is now a script rather than a Rust binary, which is the whole reason this method is worth
+listing.
+
+**Spent when** — it does not, in the way the others do. It depends on noticing, and the tables grow.
 
 **One trap, already paid for.** Feeding the tables in as candidate *input* is a closed loop: every
-name in a table is already resolved by definition, so it cannot be a find. It was 87% of
-`consolidate`'s work for **zero** names, and is now skipped. The tables are a source of
-*vocabulary* and an *exclusion list* — never a candidate set.
+name in a table is resolved by definition, so it cannot be a find. It was 87% of `consolidate`'s
+work for **zero** names. The tables are a source of *vocabulary* and an *exclusion list*, never a
+candidate set.
 
-## 7. Cutting at underscores and recombining
-
-**Builds from** scraped strings, which carry noise at both ends.
-
-**Reaches** the real name buried inside a longer line. Every piece between marks is a candidate in
-its own right, and the correct one is often a fragment rather than the whole.
-
-**Run it** as a seed generator feeding the general search.
-
-**Spent when** the harvest has not grown. Like materials-to-images, it is derivative — it yields
-nothing on unchanged input.
-
-## 8. Cross-game known pairs, and the whole-tag sweep
+## 9. Cross-game techset pairs, and the whole-tag sweep
 
 **Builds from** a sibling game that ships the same thing unhashed. Black Ops III ships its
-techsetdefs as plain files, and the newer games carry assets left over from it — so one material
-exported from two games pairs a plain name with the hash of whatever the newer game calls the
-same thing. Three such pairs turn a found transformation into a proof, because whatever maps one
-must map them all.
+techsetdefs as plain files, and the newer games carry assets left over from it, so one material
+exported from two games pairs a plain name with the newer game's hash. Three such pairs turn a
+found transformation into a proof.
 
-**Reaches** the techset pools, which no other method touches. A techset name is
-`<base>#<8 hex>`, and the tag is a 32-bit compile stamp that cannot be predicted — but 32 bits
-is small enough to **sweep whole**: with per-digit hash-state reuse, all 4.29 billion tags for
-one base cost about two seconds. Unlike every other method here, a base name is therefore
-*proved or conclusively ruled out*, never merely unswept.
+**Reaches** the techset pools, which nothing else touches. A techset name is `<base>#<8 hex>`, and
+the tag is a 32-bit compile stamp that cannot be predicted — but 32 bits is small enough to
+**sweep whole**: with per-digit hash-state reuse, all 4.29 billion tags for one base cost about two
+seconds. A base is therefore *proved or conclusively ruled out*, never merely unswept.
 
-**Run it with** `techset_probe` (a file of candidate bases; sweeps every tag against the
-configured game's techset pool) and `techset_pair` (known `target_hash,plain_name` pairs; tries
-separators and tag widths to crack a convention from specimens).
+**Run it with** `techset_probe` (a file of candidate bases) and `techset_pair` (known
+`target_hash,plain_name` pairs).
 
-What it established, 2026-08-18/19:
+Established 2026-08-18/19:
 
-- **Black Ops 4** `technique_set` (3,597 ids, zero previously named): names are
-  `<base>#<8hex>` with BO3's base vocabulary. Material-class sets carry `mc/`
-  (`mc/lit_backlit#f4b74e85`), screen/2d/compute sets are bare (`zombie_blood#a60c435b`).
-  Tags are per-permutation — one base can hold dozens — and `#a60c435b` is the commonest.
-  1,322 names fell in the first 53-minute sweep.
-- **BO4 simplified BO3's stems** — `lit_weapon` became `lit`, `lit_emissive_scroll` became
-  `lit_emissive` — so trailing-qualifier truncation of known stems is a real seed transform.
-- **Cold War** `techset` (7,096 unnamed): *not* reachable from BO3 stems under any 32-bit tag —
-  full sweeps of every stem × every tag came back empty, which is a conclusive no for that
-  shape. The vocabulary or convention changed again. The next lever is the same trick one
-  generation up: a BO4-leftover asset exported from Cold War pairs a now-known BO4 name with a
-  CW hash.
+- **Black Ops 4** `technique_set` (3,597 ids, zero previously named): names are `<base>#<8hex>`
+  with BO3's base vocabulary. Material-class sets carry `mc/` (`mc/lit_backlit#f4b74e85`);
+  screen/2d/compute sets are bare (`zombie_blood#a60c435b`). Tags are per-permutation and
+  `#a60c435b` is commonest. 1,322 names fell in the first 53-minute sweep.
+- **BO4 simplified BO3's stems** — `lit_weapon` → `lit`, `lit_emissive_scroll` → `lit_emissive` —
+  so trailing-qualifier truncation of known stems is a real seed transform.
+- **Cold War** `techset` (7,096 unnamed): *not* reachable from BO3 stems under any 32-bit tag.
+  Full sweeps of every stem × every tag came back empty, which is a conclusive no for that shape.
 
-**Spent when** the base vocabulary stops growing. New bases come from cross-game leftovers,
-stem transforms of confirmed names, and future def dumps — the tag side is never the problem.
+**Spent when** the base vocabulary stops growing. The tag side is never the problem.
+
+> These names currently have **nowhere upstream to land** — cod-name-db has no techset table.
+> Proposing one is worth more than another night of grinding. See `docs/HASHES.md`.
 
 ---
 
-## The pools are all identified
+## Adding a method
 
-An earlier version of this file called 67 pools "unidentified", labelled `pool_NNN`, with
-`pool_184` alone holding 52,677 stuck names. That is no longer true and has not been for some
-time: the pool labels have since been completed, and `snapshots/*.pools.txt` names **every
-filled pool in both games** — 202 for Cold War, 156 for Black Ops 4 — with its asset type and
-count. There is nothing left to identify, and no findings are stuck for want of a type.
+**This is the highest-value thing anybody does here**, and it no longer requires writing Rust.
+`confirm_list` takes candidate names on standard input and does the careful half. A method is a
+program that prints names.
 
-What remains real is narrower. Some identified *types* have no destination table in
-cod-name-db yet — a confirmed `technique_set` name has no `fnv1a_techsets.csv` upstream to
-land in. Giving such types a home is the useful non-grinding contribution this section used to
-mis-describe.
+A new method earns its place by answering the **reaches** question: what slice of the unnamed ids
+does it get at that nothing above does? A method that covers ground the general search already
+covers is not a new method, it is a slower one.
+
+When you add one:
+
+1. Put the generator in `contrib/`. `submit` carries it into the pull request under
+   `scripts/contributed/`, with the docstring requirements in `scripts/README.md`.
+2. Add a section here in the same shape, with the numbers your run measured.
+3. Say honestly what it is spent by.
+4. **If it did not work, put it in the dead ends below.** A measured negative is worth as much as
+   a find, and costs the next person nothing.
 
 ---
 
@@ -304,15 +358,17 @@ mis-describe.
 Seeded methods first, always. That is where the yield is and they compound.
 
 Exhaustive or random character combination is a legitimate **last** resort once seeded methods are
-genuinely exhausted — not a starting point. If you get there, constrain it with what has been
-measured: known directories, known prefixes, known segment shapes, known endings. A combination
-built from measured parts is enormously more likely to land than an arbitrary string of the same
-length.
+genuinely exhausted — never a starting point. The arithmetic says why: the median confirmed name
+has seven or eight underscore-separated segments, and the space of sequences that long passes 2^63
+long before the name does. Past four segments the hash stops being a filter and becomes a
+checksum: there are more candidate strings than there are hashes, every one an equally valid
+preimage, and no amount of speed changes that. Only a prior can. Fragment recombination *is* that
+prior.
 
-This is also the only regime where collisions matter. A match proves a string hashes to an id the
-game holds; with ~1.5M ids in a 2^63 space a coincidental match is vanishingly rare, and a normal
-pass expects a fraction of one. Every binary prints the figure. It is not something to design
-around until you are sweeping raw character space, which is exactly why that is last.
+If you do get there, constrain it with what has been measured — known directories, known prefixes,
+known segment shapes, known endings. This is also the only regime where collisions matter: a
+41.7 T candidate pass expects 0.617 coincidental matches, and a seeded pass of forty million
+expects 0.0000. Every binary prints the figure.
 
 ---
 
@@ -327,33 +383,22 @@ Do not spend a night rediscovering these. Each cost real time.
 | Salsa20 for the encrypted fast files | Wrong cipher. It is AES-256-CTR, little-endian counter. |
 | Training a name classifier on the `_v2` tables | Those are MW2022/BO6 and teach the wrong conventions. |
 | Stripping `_geo_rigid_bs_` as its own rule | Underscore truncation already covers it, and mesh names are unobtainable anyway. |
-| Feeding the hash tables in as candidate input | A closed loop. 87% of `consolidate`'s work, zero names found. |
-| Hunting `localizeentry` | The entry is a 16-byte struct holding its own unhashed string pointer — the plain text is already in the build. 8,667 confirmed in one pass, all worthless. |
+| Feeding the hash tables in as candidate input | A closed loop. 87% of `consolidate`'s work, zero names. |
+| Hunting `localizeentry` | The entry holds a pointer to its own unhashed string — the plain text is already in the build. 8,667 confirmed in one pass, all worthless. `confirm_localize` now refuses to run. |
+| Hunting `streamkey` | ~290,000 genuine, useless hashes, mostly sequential `d3dbsp` terrain. The largest pool in both games, so anything that "opens up every pool" lands here first. `submit` refuses to send them. |
+| Widening `pools` to ~40 asset types by guesswork | One submission did. Nothing useful came of it, and the real findings were buried among the rest. |
+| Searching four pools because they had "sound" in the name | `sound`, `sound_asset`, `sound_bank`, `sound_duck`. Only `sound_asset` is worth anything, and only in Cold War. |
+| Cross-type generation involving `xanim` and a non-model type | Measured: 13 to 22 shared cores out of tens of thousands. There is no seam. |
+| Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
 
 ---
 
-## Adding a method
+## What is still not recorded
 
-Inventing a new way to build candidates is the single highest-value thing anyone can do here,
-because every method above eventually goes quiet. It is also the main reason this repo is written
-to be read by an assistant rather than run as a fixed program.
+The fingerprint records that a *configuration* was swept. It does not record which *ranges* within
+a method were swept — so `confirm_variants` walking `_01` to `_64` of one family and stopping is
+still invisible to the next assistant.
 
-A new method earns its place by answering the **reaches** question: what slice of the unnamed ids
-can it get at that nothing above can? A method that covers ground the general search already
-covers is not a new method, it is a slower one.
-
-When you add one, add a section here in the same shape, and say honestly what it is spent by. The
-next assistant to arrive has only this file.
-
----
-
-## A gap worth knowing about
-
-**Which ranges each method has already swept is not recorded anywhere.** Results say what was
-found; nothing says what was tried and came back empty. So "spent when" above describes the
-*signal* to watch for rather than a history you can look up, and two assistants on different
-nights can unknowingly sweep the same ground.
-
-Writing a swept-ranges ledger — even a plain append-only file naming the method, the input set and
-the date — would make this file far more useful than it currently is. It is the obvious next
-improvement to how the project remembers itself.
+That is the obvious next improvement to how this project remembers itself, and it is smaller than
+it looks now that `RunNote` carries arbitrary measurements: a method that records the ranges it
+covered into its run note would make this file far more useful than it currently is.

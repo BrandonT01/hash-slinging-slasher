@@ -38,15 +38,22 @@ for an hour of grinding. A whole night is cheap.
 
 ## What you need
 
-- **git**, and the **GitHub CLI** (`gh`) signed in with `gh auth login`. Findings are submitted
-  through it, and the hash tables are fetched with git.
-- **On Windows, nothing else.** The compiled tools are committed in `bin/windows/` -- run
-  `bin/windows/preflight.exe` and skip the rest of this.
-- **On Linux or macOS**, Rust. There are no dependencies, so `cargo build --release` takes about
-  a minute once.
+**One command.** On Windows:
 
-Your assistant should help you set these up rather than assume them. `preflight` refuses to pass
-until they are working, because a night of grinding with nowhere to send it is a night wasted.
+```
+bin\windows\start.exe
+```
+
+It installs git and the GitHub CLI if they are missing, brings the repository up to date, fetches
+the community hash tables, and reads what every other contributor has in flight so tonight does
+not duplicate one. It stops and tells you exactly what to type if anything is in the way.
+
+The only step it cannot do for you is `gh auth login`, because that opens a browser and asks you
+to approve it — and it prints the exact command for your machine, full path included.
+[`docs/SETUP.md`](docs/SETUP.md) walks through it for somebody who has never used a terminal.
+
+On Linux or macOS, install Rust and run `cargo run --release --bin start`. There are no
+dependencies, so the build takes about a minute once.
 
 ## Getting started
 
@@ -54,21 +61,24 @@ Point your assistant at this folder and say so:
 
 > Have a look at this repo and start grinding.
 
-It reads [`AGENTS.md`](AGENTS.md), which tells it everything: what is already established, what
-methods work, and that it should grind for hours rather than stop and ask you things. That is
-the whole setup.
+It reads [`AGENTS.md`](AGENTS.md), which tells it everything: the one command to run first, what
+is already established, what methods have already been exhausted by somebody else, and that it
+should grind for hours rather than stop and ask you things. That is the whole setup.
 
 If you would rather drive it yourself:
 
 ```
-cargo run --release --bin preflight        # always first
-cargo run --release --bin confirm_cw       # the general search
-cargo run --release --bin submit           # send what was found
+bin\windows\start.exe             # always first; every search refuses to run until it passes
+bin\windows\confirm_cw.exe        # the general search
+bin\windows\submit.exe            # send what was found
 ```
 
-`preflight` checks the one thing people forget: **that you are signed in to GitHub**, because a
-night of grinding with nowhere to send it is a night wasted. If it complains, run `gh auth
-login` and try again.
+Or invent a method, which is the useful thing to do here — a generator that prints candidate
+names, and one command that confirms them against the game:
+
+```
+python scripts/continuations.py | bin\windows\confirm_list.exe - --label "per-prefix continuations"
+```
 
 ## How it actually works
 
@@ -118,11 +128,12 @@ discovery and a name somebody published last week. They come from
 [cod-name-db](https://github.com/echo000/cod-name-db), which is also where confirmed names end
 up — so the same repository is both what you check against and where your findings go.
 
-They go stale in about a day. Fetch them before a session:
+They go stale in about a day. `start` fetches and refreshes them, so there is normally nothing to
+do; `cargo run --release --bin fetch-tables` forces it in between.
 
-```
-cargo run --release --bin fetch-tables
-```
+Which file belongs to which game, and which hash and mask each uses, is in
+[`docs/HASHES.md`](docs/HASHES.md). Getting the mask wrong is the commonest reason a correct name
+fails to resolve, and it fails silently.
 
 ## Standing on other people's work
 

@@ -18,10 +18,8 @@ use std::sync::Mutex;
 use std::time::Instant;
 
 use slasher::loader::{loaded_assets, unnamed_in};
-use slasher::{
-    expected_by_chance, feed, hash64, paths, pool_index, pool_label, read_list, table_keys,
-    Filter, Results, ID_MASK,
-};
+use slasher::fingerprint::Fingerprint;
+use slasher::{config, expected_by_chance, feed, hash64, paths, pool_index, pool_label, read_list, readiness, recon, table_keys, Filter, ID_MASK, Results, RunNote};
 
 const HEX: [u8; 16] = *b"0123456789abcdef";
 
@@ -69,6 +67,8 @@ fn sweep(base: &str, filter: &Filter, wanted: &HashMap<u64, usize>) -> Vec<(u64,
 }
 
 fn main() {
+    readiness::require();
+
     let began = Instant::now();
 
     // The streaming property the sweep depends on, checked rather than trusted.
@@ -115,6 +115,14 @@ fn main() {
             results.add(&label, id, base.clone());
         }
     }
+
+    let fingerprint = Fingerprint::of("techset_probe")
+        .with("game", &config::game())
+        .with_list("bases", &bases)
+        .with_count("wanted", wanted.len())
+        .finish();
+    println!("fingerprint: {fingerprint}");
+    recon::warn_if_swept(&fingerprint);
 
     let filter = Filter::sized(wanted.keys(), wanted.len());
     let next = AtomicUsize::new(0);
@@ -169,11 +177,15 @@ fn main() {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
-                "BO3 techset tag sweep (techset_probe)",
-                "every Black Ops III techsetdef base name given every possible 32-bit tag -- \
-                 the tag space is small enough to sweep whole, so each base is proved or \
-                 ruled out exactly",
-                began.elapsed(),
+                &RunNote::new(
+                    "BO3 techset tag sweep (techset_probe)",
+                    "every Black Ops III techsetdef base name given every possible 32-bit tag -- \
+                     the tag space is small enough to sweep whole, so each base is proved or \
+                     ruled out exactly",
+                    began.elapsed(),
+                )
+                .measured("game", config::game())
+                .fingerprint(&fingerprint),
             );
         }
         Ok(None) => println!("this run found nothing new"),

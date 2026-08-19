@@ -24,6 +24,15 @@ pub mod paths;
 pub mod snapshot;
 pub mod search;
 
+// Everything that has to happen before a search, and the gate that makes it happen. Kept
+// together because they are one idea: a night is wasted by a stale clone far more often than by
+// a bad method, so freshness is enforced by a program rather than asked for in prose.
+pub mod update;
+pub mod recon;
+pub mod readiness;
+pub mod startup;
+pub mod fingerprint;
+
 // Reading the loader's memory to capture a snapshot. Only whoever owns the game needs this, and
 // it is the only Windows-only part of the crate, so it is behind a feature that is off by
 // default. Grinding against a captured snapshot needs none of it.
@@ -42,6 +51,52 @@ pub const ID_MASK: u64 = 0x7FFF_FFFF_FFFF_FFFF;
 
 /// The only game these pool indexes and tables describe.
 pub const GAME: &str = "BLKOPSCW";
+
+/// Pools that are large, easy to hit, and worth nothing -- with the reason, so that the next
+/// person to be tempted by one can see what it cost the last person.
+///
+/// These are not merely "not the priority". Each has been searched, and each produced a large
+/// number of genuine hashes that nobody has any use for. The point of naming them here rather
+/// than only in the documentation is that a program can refuse, and prose cannot.
+///
+/// They are also, not coincidentally, the biggest pools in both games -- `streamkey` alone is
+/// 420,229 ids in Cold War and 292,133 in Black Ops 4, more than any nameable type. Anything
+/// that opens up "every pool" lands here first and hardest.
+pub const LOW_VALUE_POOLS: &[(&str, &str)] = &[
+    (
+        "streamkey",
+        "the largest pool in both games and the emptiest. One pass produced ~290,000 genuine \
+         hashes, overwhelmingly sequential terrain entries like \
+         `maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000079` -- real names describing nothing \
+         anybody needs. They also bury the useful findings in the same results folder.",
+    ),
+    (
+        "localizeentry",
+        "a localize entry is a 16-byte struct holding a pointer to its own *unhashed* string, so \
+         the plain text is already in the build. No published table holds one of these names \
+         because recovering them proves nothing. 8,667 were confirmed in a single twenty-minute \
+         pass, all worthless.",
+    ),
+    (
+        "localize_entry",
+        "the Black Ops 4 spelling of `localizeentry`, and worthless for the same reason.",
+    ),
+    (
+        "xmodelmesh",
+        "structurally unreachable: a mesh name is `<model>_s1_geo_rigid_bs_` plus twenty-six \
+         characters of base32 that are a hash of the mesh itself. No rule can produce it, and \
+         leaving these ids in the wanted set roughly doubles what a candidate can land on by \
+         coincidence.",
+    ),
+];
+
+/// Why this pool is not worth searching, if it is one of the ones that is not.
+pub fn low_value_reason(pool: &str) -> Option<&'static str> {
+    LOW_VALUE_POOLS
+        .iter()
+        .find(|(name, _)| *name == pool)
+        .map(|(_, reason)| *reason)
+}
 
 /// Cold War's asset types, by pool index -- the whole `BO5XAssetType` enum, since Cold War is
 /// "Black Ops 5" internally. Index 18 being the sound bank pool is what first confirmed the
@@ -536,6 +591,80 @@ pub fn human_duration(duration: std::time::Duration) -> String {
     }
 }
 
+/// What a run has to say for itself, beyond the names it found.
+///
+/// A submission that says only "430 names" teaches the next contributor nothing, and this
+/// project's whole advantage is supposed to be that each night starts further along than the
+/// last. So a run records what it *was*: the method, the inputs, what those inputs measured, how
+/// much ground it covered, and the fingerprint that lets the next person recognise the same
+/// search and go and do a different one instead.
+///
+/// Everything here ends up in the pull request. Keep it to things a later reader can act on.
+pub struct RunNote {
+    method: String,
+    what: String,
+    took: std::time::Duration,
+    fingerprint: Option<String>,
+    measurements: Vec<(String, String)>,
+    next: Option<String>,
+}
+
+impl RunNote {
+    pub fn new(method: impl Into<String>, what: impl Into<String>, took: std::time::Duration) -> Self {
+        Self {
+            method: method.into(),
+            what: what.into(),
+            took,
+            fingerprint: None,
+            measurements: Vec::new(),
+            next: None,
+        }
+    }
+
+    /// The digest of everything that decided what this pass would find. See `fingerprint`.
+    pub fn fingerprint(mut self, value: impl Into<String>) -> Self {
+        self.fingerprint = Some(value.into());
+        self
+    }
+
+    /// A number worth carrying: candidates, seeds, throughput, how much was already known.
+    pub fn measured(mut self, label: impl Into<String>, value: impl std::fmt::Display) -> Self {
+        self.measurements.push((label.into(), value.to_string()));
+        self
+    }
+
+    /// What the person who reads this should try next, in one sentence.
+    pub fn next_step(mut self, value: impl Into<String>) -> Self {
+        self.next = Some(value.into());
+        self
+    }
+
+    fn render(&self) -> String {
+        let mut text = format!(
+            "- method: {}\n- what it does: {}\n- ran for: {}\n",
+            self.method,
+            self.what,
+            human_duration(self.took)
+        );
+
+        for (label, value) in &self.measurements {
+            text.push_str(&format!("- {label}: {value}\n"));
+        }
+
+        // Last, and in exactly this spelling: `recon` reads it back out of a pull request diff to
+        // warn the next contributor off a search that has already been run to exhaustion.
+        if let Some(fingerprint) = &self.fingerprint {
+            text.push_str(&format!("- fingerprint: {fingerprint}\n"));
+        }
+
+        if let Some(next) = &self.next {
+            text.push_str(&format!("\n**Next:** {next}\n"));
+        }
+
+        text
+    }
+}
+
 #[derive(Default)]
 pub struct Results {
     by_kind: HashMap<String, HashMap<u64, String>>,
@@ -701,25 +830,12 @@ impl Results {
         Ok(Some(folder))
     }
 
-    /// Writes a short account of a run into its folder: which method ran, what that method
-    /// does, and how long it took. The submission carries it upstream, so a reviewer sees how
-    /// a batch of names was reached rather than only the names themselves.
+    /// Writes a run's account of itself into its folder, and the submission carries it upstream.
     ///
     /// A `.md` rather than a `.txt`, because a submission gathers every `.txt` line in a run
     /// folder as a name, and the account of a run is not a name.
-    pub fn note_run(
-        folder: &Path,
-        method: &str,
-        what: &str,
-        took: std::time::Duration,
-    ) -> std::io::Result<()> {
-        fs::write(
-            folder.join("notes.md"),
-            format!(
-                "- method: {method}\n- what it does: {what}\n- ran for: {}\n",
-                human_duration(took)
-            ),
-        )
+    pub fn note_run(folder: &Path, note: &RunNote) -> std::io::Result<()> {
+        fs::write(folder.join("notes.md"), note.render())
     }
 
     /// Writes a file per type, sorted by name, and reports what each gained.

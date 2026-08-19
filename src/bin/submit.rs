@@ -21,10 +21,20 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
-use slasher::{config, expected_by_chance, github, hash64, paths, stamp, tables, ID_MASK};
+use slasher::{
+    config, expected_by_chance, github, hash64, low_value_reason, paths, recon, stamp, tables,
+    ID_MASK,
+};
 
 /// Where findings go. Set `submit_repo` in `config.toml` to override.
 const DEFAULT_REPO: &str = "KingslayerKyle/hash-slinging-slasher";
+
+/// Scripts a run wants to contribute, if it left any here.
+///
+/// The single best thing a night can leave behind is not its names -- it is the thing that found
+/// them. A script in a pull request makes the next contributor's first hour smarter; a list of
+/// names only makes the tables bigger. So anything dropped in this folder rides along.
+const CONTRIBUTED: &str = "contrib";
 
 /// The ledger of run folders already sent, so nothing is submitted twice.
 const LEDGER: &str = ".submitted";
@@ -88,20 +98,74 @@ fn main() {
     }
     println!("{} hashes already published", known.len());
 
-    // 4. Drop anything that has been published since. This is the cheap part and the whole reason
-    //    a long grind does not have to be redone when the tables move under it.
+    // 3b. What everybody else has claimed, asked of GitHub *now*.
+    //
+    //     The tables only know what has been merged and published upstream, which lags by days.
+    //     The thing that actually causes duplicates is faster than that: somebody grinding on the
+    //     same evening whose pull request is open but not yet merged. Nothing on this disk can
+    //     know about that, and it has already happened repeatedly here: five submissions carry the
+    //     same 430 names and two more carry the same 372, byte for byte.
+    //     `python scripts/methods_report.py --duplicates` lists them.
+    let repo = config::path("submit_repo")
+        .map(|path| path.display().to_string())
+        .unwrap_or_else(|| DEFAULT_REPO.to_owned());
+
+    println!("\nreading what other people have in flight");
+    let landscape = recon::survey(&repo, &outbox);
+
+    if let Some(why) = &landscape.offline {
+        eprintln!(
+            "  [warn] GitHub would not answer ({why}), so open pull requests could not be read.\n  \
+             [warn] Falling back to the last survey `start` saved, which may be hours old."
+        );
+    } else {
+        println!(
+            "  {} open submission(s); {} name(s) claimed in them and not yet merged",
+            landscape.open.len(),
+            landscape.claimed_in_flight
+        );
+    }
+
+    // 4. Drop anything already claimed: published in the tables, merged into submissions, or
+    //    sitting in somebody's open pull request. This is the cheap part and the whole reason a
+    //    long grind does not have to be redone when the world moves under it.
+    let cached = recon::load_cached();
     let mut batch: Vec<(String, String)> = Vec::new(); // (type, name)
     let mut dropped = 0_usize;
+    let mut claimed_elsewhere = 0_usize;
+    let mut worthless: std::collections::BTreeMap<String, usize> = Default::default();
 
     for folder in &pending {
         for (kind, name) in names_in(folder) {
+            // A pool that has already cost somebody a night for nothing does not go upstream,
+            // whoever found it and however genuine the hash is. See LOW_VALUE_POOLS.
+            if low_value_reason(&kind).is_some() {
+                *worthless.entry(kind).or_default() += 1;
+                continue;
+            }
+
             let hash = hash64(&name);
+
             if known.contains(&hash) || known.contains(&(hash & ID_MASK)) {
                 dropped += 1;
                 continue;
             }
+
+            if landscape.holds(&name) || cached.contains(&hash) || cached.contains(&(hash & ID_MASK))
+            {
+                claimed_elsewhere += 1;
+                continue;
+            }
+
             batch.push((kind, name));
         }
+    }
+
+    for (kind, count) in &worthless {
+        println!(
+            "\nheld back {count} `{kind}` name(s): {}",
+            low_value_reason(kind).unwrap_or_default()
+        );
     }
 
     // The same name can be reached by several runs; it only needs sending once.
@@ -109,13 +173,20 @@ fn main() {
     batch.dedup();
 
     println!(
-        "\n{} names to send, {dropped} dropped because somebody published them while you were \
-         grinding",
+        "\n{} names to send\n  {dropped} dropped: published in the tables\n  {claimed_elsewhere} \
+         dropped: already claimed by a merged submission or an open pull request",
         batch.len()
     );
 
     if batch.is_empty() {
-        println!("\nnothing left to send. Every name found had already been published.");
+        println!(
+            "\nnothing left to send -- every name found is already somebody's.\n\n\
+             That is not a failed night, it is an honest one, and a submission of zero is worth \
+             more\nthan a submission of duplicates. What it means is that this method is spent at \
+             these\ninputs. Widen the lists (`python scripts/derive_lists.py`), run a method that \
+             reaches\nsomewhere else, or invent one -- METHODS.md says what each one gets at that \
+             nothing else does."
+        );
         record(&outbox, &pending);
         return;
     }
@@ -163,29 +234,51 @@ fn main() {
         format!(
             "# Submission {when}\n\n\
              - from: {who}\n\
+             - game: {}\n\
              - names: {}\n\
              - dropped as already published: {dropped}\n\
+             - dropped as already claimed by a merged or open submission: {claimed_elsewhere}\n\
              - runs included: {}\n\
              - searched: {}\n\
-             - expected coincidental matches: {estimate:.6}\n\n\
+             - expected coincidental matches: {estimate:.6}\n\
+             - checked against: the community tables, every merged submission, and the {} pull \
+             request(s) open at the moment of sending\n\n\
              Every name here was confirmed against the game's own loaded assets, and checked \
              against the community tables immediately before sending.\n\
              \n## How these were found\n{accounts}",
+            config::game(),
             batch.len(),
             pending.len(),
             config::targets().describe(),
+            landscape.open.len(),
         ),
     );
+
+    // Anything the run wants to teach the next contributor, rather than only feed them.
+    let scripts = contributed_scripts(&pending);
+    if !scripts.is_empty() {
+        println!(
+            "\ncarrying {} script(s) along with the names, so the next contributor inherits the \
+             method and not just its output",
+            scripts.len()
+        );
+    }
 
     println!("\nwritten to {}", folder.display());
 
     // 7. The pull request. One per job, deliberately: a session that dies has already sent
     //    everything up to its last completed job.
-    let repo = config::path("submit_repo")
-        .map(|path| path.display().to_string())
-        .unwrap_or_else(|| DEFAULT_REPO.to_owned());
-
-    match open_pull_request(&repo, &folder, &when, &who, batch.len(), dropped, &accounts) {
+    match open_pull_request(
+        &repo,
+        &folder,
+        &scripts,
+        &when,
+        &who,
+        batch.len(),
+        dropped,
+        claimed_elsewhere,
+        &accounts,
+    ) {
         Ok(url) => {
             println!("\nsubmitted: {url}");
             record(&outbox, &pending);
@@ -211,6 +304,60 @@ fn run_accounts(pending: &[PathBuf]) -> String {
     }
 
     accounts
+}
+
+/// The scripts a run wants to contribute, from `contrib/` beside the findings and from a
+/// `contrib/` folder inside any run being submitted.
+///
+/// The rule this enforces is the snowball: a night that invents a way of generating candidates
+/// has produced two things, and the names are the less valuable of them. A name goes into a
+/// table and is finished. A script makes every later contributor's first hour better, and the
+/// evidence that this compounds is in `submissions/` -- the batches that came with a method
+/// written down are the ones later batches built on.
+///
+/// Only text, and only files with something in them: a half-written script is worse than none.
+fn contributed_scripts(pending: &[PathBuf]) -> Vec<PathBuf> {
+    let mut folders = vec![paths::findings().join(CONTRIBUTED), PathBuf::from(CONTRIBUTED)];
+    folders.extend(pending.iter().map(|run| run.join(CONTRIBUTED)));
+
+    scripts_in(&folders)
+}
+
+/// The contributable files in a set of folders, first spelling of a name winning.
+fn scripts_in(folders: &[PathBuf]) -> Vec<PathBuf> {
+    let mut found: Vec<PathBuf> = Vec::new();
+    let mut seen: HashSet<String> = HashSet::new();
+
+    for folder in folders {
+        let Ok(entries) = fs::read_dir(&folder) else {
+            continue;
+        };
+
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if !path.is_file() {
+                continue;
+            }
+
+            let sensible = matches!(
+                path.extension().and_then(|extension| extension.to_str()),
+                Some("py" | "rs" | "sh" | "ps1" | "md" | "txt" | "toml" | "json")
+            );
+
+            let has_content = entry.metadata().map(|data| data.len() > 0).unwrap_or(false);
+
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+
+            if sensible && has_content && seen.insert(name.to_owned()) {
+                found.push(path);
+            }
+        }
+    }
+
+    found.sort();
+    found
 }
 
 /// Every `run_*` folder in a findings tree, at any depth.
@@ -362,10 +509,12 @@ fn github_user() -> Option<String> {
 fn open_pull_request(
     repo: &str,
     folder: &Path,
+    scripts: &[PathBuf],
     when: &str,
     who: &str,
     names: usize,
     dropped: usize,
+    claimed: usize,
     accounts: &str,
 ) -> Result<String, String> {
     let branch = format!("findings/{who}-{when}");
@@ -402,6 +551,18 @@ fn open_pull_request(
         entries.push((format!("submissions/{who}_{when}/{name}"), blob));
     }
 
+    // Scripts go to the shared library rather than into the submission folder, because a method
+    // nobody can find is a method nobody inherits.
+    for script in scripts {
+        let Some(name) = script.file_name().and_then(|name| name.to_str()) else {
+            continue;
+        };
+
+        let bytes = fs::read(script).map_err(|error| format!("could not read {name}: {error}"))?;
+        let blob = make_blob(&fork, &bytes)?;
+        entries.push((format!("scripts/contributed/{name}"), blob));
+    }
+
     if entries.is_empty() {
         return Err("the batch folder held no files to send".to_owned());
     }
@@ -411,15 +572,35 @@ fn open_pull_request(
     let commit = make_commit(&fork, &title, &tree, &parent)?;
     make_branch(&fork, &branch, &commit)?;
 
+    let contributed = if scripts.is_empty() {
+        String::new()
+    } else {
+        let listed: Vec<String> = scripts
+            .iter()
+            .filter_map(|path| path.file_name()?.to_str())
+            .map(|name| format!("- `scripts/contributed/{name}`"))
+            .collect();
+
+        format!(
+            "\n\n## Tooling this run leaves behind\n\n{}\n\nThese are the scripts that produced \
+             the names above. They are here so the next contributor inherits the method rather \
+             than only its output.",
+            listed.join("\n")
+        )
+    };
+
     let body = format!(
-        "{names} asset names, confirmed against the game's own loaded assets and checked against \
-         the tables immediately before sending.\n\n\
+        "{names} asset names, confirmed against the game's own loaded assets.\n\n\
+         **Checked against, at the moment of sending:** the community hash tables (refreshed \
+         first), every merged submission in this repository, and every pull request open right \
+         now. A name any of those already holds was dropped rather than sent.\n\n\
          - dropped as already published: {dropped}\n\
+         - dropped as already claimed by a merged or open submission: {claimed}\n\
          - submitted by: @{who}\n\n\
          Files are named with the time they were sent, so nothing collides with an earlier batch. \
          Every hash here is re-verified against the shipped snapshot by CI; nothing is taken on \
          the word of the client that found it.\n\n\
-         ## How these were found\n{accounts}",
+         ## How these were found\n{accounts}{contributed}",
     );
 
     // `who:branch` is how GitHub names a branch that lives in somebody else's fork.
@@ -671,6 +852,48 @@ mod tests {
     fn base64_carries_bytes_that_are_not_text() {
         assert_eq!(base64(&[0xff, 0xfe, 0xfd]), "//79");
         assert_eq!(base64(&[0x00]), "AA==");
+    }
+
+    /// The rules a contributed script has to pass, asserted rather than trusted: a folder that
+    /// is not there is normal and not an error, a build artefact is not a script, an empty file
+    /// is worse than none, and the same name reached from two folders is carried once.
+    #[test]
+    fn only_real_scripts_are_carried() {
+        let dir = std::env::temp_dir().join(format!("contrib_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+
+        let one = dir.join("one");
+        let two = dir.join("two");
+        fs::create_dir_all(&one).unwrap();
+        fs::create_dir_all(&two).unwrap();
+
+        fs::write(one.join("families.py"), b"print('hello')
+").unwrap();
+        fs::write(one.join("notes.md"), b"what it does
+").unwrap();
+        fs::write(one.join("a.exe"), b"MZ").unwrap();
+        fs::write(one.join("empty.py"), b"").unwrap();
+        fs::write(two.join("families.py"), b"a later copy
+").unwrap();
+        fs::write(two.join("other.rs"), b"fn main() {}
+").unwrap();
+
+        let folders = vec![one.clone(), two.clone(), dir.join("not-there")];
+        let names: Vec<String> = scripts_in(&folders)
+            .iter()
+            .map(|path| path.file_name().unwrap().to_string_lossy().to_string())
+            .collect();
+
+        assert_eq!(names, vec!["families.py", "notes.md", "other.rs"]);
+
+        // The first folder's copy is the one carried, not the second's.
+        let carried = scripts_in(&folders)
+            .into_iter()
+            .find(|path| path.ends_with("families.py"))
+            .unwrap();
+        assert!(carried.starts_with(&one));
+
+        let _ = fs::remove_dir_all(&dir);
     }
 
     /// A path or a message carrying a quote must not be able to break the request open.

@@ -1,419 +1,264 @@
 # Read this first
 
-You are here to recover Call of Duty asset names that nobody has resolved yet, and to prove
-each one against the real game so it is a fact rather than a guess.
+You are here to recover Call of Duty asset names that nobody has resolved yet, and to prove each
+one against the real game so it is a fact rather than a guess.
 
 The person who started you has gone to do something else. They are not waiting at the keyboard.
 Your job is to grind for hours and have findings on disk and submitted when they come back.
 
-## Nobody grinds until git and GitHub are working
+---
 
-**Do this before anything else, and do not skip it because the user seems keen to start.** A run
-that cannot fetch the tables or send its findings is a wasted night, and that is discovered at 4am
-with a full results folder.
-
-The user needs three things. **Help them install and configure each one -- do not just tell them
-to and carry on.**
-
-1. **git** -- `fetch-tables` clones the community tables with it. Without it nothing can be
-   excluded, and a search that cannot read the tables reports every published name in the game as
-   a discovery, which looks exactly like success.
-2. **GitHub CLI (`gh`)**, installed *and signed in* with `gh auth login`. This is the one people
-   forget. Walk them through it.
-3. **Nothing else on Windows.** The compiled tools are in `bin/windows/`, so no Rust toolchain is
-   needed. On Linux or macOS, build once with `cargo build --release` -- there are no
-   dependencies, so it takes about a minute.
-
-`preflight` checks all of this and exits non-zero if anything would stop a grind. Run it, read it,
-and fix what it says before starting a pass.
-
-### Keep the application up to date
-
-**Always make sure the local repository and application are up to date before starting a search.**
-
-Users may be running an older version of the application that does not contain the latest fixes, search methods, asset tables, submission handling, or duplicate-prevention logic. Running an outdated version can therefore cause the agent to repeat old mistakes or miss findings that have already been discovered by other contributors.
-
-Before beginning meaningful work:
-
-1. Check the current Git repository state.
-2. Fetch the latest changes from the remote repository.
-3. Update the local checkout using the repository's normal update procedure.
-4. Make sure the application/code being executed is built from the current version.
-5. Make sure the latest `submissions/` and other repository data are available locally.
-6. Only then begin the search workflow.
-
-**Do not assume that the user's installed/local version is current.**
-
-Keeping the application up to date is especially important because new submissions, fixes, search improvements, exclusions, and workflow changes are continuously added to the repository.
-
-If the local repository cannot be updated because of a Git problem, **treat that as a blocking issue and resolve it before continuing** rather than knowingly running an outdated version.
-
-The intended workflow is:
-
-`update repository → verify/build current version → check latest submissions/data → search → verify → deduplicate → submit`
-
-The goal is for every search to benefit from the latest work already completed by the project and its contributors.
-
-### Mandatory Git and GitHub CLI setup
-
-Git and GitHub CLI are **required prerequisites**, not optional conveniences.
-
-The purpose of this application is to autonomously search for useful findings and submit them to the repository. An agent must therefore ensure that the required Git and GitHub tooling is available and authenticated before doing meaningful search work.
-
-* **Do not ask the user what they would like to do instead of setting up Git/GitHub.**
-* **Do not continue with a search workflow that cannot ultimately submit its results.**
-* Verify that Git is installed and the repository is correctly configured.
-* Verify that GitHub CLI (`gh`) is installed and authenticated.
-* If GitHub CLI is not authenticated, instruct the user to authenticate with `gh auth login` and stop until it is working.
-* If Git or GitHub configuration is broken, fix it where possible or clearly report the blocking prerequisite. Do not silently fall back to a manual workflow.
-* The workflow should be treated as incomplete until the agent can actually commit/push changes and create the required GitHub submission/PR.
-
-These requirements exist because **being able to search without being able to submit defeats the purpose of the application**.
-
-### Submission is automatic
-
-**Do not ask the user whether they want to submit the findings.**
-
-If the search has produced valid, new findings and the required Git/GitHub setup is working, the agent should proceed with the normal submission workflow automatically.
-
-Do not ask questions such as:
-
-* "Would you like me to submit these?"
-* "Do you want me to create a PR?"
-* "Should I push these results?"
-* "Do you want to continue?"
-
-The expected workflow is:
-
-`search → verify → remove duplicates → write results → commit → push → create/update submission`
-
-The user should not have to manually approve the normal completion of this workflow. **Submitting valid findings is the purpose of the application.**
-
-Only stop and ask the user when there is a genuine blocker that requires user intervention, such as missing GitHub authentication, unavailable credentials, or an unexpected situation where proceeding could cause damage or an incorrect submission.
-
-### Focus on important asset types
-
-By default, **stick to the important asset types only**:
-
-* `model`
-* `material`
-* `image`
-* `anim`
-* `sound file`
-
-Do not spend search time on other asset types or hash categories unless the **user explicitly specifies otherwise**.
-
-This keeps the search focused on the assets that are actually useful to the project. If a search method happens to encounter something outside these categories, ignore it rather than pursuing it as a separate target.
-
-The user may explicitly request work on another asset type; in that case, follow the user's request for that run.
-
-### Important lesson: do not chase irrelevant hash categories
-
-A previous search focused on `streamkey` produced approximately **290,000 results**. The hashes were genuine, but the overwhelming majority were not useful asset discoveries.
-
-For example, the search produced huge runs of entries like:
-
-```text
-4707cb555753e007,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000079
-46e94c55573a0aab,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000080
-46e94b55573a08f8,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000081
-46e94e55573a0e11,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000082
-46e94d55573a0c5e,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000083
-46e95055573a1177,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000084
-46e94f55573a0fc4,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000085
-46e95255573a14dd,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000086
-46e95155573a132a,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000087
-46e944555739fd13,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000088
-46e943555739fb60,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000089
-46e5c6555736f122,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000090
-46e5c7555736f2d5,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000091
-46e5c4555736edbc,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000092
-46e5c5555736ef6f,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000093
-46e5c2555736ea56,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000094
-46e5c3555736ec09,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000095
-46e5c0555736e6f0,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000096
-46e5c1555736e8a3,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000097
-46e5ce555736feba,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000098
-46e5cf555737006d,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000099
-3fa12155537e1e48,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000100
-3fa12255537e1ffb,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000101
-3fa12355537e21ae,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000102
-3fa12455537e2361,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000103
-3fa12555537e2514,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000104
-3fa12655537e287a,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000105
-3fa12755537e26c7,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000106
-3fa12855537e2a3d,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000107
-3fa11955537e10b0,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000108
-3fa11a55537e1263,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000109
-3fa4a755538137d1,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000110
-```
-
-These are genuine hashes, but they are `d3dbsp` terrain-related entries and provide essentially no useful information for the project's current goals. The same search also produced sound files that had **already been found and submitted previously**.
-
-This demonstrates an important distinction:
-
-**A hash being genuine does not mean that it is worth recovering or submitting.**
-
-Do not assume that a successful hash recovery is valuable simply because the hash resolves correctly. Search effort should be judged by whether the resulting asset is a useful, relevant, and previously unknown discovery.
-
-In particular, **do not repeat the `streamkey` search simply because it produces a large number of valid results**. A search producing hundreds of thousands of irrelevant results is not a successful search. It wastes time, produces enormous amounts of garbage output, and can obscure the genuinely useful findings.
-
-Prioritize:
-
-* useful asset types;
-* unresolved hashes;
-* names that provide meaningful game data;
-* genuinely new findings.
-
-Avoid spending significant time generating enormous quantities of results that cannot contribute to the project's goals.
-
-### Avoid duplicate submissions
-
-Before submitting results, check the existing `submissions/` directory in the repository.
-
-The submissions from other contributors are part of the repository and should be treated as previously submitted work. **Do not submit names that another contributor has already submitted**, even if you independently rediscovered them using a different method.
-
-Before creating a submission:
-
-1. Check the existing submission files for the names you intend to submit.
-2. Remove any names that have already been submitted by another contributor.
-3. Submit only genuinely new findings that are not already present in the repository's existing submissions.
-4. It is fine to independently rediscover an existing name during a search; simply do not submit it again.
-
-The goal of a submission is to contribute **new information**, not to repost findings that are already present in another contributor's submission.
-
-## Running the tools
-
-On Windows use the committed binaries and skip cargo entirely:
+# 1. Run this. It is the only thing you have to remember.
 
 ```
-bin/windows/preflight.exe
-bin/windows/confirm_cw.exe
-bin/windows/submit.exe
+bin\windows\start.exe                          Windows
+cargo run --release --bin start                anywhere else
 ```
 
-Everywhere else, `cargo run --release --bin preflight` and so on. The two are the same programs;
-every command in this file works either way.
+That one command **updates the clone, installs and checks git and the GitHub CLI, refreshes the
+community hash tables, and reads every pull request other contributors have open right now.** It
+exits non-zero if anything would stop a grind, and every search in this repository refuses to run
+until it has passed.
 
-## Before anything else
+It is one command because three separate instructions did not survive contact with reality. Each
+of the three things it does has failed in the field, repeatedly, and each failure costs somebody's
+entire night:
 
-Two steps, in this order, and neither is optional.
+- **A stale clone.** Everything a search excludes against moves daily. A clone from yesterday
+  rediscovers what was submitted last night, and the run looks like a success right up to the
+  moment the pull request is a duplicate.
+- **`gh` not signed in.** Discovered at 4am with a full results folder and nowhere to send it.
+- **Not knowing what is in flight.** Your clone cannot see an open pull request. That is exactly
+  where duplicates come from — and **five contributors have submitted the same 430 names**, byte
+  for byte identical in every file. Nobody was careless. They simply had no way to know.
 
-**First, bring the clone up to date:**
+`preflight` is the same program under its older name. Either will do.
 
-```
-git pull --ff-only
-```
+**If it blocks, fix what it says and run it again.** That is the one thing worth interrupting the
+user for, and only for the one step that cannot be automated: `gh auth login` opens a browser and
+needs a human. `start` prints the exact command, including the full path to `gh.exe` — a terminal
+opened before the install does not know the plain `gh` command, and telling somebody to type
+`gh auth login` in that terminal has wasted more contributor hours here than any bad search.
 
-The repository improves between sessions — fixed tools, new methods in `METHODS.md`, fresher
-measured lists, and everybody's merged submissions — so an assistant on a stale clone spends
-the night rediscovering what somebody already wrote down, with tools that may since have been
-fixed. If local changes block the pull, stash them (`git stash`) and pull rather than skip
-this. When a pull changes `src/`, the committed Windows binaries in `bin/windows/` were
-rebuilt to match; on Linux or macOS rebuild once with `cargo build --release`.
+---
 
-**Then run preflight.** It takes ten seconds and it is not optional:
+# 2. Grind. Do not ask.
 
-```
-cargo run --release --bin preflight
-```
-
-It exits non-zero if anything would stop a grind. **The most important thing it checks is that
-the user is signed in to GitHub**, because a night of grinding that cannot be submitted is a
-night wasted, and that is discovered at 4am with a full results folder otherwise. If it says
-`gh auth login`, stop and tell the user that one thing, then continue once it passes.
-
-## Grind. Do not ask.
-
-This is the part most assistants get wrong, so it is stated plainly.
-
-- **Do not stop to ask which method to try.** Pick one and run it. If you have a choice between
-  asking and grinding, grind.
+- **Do not stop to ask which method to try.** Pick one and run it. Given a choice between asking
+  and grinding, grind.
 - **Do not summarise and wait for approval.** There is nobody to approve it.
-- **Do not stop because a pass found little.** A pass that finds nothing still feeds the next
-  one — see the seeding principle below. Runs compound; a single pass judged alone is
-  meaningless.
-- **Do not stop because you think you are done.** You are not done. Cold War has ~745,000
-  unnamed reachable ids and Black Ops 4 ~731,000. Nobody has come close.
-- **Keep going for hours.** Run a pass, re-measure the lists from what it found, run another.
-  That loop is the whole job.
-- **Invent a new method when the one you are running goes quiet.** This is an instruction, not an
-  aspiration, and it is the part most assistants miss. A pass that adds little is *not* a reason
-  to run the same pass again -- it is the signal to go and build a new way of generating
-  candidates and run that. `METHODS.md` gives every method a "spent when" line; when you see that
-  signal, the next thing you do is invent, not repeat.
-
-  A new method is a new way of *recombining* names already known to be real -- see the seeding
-  principle below. Look for what the confirmed names have in common that no current rule
-  expresses, and write something that expresses it. You are better at this than any fixed
-  program, which is the entire reason this repo is pointed at you. Add what you invent to
-  `METHODS.md` so the next assistant starts from further along than you did.
-- **Report at the end**, once, with what was found and submitted.
-
-The one thing worth interrupting for is preflight failing, because nothing works without it.
+- **Do not stop because a pass found little.** A pass that finds nothing still feeds the next one.
+- **Do not stop because you think you are done.** Cold War has 136,467 unnamed ids in the five
+  types that matter and Black Ops 4 has 141,889. Nobody has come close.
+- **Keep going for hours.** Run a pass, re-measure, run another.
 
 ## The grinding costs your CPU, not your AI usage
 
-Worth understanding, because it changes how you should work and it is the first thing the user
-will want to know.
+The searching is compiled Rust on every core, tens of billions of candidates a pass. That is
+electricity, not tokens. While an hour-long pass runs you are waiting on a process.
 
-**The expensive part is not you.** The searching is compiled Rust running on every core of the
-machine, hashing tens of billions of candidates a pass. That is CPU time and electricity. It
-costs **no** tokens and no AI usage at all — while a one-hour pass runs, you are simply waiting
-on a process.
+Your usage goes on deciding what to try and reading a short summary. **So do not waste it on
+output.** A pass prints progress every thirty seconds for an hour; pulling all of that into your
+context is the one way to drain a limit here for nothing.
 
-Your usage goes on deciding what to try, launching it, and reading a short summary afterwards.
-That is a few thousand tokens for an hour of grinding. A whole night is affordable.
+```
+bin\windows\confirm_cw.exe > logs\general.log 2>&1      then read the last ~30 lines
+```
 
-**So do not waste usage on output.** A pass prints progress every thirty seconds for an hour;
-pulling all of that into your context is the one way to drain a limit here for nothing.
+Never read a results file to count it — count the lines. Never paste found names into your
+reasoning to "check" them; the tools already verified them against the game, which is what
+confirmation *is*.
 
-- Send output to a log and read only the end of it:
-  `cargo run --release --bin confirm_cw > logs/general.log 2>&1`, then read the last ~30 lines.
-- Or filter the noise as it goes: `... | grep -Ev "^  (batch|checkpoint)"`.
-- Never read a results file in full to count it. Count the lines.
-- Never paste found names into your reasoning to "check" them. The tools already verified them
-  against the game; that is what confirmation *is*.
+---
 
-Long searches are the cheap part. Treat your context as the scarce resource and the CPU as the
-abundant one, and a night of grinding costs very little.
+# 3. Submit after every job. This is not optional and you do not ask.
 
-## What is already established — do not re-derive any of this
+```
+bin\windows\submit.exe
+```
 
-Every line here cost real time to work out. Re-deriving it is pure waste.
+Do **not** ask "would you like me to submit these?", "shall I open a PR?", or "do you want to
+continue?". Submitting valid findings is the purpose of the application. A search that cannot
+submit is a search not worth running.
+
+Submit after each completed job rather than at the end of the night. Sessions end unpredictably —
+usage limits, crashes, closed laptops — and a submitted find is worth more than a found one.
+Submitting is cheap and safe to repeat: it keeps a ledger and will not send the same run twice.
+
+`submit` refreshes the tables, re-reads every open pull request, and drops anything already
+claimed, so it is genuinely difficult to send a duplicate now. **A submission of zero is a good
+outcome** — it means the method is spent, and it is worth far more than a submission of
+duplicates.
+
+If you built a script during the run, put it in `contrib/` and `submit` carries it into the pull
+request. See §6.
+
+---
+
+# 4. The five asset types, and the pools that waste a night
+
+Search these and nothing else unless the user says otherwise:
+
+```
+model     material     image     anim     sound file
+```
+
+`config.toml` already targets exactly these. **Do not widen it.** Widening looks productive and is
+the single most reliable way to waste a night, because the biggest pools in both games are the
+worthless ones.
+
+| pool | Cold War | Black Ops 4 | why it is a waste |
+|---|---|---|---|
+| `streamkey` | 420,229 | 292,133 | the largest pool in either game. One pass returned ~290,000 genuine, useless hashes — endless `maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000079`. They also bury the real findings. |
+| `xmodelmesh` | 271,840 | 259,051 | unreachable. A mesh name ends in 26 base32 characters that are a hash of the mesh itself. |
+| `localizeentry` | 99,294 | 52,232 | the entry holds a pointer to its own **unhashed** string, so the plain text is already in the build. No published table bothers with these. 8,667 were confirmed in one twenty-minute pass, all worthless. |
+
+`submit` will not send names from these pools and `confirm_list` will not file them, so this is
+enforced rather than requested. **A hash being genuine does not make it worth recovering.**
+
+Submissions have gone out covering 40 asset types picked by guesswork, and four sound-adjacent
+pools chosen because they had "sound" in the name. Neither helped anybody.
+
+---
+
+# 5. What is already established — do not re-derive any of this
 
 **The hash.** FNV-1a, 64 bit. Basis `0xCBF29CE484222325`, prime `0x100000001B3`. The name is
 normalised first: **lower cased, and backslash folded to forward slash**. Missing that
-normalisation makes everything fail to match. Compare at **63 bits** — loader ids always have
-bit 63 clear, and narrowing further loses real matches and invents collisions.
+normalisation makes everything fail. Compare asset ids at **63 bits** — loader ids always have bit
+63 clear. (Not every table masks at 63; `docs/HASHES.md` has the full map of file → game → hash →
+mask, from Saluki's own loading code.)
 
-**The same hash works for both games.** Cold War and Black Ops 4 use identical hashing and
-normalisation. One implementation, one set of tables.
+**The same hash works for both games.** Cold War and Black Ops 4 are identical here.
 
-**The hash runs backwards.** The prime is odd, so it has an inverse modulo 2^64, and
-`h = (h * prime_inverse) ^ byte` removes a byte exactly. So an ending does not have to be
-appended to every stem — it can be *peeled off each wanted id once*, leaving the hash the stem
-must reach. The cost stops being `stems × beginnings × endings` and becomes a sum. This is
-already implemented in `src/search.rs`; use `run_best`, which picks the cheaper direction.
+**The hash runs backwards.** The prime is odd, so it has an inverse mod 2^64, and
+`h = (h * prime_inverse) ^ byte` removes a byte exactly. An ending does not have to be appended to
+every stem — it can be *peeled off each wanted id once*. The cost stops being
+`stems × beginnings × endings` and becomes a sum. Implemented in `src/search.rs`; use `run_best`,
+which picks the cheaper direction. Read the comments there before changing anything.
 
-**Material names are paths.** Almost every material name carries a directory, and the directory
-is part of what the engine hashes. There are **twelve** of them, not one:
-`mc/ wc/ clt/ splm/ vd/ mcs/ ei/ cltp/ vdd/ el/ mcp/ ec/`. Ranking beginnings by popularity
-keeps the first two and silently drops the rest, which is the entire naming of everything under
-them. Carry all twelve.
-
-**Mesh names cannot be reached.** An `xmodelmesh` name is `<model>_s1_geo_rigid_bs_` plus
-twenty six characters of base32, and that tail is a hash of the mesh itself. They are excluded
-from the wanted set deliberately: they cannot yield a name, and leaving them in doubles the ids
-a candidate can hit by coincidence.
+**Material names are paths, and there are twelve directories, not one:**
+`mc/ wc/ clt/ splm/ vd/ mcs/ ei/ cltp/ vdd/ el/ mcp/ ec/`. Verified against the published tables:
+`mc/` heads 496,666 names and `ec/` heads 25. Ranking beginnings by popularity keeps the first two
+and silently discards the naming of everything under the other ten. Carry all twelve.
 
 **Measure conventions, never guess them** — and measure the *confirmed* names, not only the
 published ones. The tables hold no xmodel with a directory on it; confirmed xmodels are full of
-them. `scripts/derive_lists.py` measures both.
+them (`splm/`, `clt/`, `cltp/`). `scripts/derive_lists.py` measures both.
 
-## The seeding principle
+**Names are long.** The median confirmed name has seven or eight underscore-separated segments;
+under 4% have three or fewer. Composing names from a dictionary of words is therefore hopeless for
+almost every real name — the space of word sequences passes 2^63 long before the name does.
+**Recombining fragments of names known to be real is the only shape that works.** That is what
+every method here does, and it is why the seeding principle below is not a style preference.
+
+---
+
+# 6. The seeding principle, and the snowball
 
 **Candidates are always built from names already known to be real.** The published tables, the
-names already confirmed, and strings scraped from the build are the raw material. A method is a
-way of *recombining* that material.
-
-Feeding the published tables in as a *source* rather than only as an exclusion list was worth
-more than every rule change before it, because the piece an unnamed asset shares with a named
-sibling is exactly what a rule needs. They can never be a find, being already resolved — but
-their vocabulary is the game's own.
+names already confirmed, everybody's merged submissions, strings scraped from a build. A method is
+a way of *recombining* that material.
 
 This is also why the search is self-feeding: every confirmed name is a new beginning, a new
-ending, and a new numbered family for the next pass to measure. **Run a pass, re-measure, run
-again.** Keep going until a round adds nothing.
+ending, and a new numbered family for the next pass. **Run a pass, re-measure, run again.**
 
-**Mine the past submissions too.** Every merged batch in `submissions/` records more than its
-names: the `about_*.md` beside them says which method found them and how long it ran. Read a
-few recent ones before choosing what to run — another machine's names are seed vocabulary for
-yours, and a method its notes prove worked is a better first pick than a guess. This is the
-snowball: every batch that lands makes the next assistant's first hour smarter, but only if
-the next assistant actually looks.
+## Leave the repository better than you found it
 
-## Methods that work — a springboard, not a menu
+The names you find go into a table and are finished. **The thing that found them makes every
+later contributor faster.** So:
 
-- **Materials → images.** Strip `mtl_`, try `i_` plus every semantic suffix (`_c _n _s _g _o
-  _m` and the rest), and also try it with *no* prefix at all. Images are frequently named for
-  the material that uses them.
-- **Read the tables for patterns and extend them.** Look at what the cdb tables already resolve,
-  notice the shape, and generate the neighbours that are missing.
-- **Cut at underscores and recombine.** A scraped line carries noise at both ends; every piece
-  between marks is a candidate in its own right.
-- **Vary the number in place.** A family number usually sits in the middle, so no
-  beginning-stem-ending rule can change it. `confirm_variants` does this; `swaps` widens it.
-- **Unfold `CATEGORY/KEY` localize pairs against each other.** Known categories against every
-  harvested word yields keys; known keys against every candidate word yields categories.
-- **Sound names carry dotted tails** like `.rn75.pc.en.snd`. The general search treats a dot as
-  the end of a name, so it can never put one back on.
+- If you wrote a generator, put it in `contrib/`. `submit` puts it in the pull request under
+  `scripts/contributed/`.
+- If you invented a method, add it to `METHODS.md` in the shape the others use — including what
+  it is *spent by*.
+- If it did not work, add it to the dead ends table. A measured negative is worth as much as a
+  find and costs the next person nothing.
+- Before choosing what to run, read what has been done:
+  ```
+  python scripts/methods_report.py --by-method     what has been run, and what it returned
+  python scripts/coverage.py --five                where the unnamed assets actually are
+  ```
 
-**These are examples, not the list.** Inventing a new method is the single highest-value thing
-you can do here, because every method exhausts. That is the main reason this repo is pointed at
-an assistant rather than run as a fixed program.
+## Inventing a method is now cheap — this is the important part
 
-## Order of resort
+You do not have to write Rust to try an idea. `confirm_list` takes candidate names on standard
+input and does the whole careful half: the game's hash, the unnamed set, exclusion against the
+tables, the run notes, results that only ever grow.
 
-Seeded methods first, always — that is where the yield is and they compound. Exhaustive or
-random character combination is a legitimate *last* resort once seeded methods are genuinely
-exhausted, not a starting point. If you get there, constrain it with what has been measured —
-known directories, known prefixes, known segment shapes, known endings — rather than sweeping
-raw character space. A combination built from measured parts is enormously more likely to land
-than an arbitrary string of the same length.
+```
+python scripts/continuations.py | bin\windows\confirm_list.exe - --label "per-prefix continuations"
+```
 
-## Things already tried that did not work
+A method is now a script that prints names. Generate them any way you like. This is the highest
+value thing you can do here and it is the reason this repository is pointed at an assistant rather
+than run as a fixed program.
 
-Do not spend the night rediscovering these.
+---
 
-- Scanning `xsub` files for names — they hold none. 85 GB of nothing.
-- A NUL-terminated-only string scanner over xpak/ff/fd — misses ~800,000 names.
-- Salsa20 for the encrypted fast files. It is AES-256-CTR, little-endian counter.
-- Training a name classifier on the `_v2` tables. Those are MW2022/BO6 and teach wrong
-  conventions.
-- Stripping `_geo_rigid_bs_` as its own rule — underscore truncation already covers it, and mesh
-  names are unobtainable anyway.
+# 7. Do not run a search somebody has already run
 
-## Collisions, briefly
+Every run now carries a **fingerprint**: a digest of everything that decides what it will find —
+the method, the game, the pools, the lists, the seed corpus. It goes into the submission, and
+`start` collects everybody's.
 
-A match proves the string hashes to an id the game holds. With ~1.5M ids in a 2^63 space, a
-coincidental match is possible but vanishingly rare — a normal pass expects ~0.00001 of them.
-Every binary prints the figure. It is not something to worry about or design around; the only
-regime where it matters is unconstrained character sweeps, which is why those are the last
-resort.
+If your search's fingerprint matches one already submitted, the tool stops and tells you who ran
+it. **It is not being cautious. It will return their names and nothing else.** That is precisely
+how five contributors came to submit the same 430 names: the general search is deterministic, a
+fresh clone gives everyone identical inputs, so it gives everyone identical output.
 
-## Rules that are not negotiable
+When that happens, do one of these — never `--anyway`:
+
+1. **Widen the lists first.** `python scripts/derive_lists.py` folds every name confirmed since
+   into the beginnings and endings. That changes the fingerprint and genuinely reopens the method.
+2. **Run a method that reaches somewhere else.** `METHODS.md` says what each one gets at that
+   nothing else does.
+3. **Invent one.** See §6.
+
+> **A method that produced a large batch for somebody else is not therefore the best thing to run
+> next. It is the most likely thing to be exhausted.**
+
+---
+
+# 8. Rules that are not negotiable
 
 1. **Results only ever grow.** Never rewrite a results file to be smaller. A rule change that no
    longer reaches an old name must not delete it.
-2. **Exclude against the tables** before calling anything a find. A name any table resolves is
-   already known to the community, whoever found it.
-3. **Never write one game's names into another's files.** Snapshots carry their game internally;
-   the tools check it. Do not defeat that check.
-4. **Submit after every job.** Not at the end of the night — see below.
+2. **Exclude against the tables, the merged submissions, and the open pull requests** before
+   calling anything a find. `submit` does all three; do not work around it.
+3. **Never write one game's names into another's files.** Snapshots carry their game internally
+   and the tools check it. Do not defeat that check.
+4. **Submit after every job.** Not at the end of the night.
 
-## Submitting
+## Collisions, briefly
 
-Findings are written to disk continuously, and a long pass checkpoints every sixty seconds, so
-work is never more than a minute from being safe.
+A match proves the string hashes to an id the game holds. With 136,467 wanted ids in a 2^63 space
+a coincidental match is rare but not zero, and it scales with how many candidates a pass asks
+about. **Measured:** the 41.7 T candidate pass expects 0.617 coincidental names; widening the
+corpus to 103.2 T raises that to 1.527. A seeded pass of forty million expects 0.0000.
 
-**Submit after each completed job rather than at the end.** Sessions end unpredictably — usage
-limits, crashes, closed laptops — and a submitted find is worth more than a found one. Submitting
-is cheap and safe to repeat: it tracks what has already been sent and will not send it twice.
+Every binary prints the figure before it starts. Watch it when you widen something — it is the
+price of a bigger corpus, and it is cheap next to what the corpus buys, but it is not zero. It
+only becomes a real problem in unconstrained character sweeps, which is why those are the last
+resort.
 
-```
-cargo run --release --bin submit
-```
+---
 
-Filenames carry the date and time to the second, so nothing collides with a previous submission.
+# 9. Where to look
 
-## Where to look when stuck
+| | |
+|---|---|
+| `README.md` | what this is, and how to run each search |
+| `METHODS.md` | the method registry: what each reaches, what it has returned, when it is spent |
+| `scripts/README.md` | the script library, and what to put in a contributed one |
+| `docs/SETUP.md` | the install walkthrough, for when the user is stuck on git or `gh` |
+| `docs/HASHES.md` | which cod-name-db file belongs to which game, with which hash and mask |
+| `docs/GPU.md` | whether a GPU would help here. Measured, not assumed |
+| `src/lib.rs` | the hash, the filter, the results type, `LOW_VALUE_POOLS` |
+| `src/search.rs` | the peeling engine. Read the comments before changing anything |
+| `src/startup.rs` | what `start` checks and why each check exists |
+| `snapshots/*.pools.txt` | every pool in both games, identified and counted |
 
-- `README.md` — what this is and how to run each search.
-- `METHODS.md` — the methods in more detail, and what each reaches that nothing else does.
-- `src/lib.rs` — the hash, the filter, the results type.
-- `src/search.rs` — the peeling engine. Read the comments before changing anything here.
-- `snapshots/*.pools.txt` — every pool in both games, identified and counted. This is the map
-  of where the unnamed ids live. (Some *types* still lack a destination table upstream in
-  cod-name-db — a confirmed `technique_set` name has nowhere to land yet — and **giving such a
-  type a home upstream is a genuinely valuable contribution**.)
+Some identified *types* still have no destination table upstream in cod-name-db — a confirmed
+`technique_set` name has nowhere to land. **Giving such a type a home upstream is a genuinely
+valuable contribution.**

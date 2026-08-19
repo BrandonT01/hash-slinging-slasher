@@ -22,8 +22,18 @@ game = "BLKOPSCW"
 # slower for names nobody needs yet.
 pools = ["xmodel", "xanim", "image", "material", "sound_asset"]
 
-# Hunt every pool the game holds, including the ones nobody has identified. Worth turning on
-# once the five above are close to done.
+# Hunt every pool the game holds. **Leave this alone.**
+#
+# It reads like the ambitious setting and it is the most reliable way to waste a night, because
+# the biggest pools in both games are the worthless ones. `streamkey` alone is 420,229 ids in Cold
+# War and 292,133 in Black Ops 4 -- more than any nameable type -- and a pass that reached it
+# returned ~290,000 genuine, useless hashes, mostly sequential d3dbsp terrain entries. Every id
+# added also makes every candidate more likely to match something by coincidence.
+#
+# `submit` will not send names from the known-worthless pools whatever this says, so turning it on
+# mostly buys a slower search. See LOW_VALUE_POOLS in src/lib.rs, and run
+# `python scripts/coverage.py` to see where the unnamed assets actually are before believing a
+# pool is worth a night.
 all_pools = false
 
 [paths]

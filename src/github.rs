@@ -50,6 +50,15 @@ pub fn locate() -> Option<Gh> {
     FOUND.get_or_init(find).clone()
 }
 
+/// The same search, ignoring the cache.
+///
+/// There is one moment in the program's life when the answer *can* change inside a run: `start`
+/// finds gh missing, installs it, and asks again. Without this the cached "missing" from ten
+/// seconds ago would stand, and a successful install would be reported as a failure.
+pub fn locate_uncached() -> Option<Gh> {
+    find()
+}
+
 /// A command for callers that just want to run gh and let any failure carry gh's own words.
 /// The located program when there is one, the plain name otherwise, so the error for a missing
 /// install still says `gh` rather than a path that never existed.

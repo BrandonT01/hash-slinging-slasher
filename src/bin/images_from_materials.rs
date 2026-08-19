@@ -14,9 +14,8 @@
 
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::search::run_best;
-use slasher::{
-    endings_of, paths, table_names, table_keys, tables_look_complete, Results, pool_label,
-};
+use slasher::fingerprint::Fingerprint;
+use slasher::{config, endings_of, paths, pool_label, readiness, recon, table_keys, table_names, tables_look_complete, Results, RunNote};
 
 /// The tables the stems and the endings come from.
 const MATERIALS: &str = "fnv1a_xmaterials";
@@ -82,6 +81,8 @@ fn stems_of(name: &str) -> Vec<String> {
 }
 
 fn main() {
+    readiness::require();
+
     let began = std::time::Instant::now();
     let (assets, _) = match loaded_assets() {
         Ok(loaded) => loaded,
@@ -125,6 +126,16 @@ fn main() {
 
     let openings: Vec<String> = OPENINGS.iter().map(|text| (*text).to_owned()).collect();
 
+    let fingerprint = Fingerprint::of("images_from_materials")
+        .with("game", &config::game())
+        .with_list("openings", &openings)
+        .with_list("endings", &endings)
+        .with_count("stems", stems.len())
+        .with_count("wanted", wanted.len())
+        .finish();
+    println!("fingerprint: {fingerprint}");
+    recon::warn_if_swept(&fingerprint);
+
     for (id, name) in run_best(&openings, &endings, &stems, &wanted, false) {
         results.add(&pool_label(wanted[&id]), id, name);
     }
@@ -137,10 +148,14 @@ fn main() {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
-                "images derived from materials (images_from_materials)",
-                "each confirmed material name stripped of mtl_ and retried as an image name \
-                 with every semantic suffix, both prefixed and bare",
-                began.elapsed(),
+                &RunNote::new(
+                    "images derived from materials (images_from_materials)",
+                    "each confirmed material name stripped of mtl_ and retried as an image name \
+                     with every semantic suffix, both prefixed and bare",
+                    began.elapsed(),
+                )
+                .measured("game", config::game())
+                .fingerprint(&fingerprint),
             );
         }
         Ok(None) => println!("this run found nothing new"),

@@ -17,10 +17,8 @@ use std::collections::{HashMap, HashSet};
 
 use slasher::loader::{loaded_assets, unnamed_in};
 use slasher::search::run_best;
-use slasher::{
-    all_table_names, folder_names, paths, pool_index, read_list, table_keys, tables_look_complete,
-    Results, pool_label,
-};
+use slasher::fingerprint::Fingerprint;
+use slasher::{all_table_names, config, folder_names, paths, pool_index, pool_label, read_list, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
 
 /// How many times to go round before calling it saturated. It stops on its own when a round
 /// adds nothing, so this is only a guard against a rule that keeps finding one more.
@@ -211,7 +209,28 @@ fn category_candidates(lines: &[String]) -> Vec<String> {
     seen.into_iter().collect()
 }
 
+/// The argument that says the caller has read why this is a waste and wants it anyway.
+const ANYWAY: &str = "--i-know-localize-is-worthless";
+
 fn main() {
+    readiness::require();
+
+    // This search works, and what it finds is worth nothing. It is left in the repository so the
+    // next assistant can see *why* rather than rediscover it, and it refuses to run so that
+    // seeing it in the binary list is not enough to start it.
+    if !std::env::args().any(|argument| argument == ANYWAY) {
+        eprintln!(
+            "{}
+
+This is not a warning about priorities. It ran once for twenty minutes and              confirmed 8,667
+names, every one of them useless. Nothing here should spend a              night on it.
+
+Run a method from METHODS.md instead. If you genuinely need this              pool, pass {ANYWAY}.",
+            slasher::low_value_reason("localizeentry").unwrap_or_default()
+        );
+        std::process::exit(2);
+    }
+
     let began = std::time::Instant::now();
     let root = paths::root();
     let pool = pool_index("localizeentry").expect("the localize pool");
@@ -238,6 +257,12 @@ fn main() {
         wanted.len()
     );
     drop(known);
+
+    let fingerprint = Fingerprint::of("confirm_localize")
+        .with("game", &config::game())
+        .with_count("wanted", wanted.len())
+        .finish();
+    recon::warn_if_swept(&fingerprint);
 
     // Everything ever harvested, which is where both the keys and the categories come from.
     let mut vocabulary: Vec<String> = Vec::new();
@@ -385,10 +410,14 @@ round {round} added nothing; saturated");
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
-                "localize category/key unfolding (confirm_localize)",
-                "known categories played against harvested words and known keys against \
-                 candidate words, completing CATEGORY/KEY pairs",
-                began.elapsed(),
+                &RunNote::new(
+                    "localize category/key unfolding (confirm_localize)",
+                    "known categories played against harvested words and known keys against \
+                     candidate words, completing CATEGORY/KEY pairs",
+                    began.elapsed(),
+                )
+                .measured("game", config::game())
+                .fingerprint(&fingerprint),
             );
         }
         Ok(None) => println!("this run found nothing new"),

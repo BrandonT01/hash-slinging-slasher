@@ -27,10 +27,8 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use slasher::loader::{loaded_assets, wanted_for_search};
-use slasher::{
-    expected_by_chance, hash64, paths, table_keys, tables_look_complete, Filter,
-    Results, ID_MASK, pool_label,
-};
+use slasher::fingerprint::Fingerprint;
+use slasher::{config, expected_by_chance, hash64, paths, pool_label, readiness, recon, table_keys, tables_look_complete, Filter, ID_MASK, Results, RunNote};
 
 /// How far a family is counted. Most stop in the low tens; a few run to the hundreds.
 const HIGHEST: u32 = 256;
@@ -201,6 +199,8 @@ fn swaps(name: &str, tokens: &[String], mut visit: impl FnMut(&str)) {
 }
 
 fn main() {
+    readiness::require();
+
     let began = Instant::now();
     let (assets, strings) = match loaded_assets() {
         Ok(loaded) => loaded,
@@ -254,6 +254,15 @@ fn main() {
     } else {
         Vec::new()
     };
+
+    let fingerprint = Fingerprint::of(if swapping { "confirm_variants/swaps" } else { "confirm_variants/numbers" })
+        .with("game", &config::game())
+        .with_count("tokens", tokens.len())
+        .with_list("seeds", &seeds)
+        .with_count("wanted", wanted.len())
+        .finish();
+    println!("fingerprint: {fingerprint}");
+    recon::warn_if_swept(&fingerprint);
 
     let filter = Filter::new(wanted.keys());
 
@@ -363,15 +372,19 @@ fn main() {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
                 &folder,
-                if swapping { "family walking, whole words (swaps)" } else { "family walking, numbers in place (variants)" },
-                if swapping {
-                    "each token of a name already known to be real replaced in turn by every \
-                     common token the game uses elsewhere"
-                } else {
-                    "each number or letter field of a name already known to be real counted \
-                     through in place, keeping the width of what was there"
-                },
-                began.elapsed(),
+                &RunNote::new(
+                    if swapping { "family walking, whole words (swaps)" } else { "family walking, numbers in place (variants)" },
+                    if swapping {
+                        "each token of a name already known to be real replaced in turn by every \
+                         common token the game uses elsewhere"
+                    } else {
+                        "each number or letter field of a name already known to be real counted \
+                         through in place, keeping the width of what was there"
+                    },
+                    began.elapsed(),
+                )
+                .measured("game", config::game())
+                .fingerprint(&fingerprint),
             );
         }
         Ok(None) => println!("this run found nothing new"),
