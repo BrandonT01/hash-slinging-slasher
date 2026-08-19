@@ -62,12 +62,12 @@ impl Landscape {
 /// Where the reconnaissance is cached between programs, so `submit` does not have to redo what
 /// `start` did minutes ago -- and so an offline `submit` still has the last known picture.
 pub fn cache() -> PathBuf {
-    PathBuf::from("state").join("claimed.txt")
+    crate::paths::state().join("claimed.txt")
 }
 
 /// The file recording which searches have already been run to exhaustion by somebody.
 pub fn swept_cache() -> PathBuf {
-    PathBuf::from("state").join("swept.txt")
+    crate::paths::state().join("swept.txt")
 }
 
 /// Reads the whole landscape: merged submissions from disk, open pull requests from GitHub.

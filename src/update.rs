@@ -216,7 +216,17 @@ pub fn relaunch_from_temp(marker: &str) -> Option<i32> {
         return None;
     }
 
-    let here = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+    // The repository, resolved **now** -- while this is still the real executable and its own
+    // ancestors still lead there. The copy about to run lives in the temporary folder, so
+    // `paths::root()` cannot find the repository from it and falls back to the working directory.
+    // Started from `bin\windows`, that put every default path in `bin\windows`: cod-name-db was
+    // cloned into `bin/windows/cod-name-db`, findings and state went there too, and the real clone
+    // was never touched. Nothing errored, and the next run would have done it again.
+    //
+    // Handing the copy the repository as its working directory fixes it at the root: `root()`
+    // then finds `data/suffixes.txt` in `.` and stops, exactly as on a normal run.
+    let here = std::fs::canonicalize(crate::paths::root())
+        .unwrap_or_else(|_| std::env::current_dir().unwrap_or_else(|_| PathBuf::from(".")));
     let rest: Vec<String> = std::env::args().skip(1).collect();
 
     let status = Command::new(&copy)

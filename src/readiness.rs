@@ -25,7 +25,7 @@ pub const GOOD_FOR: Duration = Duration::from_secs(12 * 60 * 60);
 pub const OVERRIDE: &str = "--anyway";
 
 pub fn receipt() -> PathBuf {
-    PathBuf::from("state").join("ready.txt")
+    crate::paths::state().join("ready.txt")
 }
 
 /// Records that the startup checks passed, with what they were passed against.

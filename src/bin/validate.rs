@@ -128,16 +128,14 @@ fn main() {
                 continue;
             }
 
-            // 2b. The id being real does not make the name real.
+            // 2b. Names whose shape is unusual for their type, flagged for a human to glance at.
             //
-            //     A hundred trillion candidates against ~136,000 wanted ids expects one or two
-            //     coincidental matches a pass, and one duly turned up: a sound path filed as an
-            //     `xmodel`, on an id that is a genuine model in both games. The hash check above
-            //     passes it, the snapshot check passes it, and it is still not a name. See
-            //     `slasher::misfiled` for the one shape this can prove, and why only one.
-            if let Some(why) = slasher::misfiled(&kind, name) {
-                bad.push(format!("{where_}: {name} {why}"));
-                continue;
+            //     Noted, never rejected. The first name this caught looked exactly like a
+            //     coincidence and turned out, checked in Saluki, to be the model's real name --
+            //     a sound path somebody pasted onto a model. A verified name must never be
+            //     thrown away by a heuristic about what names ought to look like.
+            if let Some(why) = slasher::odd_for_pool(&kind, name) {
+                println!("  note: {where_}: {name} {why}");
             }
 
             // 3. The type must be one of the pools the id actually lives in.

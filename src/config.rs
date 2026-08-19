@@ -80,7 +80,7 @@ impl Targets {
 /// and guessing at somebody's folder layout is how one person's Desktop ends up in everyone's
 /// source code.
 pub fn path(key: &str) -> Option<std::path::PathBuf> {
-    let text = fs::read_to_string(CONFIG).unwrap_or_default();
+    let text = fs::read_to_string(crate::paths::root().join(CONFIG)).unwrap_or_default();
     let raw = value_of(&text, key)?;
     let raw = raw.trim().trim_matches('"').trim_matches('\'');
 
@@ -99,7 +99,9 @@ pub const GAMES: &[&str] = &["BLKOPSCW", "BLKOPS04"];
 /// The alternation would be worthless as advice alone: it would mean every search needed a flag
 /// remembered from the output of an earlier command, which is exactly the shape of instruction
 /// this project keeps finding does not survive. So the decision is written down and read back.
-const CHOSEN: &str = "state/game.txt";
+fn chosen_path() -> std::path::PathBuf {
+    crate::paths::state().join("game.txt")
+}
 
 /// Whether the alternation has been deliberately switched off.
 ///
@@ -109,7 +111,7 @@ const CHOSEN: &str = "state/game.txt";
 /// those contributors to Cold War forever, silently -- which is the precise failure being fixed,
 /// reintroduced through the back door. A new key cannot be in an old file.
 pub fn alternates() -> bool {
-    let text = fs::read_to_string(CONFIG).unwrap_or_default();
+    let text = fs::read_to_string(crate::paths::root().join(CONFIG)).unwrap_or_default();
     flag(&text, "alternate_games") != Some(false)
 }
 
@@ -146,7 +148,7 @@ pub fn game() -> String {
     }
 
     if alternates() {
-        if let Some(chosen) = fs::read_to_string(CHOSEN)
+        if let Some(chosen) = fs::read_to_string(chosen_path())
             .ok()
             .map(|raw| raw.trim().to_uppercase())
             .filter(|raw| GAMES.contains(&raw.as_str()))
@@ -155,7 +157,7 @@ pub fn game() -> String {
         }
     }
 
-    let text = fs::read_to_string(CONFIG).unwrap_or_default();
+    let text = fs::read_to_string(crate::paths::root().join(CONFIG)).unwrap_or_default();
 
     value_of(&text, "game")
         .map(|raw| raw.trim().trim_matches('"').trim_matches('\'').to_uppercase())
@@ -165,7 +167,7 @@ pub fn game() -> String {
 
 /// Records the game the alternation picked, for the searches that follow.
 pub fn choose_game(game: &str) -> std::io::Result<()> {
-    let path = Path::new(CHOSEN);
+    let path = chosen_path();
     if let Some(parent) = path.parent() {
         fs::create_dir_all(parent)?;
     }

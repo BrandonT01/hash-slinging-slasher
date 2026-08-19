@@ -90,23 +90,29 @@ pub const LOW_VALUE_POOLS: &[(&str, &str)] = &[
     ),
 ];
 
-/// Why a name cannot belong to the pool it landed in, when it plainly cannot.
+/// Why a name does not look like its pool's convention -- **without claiming it is wrong**.
 ///
 /// A match proves a string hashes to an id the game holds. It does **not** prove the string is
 /// that asset's name -- with ~136,000 wanted ids and a hundred trillion candidates a pass, one or
 /// two coincidences are expected, and every binary prints the figure it expects. Until now
 /// nothing acted on that: a coincidence was written to disk and submitted like any other find.
 ///
-/// One turned up on the first widened pass and it is the model case.
-/// `survival/operators/beck/vox_beck_se_kill_mult_nightingale_01.rn75.pc.ea_item` was filed as an
-/// `xmodel`, in both games. The id is a real model -- Cold War holds its `xcollision` and
-/// `xskeleton` too, which is the ordinary model triple -- so the id is genuine and the *name* is
-/// a sound path with a mangled tail that happens to hash to it.
+/// One turned up on the first widened pass:
+/// `survival/operators/beck/vox_beck_se_kill_mult_nightingale_01.rn75.pc.ea_item`, filed as an
+/// `xmodel` in both games. Everything about it said coincidence -- the sound-encoding path, the
+/// tail that is not a valid sound tail, an id that is a genuine model with the usual `xcollision`
+/// and `xskeleton` beside it.
+///
+/// **It was checked in Saluki and it is the model's real name.** Somebody at Treyarch pasted a
+/// sound path onto a model. So the rule this function encodes is *not* "reject": rejecting would
+/// have thrown away a verified name, which is the one thing this project must never do. What an
+/// odd shape is actually good for is deciding what to *learn* from -- a sound path taken as an
+/// xmodel convention would teach every later candidate a shape the game does not use.
 ///
 /// The rule is deliberately narrow, and it is measured rather than assumed. Across the published
 /// tables: **1,414,269 xmodel, image, material and xanim names carry no `.rn75.`/`.ln75.` tail
 /// between them -- not one -- while 1,485,904 sound names do.** So the tail is a sound name's
-/// signature, and one on anything else is a coincidence. Reproduce it with:
+/// signature, and one on anything else is worth flagging -- never rejecting. Reproduce with:
 ///
 /// ```text
 /// cd cod-name-db/csv
@@ -114,17 +120,17 @@ pub const LOW_VALUE_POOLS: &[(&str, &str)] = &[
 /// cat fnv1a_*xsounds.csv | cut -d, -f2- | grep -cE '\.(rn|ln)75\.'  # 1485904
 /// ```
 ///
-/// Nothing else is guessed at here. A rule that threw away real names to catch one coincidence a
-/// pass would cost far more than it saved, so this stays at the one shape that has never once
-/// been wrong in one and a half million published names.
-pub fn misfiled(pool: &str, name: &str) -> Option<String> {
+/// Nothing else is guessed at here, and nothing is ever rejected on it.
+pub fn odd_for_pool(pool: &str, name: &str) -> Option<String> {
     let sound = matches!(pool, "sound" | "sound_asset" | "sound_bank" | "sound_duck");
 
     if !sound && (name.contains(".rn75.") || name.contains(".ln75.")) {
         return Some(format!(
-            "carries a sound name's `.rn75.`/`.ln75.` tail but landed in `{pool}`; no published \
-             xmodel, image, material or xanim has one, so this is a coincidental hash match rather \
-             than a name"
+            "carries a sound name's `.rn75.`/`.ln75.` tail but is filed as `{pool}`, which no \
+             published xmodel, image, material or xanim does. Kept and submitted -- one such name \
+             is verified real, a sound path pasted onto a model by mistake -- but held back from \
+             the seed corpus, because learning a convention from somebody's slip would aim every \
+             later candidate wrongly."
         ));
     }
 
@@ -806,6 +812,22 @@ impl Results {
             .collect()
     }
 
+    /// The same, minus anything whose shape would teach a later pass the wrong convention.
+    ///
+    /// A confirmed name is kept forever and submitted; that is not in question. But it is also
+    /// fed back in as raw material, and a real-but-unrepresentative name is actively harmful
+    /// there -- one xmodel genuinely called `.../vox_....rn75.pc.ea_item` would put a whole sound
+    /// path into the xmodel vocabulary and spend the next pass building candidates from it.
+    /// Keep the name, decline the lesson.
+    pub fn seed_names(&self) -> Vec<String> {
+        self.by_kind
+            .iter()
+            .flat_map(|(kind, rows)| {
+                rows.values().filter(move |name| odd_for_pool(kind, name).is_none()).cloned()
+            })
+            .collect()
+    }
+
     /// The names held under one type.
     pub fn names(&self, kind: &str) -> Vec<String> {
         self.by_kind
@@ -840,13 +862,13 @@ impl Results {
             name
         };
 
-        // A coincidence caught here never reaches disk, and therefore never reaches a submission.
-        // Said out loud rather than dropped quietly: a run that hits one has learned something
-        // about its own accuracy, and the expected-by-chance figure it printed at the start is
-        // the thing to compare it against.
-        if let Some(why) = misfiled(kind, &name) {
-            println!("  discarded {id:x},{name}\n    {why}");
-            return;
+        // Kept, and flagged. An earlier version discarded these as coincidences, and the very
+        // first one it caught turned out -- checked in Saluki -- to be the model's real name: a
+        // sound path somebody at Treyarch pasted onto a model. Results only ever grow, and that
+        // rule outranks any heuristic about what a name ought to look like. The flag exists so a
+        // human glances at it, and so `seed_names` declines to learn from it.
+        if let Some(why) = odd_for_pool(kind, &name) {
+            println!("  unusual, kept: {id:x},{name}\n    {why}");
         }
 
         let rows = self.by_kind.entry(kind.to_owned()).or_default();

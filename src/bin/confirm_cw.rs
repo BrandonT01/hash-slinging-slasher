@@ -248,7 +248,7 @@ fn main() {
 
     // The confirmed names are proven patterns, so they always go back in as seeds.
     let mut results = Results::load(paths::findings());
-    let mut lines = results.all_names();
+    let mut lines = results.seed_names();
     println!("confirmed names as seeds: {}", lines.len());
 
     if sources == Sources::All {
