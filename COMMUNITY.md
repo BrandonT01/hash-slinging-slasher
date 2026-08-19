@@ -20,6 +20,7 @@ The game's **asset IDs are already captured in the repo**, so you don't need the
 
 All you need is:
 
+* A GitHub account (Allows you to submit your findings)
 * A computer
 * The files from the repo
 * Claude (or another coding agent)
