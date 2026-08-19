@@ -258,6 +258,7 @@ Filenames carry the date and time to the second, so nothing collides with a prev
 - `METHODS.md` — the methods in more detail, and what each reaches that nothing else does.
 - `src/lib.rs` — the hash, the filter, the results type.
 - `src/search.rs` — the peeling engine. Read the comments before changing anything here.
-- `snapshots/*.pools.txt` — every pool, with how many assets it holds. The unidentified ones are
-  named `pool_NNN`; **working out what any of them is, is a genuinely valuable contribution**,
-  because names in an unidentified pool cannot be submitted upstream until the type is known.
+- `snapshots/*.pools.txt` — every pool in both games, identified and counted. This is the map
+  of where the unnamed ids live. (Some *types* still lack a destination table upstream in
+  cod-name-db — a confirmed `technique_set` name has nowhere to land yet — and **giving such a
+  type a home upstream is a genuinely valuable contribution**.)

@@ -247,28 +247,18 @@ stem transforms of confirmed names, and future def dumps — the tag side is nev
 
 ---
 
-## The unidentified pools
+## The pools are all identified
 
-This is the largest single piece of unfinished business in the project, and it is not a search
-problem at all.
+An earlier version of this file called 67 pools "unidentified", labelled `pool_NNN`, with
+`pool_184` alone holding 52,677 stuck names. That is no longer true and has not been for some
+time: the pool labels have since been completed, and `snapshots/*.pools.txt` names **every
+filled pool in both games** — 202 for Cold War, 156 for Black Ops 4 — with its asset type and
+count. There is nothing left to identify, and no findings are stuck for want of a type.
 
-Cold War has **67 pools holding confirmed names that are labelled `pool_NNN`**, because nobody has
-worked out what asset type they are. A name in an unidentified pool **cannot be submitted upstream
-until its type is known**, so these names are found, proven, and stuck.
-
-**`pool_184` alone holds 52,677 confirmed names — 57% of the entire current haul.** Its contents
-look like a streaming or stream-key pool, naming the assets it streams:
-
-```
-core_frontend.d0 stream tree mtlGroup 14
-rev/2020/2020_dodge_challenger_truck_dmg.mod.vl100.pc.all.snd_transient
-maps/wz/wz_forest.d3dbsp_s0__terrain_l00_n000770
-```
-
-Identifying the top few pool numbers converts the bulk of the haul into something submittable. It
-needs no grinding and no game — just someone working out what the enum index means. **This is the
-highest-value non-grinding contribution available**, and the best first task for a new
-contributor. Every pool with its count is in `snapshots/*.pools.txt`.
+What remains real is narrower. Some identified *types* have no destination table in
+cod-name-db yet — a confirmed `technique_set` name has no `fnv1a_techsets.csv` upstream to
+land in. Giving such types a home is the useful non-grinding contribution this section used to
+mis-describe.
 
 ---
 
