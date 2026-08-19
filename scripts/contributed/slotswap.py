@@ -39,6 +39,11 @@ invents a word.
 Numbers are folded to `#` when forming a context, so `_01_` and `_07_` are the same neighbour and
 a family's vocabulary is shared across all of its members rather than split between them.
 
+`--context left` and `--context right` key the alphabet on one neighbour instead of two. That is
+looser -- the alphabets are larger and the candidates less certain -- but it is the only way to
+reach a name whose *other* neighbour also differs from anything known, which the two-sided form
+structurally cannot: it requires both sides to have been seen together already.
+
 ## What it reads and writes
 
 Reads the community tables, this machine's confirmed findings and the merged submissions, all
@@ -47,6 +52,7 @@ go to standard error.
 
 ## Options
 
+    --context WHICH  neighbours that define a slot: both, left or right (default both)
     --cap N          most substitutes offered per slot (default 12, by frequency)
     --min-seen N     ignore a context seen fewer than this many times (default 4)
     --min-alt N      ignore a substitute seen fewer than this many times (default 2)
@@ -120,8 +126,19 @@ def shape(token):
     return "".join(out)
 
 
-def measure(names, max_tokens):
-    """{(before, after): Counter of the tokens seen between them}."""
+def context_of(texts, index, which):
+    """The slot's context: the token before, the token after, or both, with digits folded."""
+    before = shape(texts[index - 1]) if index else "^"
+    after = shape(texts[index + 1]) if index + 1 < len(texts) else "$"
+    if which == "left":
+        return (before, "*")
+    if which == "right":
+        return ("*", after)
+    return (before, after)
+
+
+def measure(names, max_tokens, context):
+    """{context: Counter of the tokens seen in it}, keyed on one neighbour or both."""
     alphabet = collections.defaultdict(collections.Counter)
 
     for name in names:
@@ -132,9 +149,7 @@ def measure(names, max_tokens):
         for index, text in enumerate(texts):
             if not text:
                 continue
-            before = shape(texts[index - 1]) if index else "^"
-            after = shape(texts[index + 1]) if index + 1 < len(texts) else "$"
-            alphabet[(before, after)][text] += 1
+            alphabet[context_of(texts, index, context)][text] += 1
 
     return alphabet
 
@@ -148,6 +163,9 @@ def main(argv):
     min_alt = option("--min-alt", 2)
     max_tokens = option("--max-tokens", 16)
     digits = "--digits" in argv
+    context = argv[argv.index("--context") + 1] if "--context" in argv else "both"
+    if context not in ("both", "left", "right"):
+        raise SystemExit("--context must be both, left or right")
     counting = "--count" in argv
 
     print("reading known names", file=sys.stderr)
@@ -155,19 +173,19 @@ def main(argv):
     names = [name.strip().lower().replace("\\", "/") for name in names if name.strip()]
     print("%d known names" % len(names), file=sys.stderr)
 
-    alphabet = measure(names, max_tokens)
+    alphabet = measure(names, max_tokens, context)
     print("%d slot contexts measured" % len(alphabet), file=sys.stderr)
 
     # Trim each context to the substitutes worth offering. A context seen a handful of times
     # says nothing, and a substitute seen once is usually a typo or a one-off in somebody's
     # scraped list.
     offers = {}
-    for context, counter in alphabet.items():
+    for key, counter in alphabet.items():
         if sum(counter.values()) < min_seen:
             continue
         chosen = [text for text, count in counter.most_common(cap) if count >= min_alt]
         if len(chosen) > 1:
-            offers[context] = chosen
+            offers[key] = chosen
     print("%d contexts kept" % len(offers), file=sys.stderr)
 
     produced = 0
@@ -187,9 +205,7 @@ def main(argv):
             # Numbers in place is method 4's job, and it walks ranges this cannot.
             if not digits and text.isdigit():
                 continue
-            before = shape(texts[index - 1]) if index else "^"
-            after = shape(texts[index + 1]) if index + 1 < len(texts) else "$"
-            chosen = offers.get((before, after))
+            chosen = offers.get(context_of(texts, index, context))
             if not chosen:
                 continue
 
