@@ -42,7 +42,22 @@ every command in this file works either way.
 
 ## Before anything else
 
-Run this. It takes ten seconds and it is not optional:
+Two steps, in this order, and neither is optional.
+
+**First, bring the clone up to date:**
+
+```
+git pull --ff-only
+```
+
+The repository improves between sessions — fixed tools, new methods in `METHODS.md`, fresher
+measured lists, and everybody's merged submissions — so an assistant on a stale clone spends
+the night rediscovering what somebody already wrote down, with tools that may since have been
+fixed. If local changes block the pull, stash them (`git stash`) and pull rather than skip
+this. When a pull changes `src/`, the committed Windows binaries in `bin/windows/` were
+rebuilt to match; on Linux or macOS rebuild once with `cargo build --release`.
+
+**Then run preflight.** It takes ten seconds and it is not optional:
 
 ```
 cargo run --release --bin preflight
@@ -155,6 +170,13 @@ their vocabulary is the game's own.
 This is also why the search is self-feeding: every confirmed name is a new beginning, a new
 ending, and a new numbered family for the next pass to measure. **Run a pass, re-measure, run
 again.** Keep going until a round adds nothing.
+
+**Mine the past submissions too.** Every merged batch in `submissions/` records more than its
+names: the `about_*.md` beside them says which method found them and how long it ran. Read a
+few recent ones before choosing what to run — another machine's names are seed vocabulary for
+yours, and a method its notes prove worked is a better first pick than a guess. This is the
+snowball: every batch that lands makes the next assistant's first hour smarter, but only if
+the next assistant actually looks.
 
 ## Methods that work — a springboard, not a menu
 

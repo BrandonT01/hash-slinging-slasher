@@ -209,6 +209,42 @@ its own right, and the correct one is often a fragment rather than the whole.
 **Spent when** the harvest has not grown. Like materials-to-images, it is derivative — it yields
 nothing on unchanged input.
 
+## 8. Cross-game known pairs, and the whole-tag sweep
+
+**Builds from** a sibling game that ships the same thing unhashed. Black Ops III ships its
+techsetdefs as plain files, and the newer games carry assets left over from it — so one material
+exported from two games pairs a plain name with the hash of whatever the newer game calls the
+same thing. Three such pairs turn a found transformation into a proof, because whatever maps one
+must map them all.
+
+**Reaches** the techset pools, which no other method touches. A techset name is
+`<base>#<8 hex>`, and the tag is a 32-bit compile stamp that cannot be predicted — but 32 bits
+is small enough to **sweep whole**: with per-digit hash-state reuse, all 4.29 billion tags for
+one base cost about two seconds. Unlike every other method here, a base name is therefore
+*proved or conclusively ruled out*, never merely unswept.
+
+**Run it with** `techset_probe` (a file of candidate bases; sweeps every tag against the
+configured game's techset pool) and `techset_pair` (known `target_hash,plain_name` pairs; tries
+separators and tag widths to crack a convention from specimens).
+
+What it established, 2026-08-18/19:
+
+- **Black Ops 4** `technique_set` (3,597 ids, zero previously named): names are
+  `<base>#<8hex>` with BO3's base vocabulary. Material-class sets carry `mc/`
+  (`mc/lit_backlit#f4b74e85`), screen/2d/compute sets are bare (`zombie_blood#a60c435b`).
+  Tags are per-permutation — one base can hold dozens — and `#a60c435b` is the commonest.
+  1,322 names fell in the first 53-minute sweep.
+- **BO4 simplified BO3's stems** — `lit_weapon` became `lit`, `lit_emissive_scroll` became
+  `lit_emissive` — so trailing-qualifier truncation of known stems is a real seed transform.
+- **Cold War** `techset` (7,096 unnamed): *not* reachable from BO3 stems under any 32-bit tag —
+  full sweeps of every stem × every tag came back empty, which is a conclusive no for that
+  shape. The vocabulary or convention changed again. The next lever is the same trick one
+  generation up: a BO4-leftover asset exported from Cold War pairs a now-known BO4 name with a
+  CW hash.
+
+**Spent when** the base vocabulary stops growing. New bases come from cross-game leftovers,
+stem transforms of confirmed names, and future def dumps — the tag side is never the problem.
+
 ---
 
 ## The unidentified pools
