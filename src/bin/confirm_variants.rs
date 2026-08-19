@@ -227,8 +227,10 @@ fn main() {
     let from_materials = Results::load(paths::findings());
 
     let mut seeds: Vec<String> = slasher::all_table_names();
-    seeds.extend(results.all_names());
-    seeds.extend(from_materials.all_names());
+    // `seed_names`, not `all_names`: a confirmed-but-unrepresentative name is kept and
+    // submitted, but must not teach this pass what a name looks like. See `odd_for_pool`.
+    seeds.extend(results.seed_names());
+    seeds.extend(from_materials.seed_names());
     seeds.extend(strings);
 
     let mut seen: HashSet<u64> = HashSet::new();

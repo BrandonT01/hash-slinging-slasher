@@ -347,6 +347,78 @@ mod tests {
         let _ = std::fs::remove_dir_all(&dir);
     }
 
+    /// The stash path, which fires the first time a contributor has edited a tracked file and the
+    /// remote has moved. It had never run: everything here is exercised by `start` only when the
+    /// clone is behind *and* dirty, which no test and no session had produced.
+    ///
+    /// Built out of two real repositories rather than mocked, because the thing being tested is
+    /// what git does, not what this file believes git does.
+    #[test]
+    fn a_dirty_clone_is_stashed_and_brought_current() {
+        let root = std::env::temp_dir().join(format!("upd_stash_{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+
+        let origin = root.join("origin");
+        let clone = root.join("clone");
+        std::fs::create_dir_all(&origin).unwrap();
+
+        let run = |dir: &std::path::Path, args: &[&str]| {
+            let ok = Command::new("git")
+                .args(args)
+                .current_dir(dir)
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+                .map(|status| status.success())
+                .unwrap_or(false);
+            assert!(ok, "git {args:?} failed in {}", dir.display());
+        };
+
+        // A repository with one commit, then a clone of it.
+        run(&origin, &["init", "-q", "-b", "main"]);
+        run(&origin, &["config", "user.email", "t@t"]);
+        run(&origin, &["config", "user.name", "t"]);
+        std::fs::write(origin.join("tracked.txt"), "first\n").unwrap();
+        run(&origin, &["add", "-A"]);
+        run(&origin, &["commit", "-qm", "one"]);
+        run(&root, &["clone", "-q", "origin", "clone"]);
+        run(&clone, &["config", "user.email", "t@t"]);
+        run(&clone, &["config", "user.name", "t"]);
+
+        // The remote moves on.
+        std::fs::write(origin.join("tracked.txt"), "second\n").unwrap();
+        run(&origin, &["commit", "-qam", "two"]);
+
+        // And the contributor has meanwhile edited a tracked file, plus left an untracked one.
+        std::fs::write(clone.join("tracked.txt"), "mine\n").unwrap();
+        std::fs::write(clone.join("untracked.py"), "my generator\n").unwrap();
+
+        assert_eq!(check(&clone), State::Behind(1), "the clone should be one behind");
+
+        let said = bring_current(&clone).expect("the pull should succeed");
+        assert!(said.contains("stashed"), "it should say what it did: {said}");
+
+        // The remote's content arrived. Trimmed, because git rewrites line endings on checkout on
+        // Windows and it is the content being asserted, not the newline convention.
+        let arrived = std::fs::read_to_string(clone.join("tracked.txt")).unwrap();
+        assert_eq!(arrived.trim(), "second");
+        assert_eq!(check(&clone), State::Current);
+
+        // ...the contributor's edit is recoverable rather than gone...
+        let stashes = Command::new("git")
+            .args(["stash", "list"])
+            .current_dir(&clone)
+            .output()
+            .unwrap();
+        assert!(!String::from_utf8_lossy(&stashes.stdout).trim().is_empty(), "nothing was stashed");
+
+        // ...and their untracked generator was left exactly where they put it, which is the whole
+        // reason `bring_current` stashes tracked changes only.
+        assert!(clone.join("untracked.py").is_file(), "an untracked file must not be swept away");
+
+        let _ = std::fs::remove_dir_all(&root);
+    }
+
     /// Only the two states a search must not start in count as stale.
     #[test]
     fn behind_and_diverged_are_stale_and_nothing_else_is() {

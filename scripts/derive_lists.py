@@ -24,6 +24,17 @@ a pass has to be able to be a superset of the pass before it.
 import settings
 import collections, os, sys, glob
 
+# A sound name's encoding tail. One confirmed xmodel genuinely carries one -- somebody at Treyarch
+# pasted a sound path onto a model, verified in Saluki -- and it is kept and submitted as the fact
+# it is. It must not reach *these* lists, though: they are the committed vocabulary every future
+# pass builds candidates from, so learning an ending off one developer's slip would aim the whole
+# search wrongly for as long as the file survives. Kept as a name, declined as a lesson.
+SOUND_TAILS = (".rn75.", ".ln75.")
+
+
+def teaches_the_wrong_shape(kind, name):
+    return not kind.startswith("sound") and any(tail in name for tail in SOUND_TAILS)
+
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TABLES = settings.tables_csv()
 CONFIRMED = settings.path("findings", "findings")
@@ -75,14 +86,19 @@ def table_names(table):
 
 def found_names():
     for folder in (CONFIRMED, FROM_MATERIALS):
-        for path in glob.glob(os.path.join(folder, "*.txt")) + \
-                    glob.glob(os.path.join(folder, "run_*", "*.txt")):
+        # Recursive, because findings are kept per game now -- findings/<game>/ and its run_*
+        # folders. A flat glob of the root would quietly measure nothing at all.
+        for path in glob.glob(os.path.join(folder, "**", "*.txt"), recursive=True):
+            kind = os.path.basename(path).split(".")[0]
+
             # localizeentry is never measured: those names are CATEGORY/KEY pairs whose plain
             # text already ships in the build, and their conventions belong to no hunted pool.
-            if os.path.basename(path).startswith("localizeentry"):
+            if kind.startswith("localizeentry"):
                 continue
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line in handle:
+                    if teaches_the_wrong_shape(kind, line):
+                        continue
                     line = line.strip()
                     if "," in line:
                         yield line.split(",", 1)[1].lower()
