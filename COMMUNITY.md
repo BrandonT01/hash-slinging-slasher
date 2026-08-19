@@ -37,6 +37,8 @@ The actual hash searching is handled by compiled Rust code running directly on y
 
 You can leave it grinding for hours or overnight without chewing through your usage.
 
+If you want to stop at any point, simply tell the agent to stop and submit the findings to the repo.
+
 ---
 
 ### 📤 Found hashes are submitted automatically
