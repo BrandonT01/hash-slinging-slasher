@@ -1,0 +1,7 @@
+2e76c1db6335c210,damage_mp
+285b7ee7e3edf2ac,emp_shock
+679908e086a90b19,explosion_shock
+7dc058a0b1a698e8,explosion_zm
+494efb357b43bced,flare_mp
+97060ed2111053,pain_zm
+744f05ef804479a7,weapon_butt

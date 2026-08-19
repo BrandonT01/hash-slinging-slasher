@@ -1,0 +1,2 @@
+10db2b11008096b7,pistol_uw
+5a430c225483240f,smg_uw
