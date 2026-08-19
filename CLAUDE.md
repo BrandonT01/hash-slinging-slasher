@@ -99,7 +99,9 @@ request. See §7.
 
 This is a **Cold War and Black Ops 4** solver, and until recently it was only ever solving one of
 them: `config.toml` does not exist in a fresh clone, the fallback was Cold War, so every
-contributor ground Cold War and Black Ops 4 received nothing.
+contributor ground Cold War. Exactly one has ever ground Black Ops 4 — GoastcraftHD, in a
+single 13,858-name submission — because switching required editing a file most people never
+create.
 
 Black Ops 4 is the bigger prize of the two:
 

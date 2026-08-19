@@ -14,7 +14,7 @@ use std::fs;
 use std::path::PathBuf;
 
 use slasher::cordycep::CordycepInstance;
-use slasher::{id_of, pool_index, read_rows, GAME, ID_MASK, POOLS};
+use slasher::{config, id_of, pool_index, pools_for, read_rows, ID_MASK};
 
 /// A full load of this game. Well short of it means the loader is still mapping files, and a
 /// name reported missing would be missing only because it has not got there yet.
@@ -36,16 +36,26 @@ fn main() {
         }
     };
 
-    if instance.game_id() != GAME {
-        eprintln!("the loader has {} open, not {GAME}", instance.game_id());
+    // Whatever the loader actually has open, not a compile-time constant. This used to insist on
+    // Cold War, so the tool simply refused on a Black Ops 4 session -- and Black Ops 4 is the game
+    // most in need of checking against a live loader, because its sounds are not readable from the
+    // game at all and have to be loaded from SABs separately.
+    let game = instance.game_id().to_owned();
+    if !config::GAMES.contains(&game.as_str()) {
+        eprintln!("the loader has {game} open, which this holds no pool names for");
         return;
     }
+    println!("the loader has {game} open");
+
+    // The pool names of *that* game. The two number their asset types differently, so labelling a
+    // Black Ops 4 pool index out of Cold War's enum reports the wrong type with total confidence.
+    let pool_names = pools_for(&game);
 
     // Every pool an id appears in, since several share a name's hash.
     let mut loaded: HashMap<u64, Vec<usize>> = HashMap::new();
     let mut total = 0_usize;
 
-    for index in 0..POOLS.len() {
+    for index in 0..pool_names.len() {
         for asset in instance.assets(index) {
             total += 1;
             loaded
@@ -129,7 +139,7 @@ fn main() {
                         misfiled += 1;
                         let held = pools
                             .iter()
-                            .map(|index| POOLS[*index])
+                            .map(|index| pool_names[*index])
                             .collect::<Vec<_>>()
                             .join("/");
                         elsewhere.push((kind.clone(), name, held));

@@ -63,7 +63,7 @@ Both games use the same hash and the same normalisation, so one implementation s
 
 **Grind both.** Until recently the project ground only Cold War, because `config.toml` does not
 exist in a fresh clone and the fallback was Cold War -- so a repository calling itself a Cold War
-and Black Ops 4 solver had, in practice, never solved any Black Ops 4. `start` now alternates by
+and Black Ops 4 solver got its Black Ops 4 work from exactly one contributor. `start` alternates by
 how many passes each game has had on the machine, findings are kept per game in `findings/<game>/`,
 and `submit` opens one pull request per game titled `[BLKOPS04] findings from ...`. Setting `game`
 in `config.toml` turns the alternation off and that choice is then respected.
@@ -117,9 +117,37 @@ note saying `new: 496` means new to this machine, and quoting that as the method
 it by two orders of magnitude. That is exactly how the entry for method 2 above came to be wrong
 the first time it was written down.
 
-**Judge a method by what `submit` actually sent.** And note which way the surprise ran here: the
-widened sound corpus looked like the weakest of the four by run-note figures and was in fact the
-strongest by a factor of five.
+And the same pass on Black Ops 4, where the gap is far starker:
+
+| run | found | new to the community |
+|---|---|---|
+| general search, Black Ops 4, 51 minutes | 15,747 | **16** |
+
+Fifty minutes of every core, and 15,731 of those names were already claimed — almost the whole of
+GoastcraftHD's earlier 13,858-name submission, re-derived from scratch.
+
+**Judge a method by what `submit` actually sent.** And note which way the surprise ran on Cold War:
+the widened sound corpus looked like the weakest of the four by run-note figures and was in fact
+the strongest by a factor of five.
+
+### The searches now exclude claimed names too, which is why that pass could happen
+
+That Black Ops 4 run was possible because `wanted` was built from the **published tables alone**.
+The tables lag the community by days, so a name merged into `submissions/` here — or sitting in an
+open pull request — was still "unnamed" as far as cod-name-db was concerned, and the search kept
+hunting it.
+
+`loader::wanted_for_search` now also drops everything in `state/claimed.txt`, which `start` writes.
+Measured immediately afterwards:
+
+| | ids hunted before | after |
+|---|---|---|
+| Black Ops 4 | 141,881 | **124,758** |
+| Cold War | 136,467 | **135,416** |
+
+Twelve percent off a Black Ops 4 pass, and the saving grows every time anybody submits. It buys
+accuracy as well as time: fewer ids means proportionally fewer coincidental matches. It also makes
+a run's own figures honest by construction rather than by the reader remembering to check them.
 
 ---
 
@@ -320,8 +348,15 @@ anything.
 
 **Reopened.** The tail vocabulary was measured from a table holding 57,593 names when 825,316 were
 available, and the two use *different* tail conventions — `.ln75.pc.all.snd` against
-`.rn75.pc.<lang>.snd`. Cold War's `sound_asset` has 19,301 unnamed. Black Ops 4's sound pool has
-99; do not run it there.
+`.rn75.pc.<lang>.snd`. Cold War's `sound_asset` has 19,301 unnamed.
+
+**Do not run it on Black Ops 4, and the reason is not that its sounds are all named.** Its sound
+pool holds a hundred assets because Saluki cannot read Black Ops 4 sounds from the game at all —
+they live in SAB files that have to be loaded separately, so they never enter the loader and never
+entered the snapshot. Confirmed against a live Cordycep session on 2026-08-19 with a full load:
+1,023,902 assets, matching the committed snapshot exactly, and still only ~100 sound assets. The
+rest are not missing from the capture; they are not there to capture. Black Ops 4 sound work needs
+a different source entirely.
 
 ## 8. Reading the tables and extending them
 

@@ -90,6 +90,47 @@ pub const LOW_VALUE_POOLS: &[(&str, &str)] = &[
     ),
 ];
 
+/// Why a name cannot belong to the pool it landed in, when it plainly cannot.
+///
+/// A match proves a string hashes to an id the game holds. It does **not** prove the string is
+/// that asset's name -- with ~136,000 wanted ids and a hundred trillion candidates a pass, one or
+/// two coincidences are expected, and every binary prints the figure it expects. Until now
+/// nothing acted on that: a coincidence was written to disk and submitted like any other find.
+///
+/// One turned up on the first widened pass and it is the model case.
+/// `survival/operators/beck/vox_beck_se_kill_mult_nightingale_01.rn75.pc.ea_item` was filed as an
+/// `xmodel`, in both games. The id is a real model -- Cold War holds its `xcollision` and
+/// `xskeleton` too, which is the ordinary model triple -- so the id is genuine and the *name* is
+/// a sound path with a mangled tail that happens to hash to it.
+///
+/// The rule is deliberately narrow, and it is measured rather than assumed. Across the published
+/// tables: **1,414,269 xmodel, image, material and xanim names carry no `.rn75.`/`.ln75.` tail
+/// between them -- not one -- while 1,485,904 sound names do.** So the tail is a sound name's
+/// signature, and one on anything else is a coincidence. Reproduce it with:
+///
+/// ```text
+/// cd cod-name-db/csv
+/// cut -d, -f2- fnv1a_xmodels.csv | grep -cE '\.(rn|ln)75\.'      # 0
+/// cat fnv1a_*xsounds.csv | cut -d, -f2- | grep -cE '\.(rn|ln)75\.'  # 1485904
+/// ```
+///
+/// Nothing else is guessed at here. A rule that threw away real names to catch one coincidence a
+/// pass would cost far more than it saved, so this stays at the one shape that has never once
+/// been wrong in one and a half million published names.
+pub fn misfiled(pool: &str, name: &str) -> Option<String> {
+    let sound = matches!(pool, "sound" | "sound_asset" | "sound_bank" | "sound_duck");
+
+    if !sound && (name.contains(".rn75.") || name.contains(".ln75.")) {
+        return Some(format!(
+            "carries a sound name's `.rn75.`/`.ln75.` tail but landed in `{pool}`; no published \
+             xmodel, image, material or xanim has one, so this is a coincidental hash match rather \
+             than a name"
+        ));
+    }
+
+    None
+}
+
 /// Why this pool is not worth searching, if it is one of the ones that is not.
 pub fn low_value_reason(pool: &str) -> Option<&'static str> {
     LOW_VALUE_POOLS
@@ -187,7 +228,18 @@ pub const BO4_POOLS: &[&str] = &[
 
 /// The pool names for the game being ground.
 pub fn pools() -> &'static [&'static str] {
-    match config::game().as_str() {
+    pools_for(&config::game())
+}
+
+/// The pool names for a named game.
+///
+/// Wanted wherever the game is known from something better than the configuration -- a snapshot's
+/// own tag, or whatever the loader has open. Labelling one game's pool index out of the other's
+/// enum has now produced three separate wrong answers in this codebase, each stated with complete
+/// confidence, because index 5 is `xanim` in Cold War and `xmodelmesh` in Black Ops 4 and both
+/// look perfectly reasonable in a log.
+pub fn pools_for(game: &str) -> &'static [&'static str] {
+    match game {
         "BLKOPS04" => BO4_POOLS,
         _ => POOLS,
     }
@@ -787,6 +839,15 @@ impl Results {
         } else {
             name
         };
+
+        // A coincidence caught here never reaches disk, and therefore never reaches a submission.
+        // Said out loud rather than dropped quietly: a run that hits one has learned something
+        // about its own accuracy, and the expected-by-chance figure it printed at the start is
+        // the thing to compare it against.
+        if let Some(why) = misfiled(kind, &name) {
+            println!("  discarded {id:x},{name}\n    {why}");
+            return;
+        }
 
         let rows = self.by_kind.entry(kind.to_owned()).or_default();
 

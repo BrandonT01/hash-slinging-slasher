@@ -84,20 +84,27 @@ fn from_snapshot() -> Result<(Vec<(u64, usize)>, Vec<String>), String> {
 #[cfg(feature = "cordycep")]
 fn from_loader() -> Result<(Vec<(u64, usize)>, Vec<String>), String> {
     use crate::cordycep::CordycepInstance;
-    use crate::{ID_MASK, POOLS};
+    use crate::ID_MASK;
 
     let instance = CordycepInstance::open().map_err(|error| error.to_string())?;
 
-    if instance.game_id() != GAME {
+    // Whatever the loader has open, checked against what this run is set to grind. The constant
+    // this used to compare against was Cold War, so a Black Ops 4 session was refused outright.
+    let open = instance.game_id().to_owned();
+    let wanted = config::game();
+
+    if open != wanted {
         return Err(format!(
-            "the loader has {} open, not {GAME}. Refusing to judge one game's names against \
-             another's assets.",
-            instance.game_id()
+            "the loader has {open} open and this run is set to grind {wanted}. Refusing to judge \
+             one game's names against another's assets -- pass `--game {open}` to follow the \
+             loader."
         ));
     }
 
+    let pool_names = crate::pools_for(&open);
+
     let mut assets = Vec::new();
-    for index in 0..POOLS.len() {
+    for index in 0..pool_names.len() {
         for asset in instance.assets(index) {
             assets.push(((asset.id as u64) & ID_MASK, index));
         }
@@ -148,6 +155,35 @@ pub fn wanted_for_search(
 
     let mut wanted = unnamed(assets, known);
     wanted.retain(|_, pool| !unreachable.contains(pool) && targets.wants(*pool));
+
+    // And everything somebody has already claimed but that has not reached the tables yet.
+    //
+    // This was missing and it cost a whole pass to notice. The published tables lag the community
+    // by days: a name merged into `submissions/` here, or sitting in an open pull request, is
+    // still "unnamed" as far as cod-name-db is concerned, so a search kept hunting it. Measured
+    // on the first Black Ops 4 pass: 15,747 names found, of which **15,731 were already claimed**
+    // -- fifty minutes of CPU spent rediscovering one contributor's earlier submission, and a run
+    // note that read like a triumph.
+    //
+    // Dropping them shrinks the wanted set, which makes every pass faster *and* more accurate:
+    // fewer ids means proportionally fewer coincidental matches. It also makes what a run reports
+    // honest by construction rather than by the reader remembering to check.
+    //
+    // `state/claimed.txt` is written by `start`. Absent, this does nothing -- so a clone that has
+    // never run the startup checks is no worse off than before, only no better.
+    let claimed = crate::recon::load_cached();
+    if !claimed.is_empty() {
+        let before = wanted.len();
+        wanted.retain(|id, _| !claimed.contains(id));
+
+        let dropped = before - wanted.len();
+        if dropped > 0 {
+            println!(
+                "not hunting {dropped} id(s) somebody has already claimed but the tables have not \
+                 caught up with yet"
+            );
+        }
+    }
 
     wanted
 }

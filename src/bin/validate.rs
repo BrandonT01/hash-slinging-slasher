@@ -23,7 +23,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 use slasher::snapshot::Snapshot;
-use slasher::{id_of, paths, pool_index, pool_label, tables};
+use slasher::{id_of, paths, tables};
 
 fn main() {
     let targets: Vec<PathBuf> = std::env::args().skip(1).map(PathBuf::from).collect();
@@ -128,31 +128,69 @@ fn main() {
                 continue;
             }
 
-            // 3. The type, when the filename names a pool that can be checked at all.
+            // 2b. The id being real does not make the name real.
             //
-            //    Two things stop this being universal. Pools nobody has identified yet are named
-            //    `pool_184`, and there is nothing to check those against. And POOLS is Cold War's
-            //    asset type enum: Black Ops 4 numbers its pools differently, so a pool index read
-            //    out of a Black Ops 4 snapshot means nothing here. A name only that game holds is
-            //    therefore confirmed real but left with its type untested, which is reported at
-            //    the end rather than passed off as a check that happened.
-            if let Some(wanted) = pool_index(&kind) {
-                match holders.first() {
-                    Some(snapshot) => {
-                        let pools = snapshot.pools_of(id);
-                        if !pools.iter().any(|(_, pool)| *pool as usize == wanted) {
-                            let held: Vec<String> =
-                                pools.iter().map(|(_, pool)| pool_name(*pool as usize)).collect();
+            //     A hundred trillion candidates against ~136,000 wanted ids expects one or two
+            //     coincidental matches a pass, and one duly turned up: a sound path filed as an
+            //     `xmodel`, on an id that is a genuine model in both games. The hash check above
+            //     passes it, the snapshot check passes it, and it is still not a name. See
+            //     `slasher::misfiled` for the one shape this can prove, and why only one.
+            if let Some(why) = slasher::misfiled(&kind, name) {
+                bad.push(format!("{where_}: {name} {why}"));
+                continue;
+            }
 
-                            bad.push(format!(
-                                "{where_}: {name} is filed as {kind} but {} holds it in {}",
-                                snapshot.game(),
-                                held.join(", ")
-                            ));
+            // 3. The type must be one of the pools the id actually lives in.
+            //
+            //    Resolved against the game of the snapshot that actually holds the id, never against
+            // whatever this machine is configured to grind. The two number their asset types
+            // differently -- index 5 is `xanim` in Cold War and `xmodelmesh` in Black Ops 4 -- so
+            // a check that reads one game's index out of the other's enum reports a confident,
+            // detailed, completely wrong answer. It did: thirteen correct Cold War anims were
+            // reported as "filed as xanim but BLKOPSCW holds it in xmodelmesh", which is not even
+            // self-consistent, and it would have rejected a sound submission in CI.
+            //
+            // A name held by several games is checked against each, and passes if any agrees:
+            // both games hold plenty of the same assets, and the submission does not say which
+            // game found it.
+            match holders.as_slice() {
+                [] => {}
+                holders => {
+                    let mut fits = false;
+                    let mut held: Vec<String> = Vec::new();
+                    let mut checkable = false;
+
+                    for snapshot in holders {
+                        let table = slasher::pools_for(snapshot.game());
+                        let Some(wanted) = slasher::pool_index_in(table, &kind) else {
                             continue;
+                        };
+                        checkable = true;
+
+                        let pools = snapshot.pools_of(id);
+                        if pools.iter().any(|(_, pool)| *pool as usize == wanted) {
+                            fits = true;
+                            break;
+                        }
+
+                        for (_, pool) in pools {
+                            held.push(format!(
+                                "{} in {}",
+                                table.get(*pool as usize).copied().unwrap_or("an unnamed pool"),
+                                snapshot.game()
+                            ));
                         }
                     }
-                    None => untyped += 1,
+
+                    if !checkable {
+                        untyped += 1;
+                    } else if !fits {
+                        bad.push(format!(
+                            "{where_}: {name} is filed as {kind} but the game holds it as {}",
+                            held.join(", ")
+                        ));
+                        continue;
+                    }
                 }
             }
 
@@ -279,22 +317,35 @@ fn published_hashes() -> Option<HashSet<u64>> {
 ///
 /// Written as a trailing-stamp trim rather than a split on the first underscore, because plenty
 /// of pool names have one in them -- `sound_asset` would otherwise arrive as `sound`.
+/// The asset type out of a submitted filename, with the timestamp taken off.
+///
+/// `submit` names files `<type>_<stamp>.txt` where the stamp is `yyyymmdd-hhmmss` -- **with a
+/// dash in it**. This used to strip only trailing runs of pure digits, so it matched nothing on
+/// a real filename and returned `xmodel_20260819-174052` as the asset type. Nothing then resolved
+/// that to a pool, so the type check below quietly counted every name as untypeable and passed.
+/// It had never worked on a real submission.
+///
+/// The test that was supposed to catch this built its stamp as `_20260818_213000`, a shape
+/// `stamp()` does not produce, so it agreed with the bug. Both are fixed; the test now uses
+/// `stamp()`'s own output.
 fn strip_stamp(stem: &str) -> &str {
     let mut cut = stem;
 
     while let Some((before, last)) = cut.rsplit_once('_') {
-        if last.is_empty() || !last.bytes().all(|byte| byte.is_ascii_digit()) {
+        let stamp_like = !last.is_empty()
+            && last.bytes().all(|byte| byte.is_ascii_digit() || byte == b'-')
+            && last.bytes().any(|byte| byte.is_ascii_digit());
+
+        if !stamp_like {
             break;
         }
+
         cut = before;
     }
 
     cut
 }
 
-fn pool_name(index: usize) -> String {
-    pool_label(index)
-}
 
 /// A path short enough to read in a log, since CI prints an absolute one.
 fn short(path: &Path) -> String {
@@ -322,36 +373,55 @@ mod tests {
     /// away into nothing.
     #[test]
     fn an_unidentified_pool_is_left_alone_enough_to_be_unmatchable() {
-        // `pool_184` trims to `pool`, which is not a known pool name, so the type check is
-        // skipped rather than wrongly failed. That is the behaviour that matters.
-        assert!(pool_index(strip_stamp("pool_184_20260818_213000")).is_none());
+        // `pool_184` trims to `pool`, which is not a known pool name in either game, so the type
+        // check is skipped rather than wrongly failed. That is the behaviour that matters.
+        let trimmed = strip_stamp("pool_184_20260819-174052");
+
+        for table in [slasher::POOLS, slasher::BO4_POOLS] {
+            assert!(slasher::pool_index_in(table, trimmed).is_none(), "{trimmed} resolved");
+        }
     }
 
     /// Every known pool name must round-trip, or a valid submission would be rejected for being
     /// filed under a type this could not recognise.
     #[test]
     fn every_pool_name_survives_a_stamp() {
-        for pool in slasher::POOLS {
-            let stamped = format!("{pool}_20260818_213000");
+        // `stamp()` itself, not a hand-written imitation of it. The imitation is what let the
+        // stripper stay broken: it produced `_20260818_213000`, the real thing produces
+        // `_20260819-174052`, and only the first one had its digits unbroken by a dash.
+        let stamp = slasher::stamp();
+        assert!(stamp.contains('-'), "the stamp shape changed: {stamp}");
+
+        for pool in slasher::POOLS.iter().chain(slasher::BO4_POOLS) {
+            let stamped = format!("{pool}_{stamp}");
             assert_eq!(strip_stamp(&stamped), *pool, "{pool} did not come back");
         }
     }
 
-    /// Asserted against Cold War's table by name rather than through `pool_name`, which reads
-    /// whichever game this machine is currently set to grind. Index 6 is `xmodel` there and
-    /// `material` in Black Ops 4, so going through the configured game makes the test's answer
-    /// depend on the machine it runs on -- which it duly started doing the day both games began
-    /// being ground.
+    /// A type whose own name ends in something stamp-shaped must survive too, or the stripper
+    /// would eat part of the asset type.
     #[test]
-    fn pools_that_are_named_are_named_and_the_rest_are_numbered() {
+    fn stripping_stops_at_the_asset_type() {
+        assert_eq!(strip_stamp("xmodel"), "xmodel");
+        assert_eq!(strip_stamp("sound_asset_20260819-174052"), "sound_asset");
+        assert_eq!(strip_stamp("cpu_occlusion_data_20260819-174052"), "cpu_occlusion_data");
+        assert_eq!(strip_stamp("script_using_mp_20260819-174052"), "script_using_mp");
+    }
+
+    /// Each game's own enum, asserted by name. The type check now resolves against the game of
+    /// the snapshot holding the id, so nothing here may go through the configured game -- index 6
+    /// is `xmodel` in Cold War and `material` in Black Ops 4, and a test that reads the config
+    /// passes or fails depending on the machine it runs on.
+    #[test]
+    fn each_game_numbers_its_pools_its_own_way() {
         assert_eq!(slasher::POOLS[6], "xmodel");
-        // 184 was the largest unidentified pool in the game until the enum named it.
+        assert_eq!(slasher::BO4_POOLS[6], "material");
+
+        // Index 5 is the one that produced a confident wrong answer for thirteen real anims.
+        assert_eq!(slasher::POOLS[5], "xanim");
+        assert_eq!(slasher::BO4_POOLS[5], "xmodelmesh");
+
+        // 184 was the largest unidentified pool in Cold War until the enum named it.
         assert_eq!(slasher::POOLS[184], "streamkey");
-        // Past the end of the enum is where the numbered fallback still applies.
-        assert_eq!(pool_name(999), "pool_999");
-        assert_eq!(pool_name(slasher::BO4_POOLS.len().max(slasher::POOLS.len())), {
-            let past = slasher::BO4_POOLS.len().max(slasher::POOLS.len());
-            format!("pool_{past}")
-        });
     }
 }

@@ -352,7 +352,8 @@ fn report(landscape: &recon::Landscape) {
 ///
 /// A fresh clone has none of either, and the tie goes to Black Ops 4: it has more unnamed assets
 /// in the five types that matter (141,889 against 136,467) and is much less picked over -- 64% of
-/// its images are named against 81% of Cold War's -- and it has historically received nothing.
+/// its images are named against 81% of Cold War's -- and exactly one contributor has ever ground
+/// it, because switching meant editing a file most people never create.
 ///
 /// Nobody chooses, both get ground, and one flag overrides it for anybody who cares.
 fn which_game() -> String {
