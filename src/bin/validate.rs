@@ -105,18 +105,28 @@ fn main() {
             here += 1;
 
             // 1. The hash, recomputed. Whatever the sender wrote is only a claim.
-            let id = id_of(name);
-            match u64::from_str_radix(claimed.trim(), 16) {
-                Ok(said) if said == id => {}
+            //
+            //    Both normalisations are accepted, and exactly one pool needs the second: Black
+            //    Ops 4's SAB sound names keep their backslashes and the game holds the hash of
+            //    the unfolded string. Checking only the folded form would reject every genuine
+            //    Black Ops 4 sound name -- 70,878 of them -- as a bad hash.
+            let folded = id_of(name);
+            let raw = slasher::hash64_raw(name) & slasher::ID_MASK;
+
+            let id = match u64::from_str_radix(claimed.trim(), 16) {
+                Ok(said) if said == folded => folded,
+                Ok(said) if said == raw => raw,
                 Ok(said) => {
-                    bad.push(format!("{where_}: says {said:x} but {name} hashes to {id:x}"));
+                    bad.push(format!(
+                        "{where_}: says {said:x} but {name} hashes to {folded:x} (or {raw:x}                          unfolded)"
+                    ));
                     continue;
                 }
                 Err(_) => {
                     bad.push(format!("{where_}: {} is not a hash", claimed.trim()));
                     continue;
                 }
-            }
+            };
 
             // 2. The claim itself: some game holds this id. Which one is not asked, because the
             //    submission does not say and a contributor should not have to know.
@@ -404,6 +414,36 @@ mod tests {
         assert_eq!(strip_stamp("sound_asset_20260819-174052"), "sound_asset");
         assert_eq!(strip_stamp("cpu_occlusion_data_20260819-174052"), "cpu_occlusion_data");
         assert_eq!(strip_stamp("script_using_mp_20260819-174052"), "script_using_mp");
+    }
+
+    /// Every way we grind must be able to find something. This is the regression test for the
+    /// failure this project keeps producing: a normalisation that quietly matches nothing while
+    /// every run looks healthy. Each entry is a name cod-name-db already publishes, and the id
+    /// the game genuinely holds for it -- so if a hash, a mask or a fold ever drifts, this fails
+    /// instead of a contributor's night failing.
+    #[test]
+    fn every_normalisation_still_reaches_the_games() {
+        let snapshots = snapshots();
+        assert!(!snapshots.is_empty(), "the snapshots ship with the repository");
+
+        let holds = |id: u64| snapshots.iter().any(|snapshot| snapshot.holds(id));
+
+        // Ordinary names: folded, and the fold is a no-op because they carry no backslash.
+        for name in [
+            "attach_t8_shotgun_pump_grip_sig2_view",
+            "splm/aml_fish_salmon_01",
+            "mc/mtl_veh_t8_mil_truck_att_decal01",
+        ] {
+            assert!(holds(id_of(name)), "{name} should be reachable by the folding hash");
+        }
+
+        // Black Ops 4 SAB sound names, which keep their backslashes. Folding these gives a number
+        // the game does not hold, which is precisely the bug this guards.
+        let sound = r"amb\environment\water\waves\crash\wave_crash_01.ln100.pc.snd";
+        let raw = slasher::hash64_raw(sound) & slasher::ID_MASK;
+
+        assert!(holds(raw), "the unfolded hash must reach the sound pool");
+        assert!(!holds(id_of(sound)), "folding it should reach nothing -- that is the whole point");
     }
 
     /// Each game's own enum, asserted by name. The type check now resolves against the game of

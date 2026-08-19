@@ -140,16 +140,38 @@ Two things follow that you need to know:
 Search these and nothing else unless the user says otherwise:
 
 ```
-model     material     image     anim     sound file
+model     material     image     anim     sound file     sound alias
 ```
 
-**"Sound file" means the `sound_asset` pool, not `sound`.** The two are different things and they
-go to different tables upstream, so getting it wrong contaminates the community database:
+**Three of those are sound-shaped and only two are wanted.** They go to different tables upstream,
+so filing one as another contaminates the community database:
 
 | pool | what it holds | goes to |
 |---|---|---|
-| **`sound_asset`** | **individual sounds — the ones we want** | `fnv1a_xsounds.csv` |
+| **`sound_asset`** | **individual sound files** | `fnv1a_xsounds.csv` |
+| **`sound_alias`** | **the names scripts and weapons refer to** | `fnv1a_soundbanks_aliases.csv` |
 | `sound` | sound *banks*, like `mp_embassy.all` | `fnv1a_soundbanks*.csv` |
+
+**Sound is a separate pass, with its own vocabulary:**
+
+```
+bin\windows\confirm_cw.exe --game BLKOPS04                     the other four types
+bin\windows\confirm_cw.exe --game BLKOPS04 --sounds --no-fold   sound files and aliases
+```
+
+Two passes because sound names look nothing like the rest, so a sound ending tried against a model
+id can only ever be a coincidence and never a match. Sharing one run made both halves worse and
+slower. Split, each gets its own measured lists (`data/sound.*.txt`) and hunts only ids its
+vocabulary can reach. `--no-fold` is for Black Ops 4 only — see §6.
+
+Neither of the two wanted ones is a loader asset — sound files live in SAB files and aliases live
+inside bank assets — so both were read out of the games and injected into the snapshots. Between
+them they are **the largest untouched ground in the project**:
+
+| | Cold War | Black Ops 4 |
+|---|---|---|
+| `sound_asset` unnamed | 19,301 | **70,878** of 79,263 |
+| `sound_alias` unnamed | **43,603** of 50,890 | 23,790 of 50,043 |
 
 In Cold War that split is `sound_asset` (19) against `sound_bank` (18). Black Ops 4's own enum has
 only the bank pool, because its individual sounds live in SAB files the loader never opens — so

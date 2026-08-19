@@ -29,6 +29,7 @@ a program that prints names; anything that can print names is a method.
 | `cross_type.py --measure` | how strongly one asset type's names predict another's. Measured, not assumed. |
 | `snapshot.py` | run directly for a one-line summary per game. Used as a library by everything else. |
 | `check_docs.py` | whether the documentation still describes the repository that exists. Runs in CI. |
+| `reach.py` | **what share of known names the lists could rebuild at all.** A ceiling, not a yield: whatever the lists cannot express, no pass can find however long it runs, and nothing in a run says so. `--missing` names the commonest beginnings and endings not carried. |
 
 ## Generators
 

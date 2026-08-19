@@ -42,7 +42,34 @@ FROM_MATERIALS = settings.path("findings", "findings")
 DATA = os.path.join(HERE, "data")
 
 # The tables that are Cold War rather than a newer game, by their marker density.
-COLD_WAR = ["fnv1a_xmodels", "fnv1a_xmaterials", "fnv1a_ximages", "fnv1a_xanims"]
+# **Order matters.** Each table gets a capped share below, but the shares are taken in this order
+# and the ceiling binds long before the list ends -- so a table placed last gets whatever is left,
+# which on the first attempt at this was nothing at all: adding the sound tables at the end
+# contributed 313 beginnings and **zero** endings. Smallest and least-represented first.
+COLD_WAR = [
+    # Sound, which these lists were blind to until the sound pools became something we grind.
+    # `sound_asset` and `sound_alias` are now ~138,000 of the wanted ids across the two games, and
+    # not one beginning or ending had ever been measured from a sound name. Each table gets its
+    # own guaranteed places below before global popularity fills the rest, so adding them widens
+    # the vocabulary rather than letting the biggest pool crowd the others out.
+    "fnv1a_soundbanks_aliases",
+    "fnv1a_english_xsounds",
+    "fnv1a_xsounds",
+    "fnv1a_xanims",
+    "fnv1a_xmodels",
+    "fnv1a_xmaterials",
+    "fnv1a_ximages",
+]
+
+# `fnv1a_xsounds` is the Black Ops 4 SAB table and is **mixed**: 8,403 of its names use
+# backslashes and 49,189 use forward slashes, none use both. The backslash rows are the SAB
+# entries, whose ids are the hash of the unfolded string.
+#
+# They are measured anyway, with the separator normalised to `/` below, because the *shape* of a
+# sound path is the same either way and only the separator differs. Keeping one canonical list
+# costs no slots and loses nothing: a `--no-fold` run translates `/` back to `\` as it loads, so
+# the same measured vocabulary serves both normalisations. Measuring them twice, once per
+# separator, would have spent half the ceiling saying the same thing.
 
 # Since the search peels its endings off the wanted ids rather than appending them to every
 # stem, an ending costs a share of one pass over those ids instead of a whole pass over the
@@ -67,6 +94,54 @@ FOUND_PREFIX_MIN = 40
 MOST_ENDINGS = 4800
 MOST_PREFIXES = 700
 
+# What must survive every regeneration, whatever else is measured.
+#
+# These lists are capped, so measuring a new table does not grow them -- it *displaces* whatever
+# ranked lowest. That failure is silent by construction: the file still has its 700 lines and
+# still looks healthy, while the beginnings that reach most of the game have quietly gone. It has
+# happened once already. Adding the sound tables made `published["directories"]` thousands of deep
+# sound paths long, that take had no cap, and it consumed the whole ceiling: `p9_`, `i_`, `mtl_`,
+# `attach_` and `vm_` all disappeared in one run.
+#
+# Nothing downstream would have complained. Every later pass would simply have found less, for as
+# long as the file survived. So the list refuses to be written without them.
+#
+# The counts are how many published names each one heads, measured from the tables, and they are
+# the argument for the entry being here. Anything added should carry the same justification.
+MUST_KEEP_PREFIXES = {
+    "p9_": 77248, "p8_": 66172, "p7_": 42516, "attach_": 27504,   # xmodel
+    "mtl_": 343794, "i_": 403889, "c_": 16617,                    # material, image
+    "vm_": 18088, "ai_": 11226, "sdr_": 6976,                     # xanim
+    "ui_": 31742, "volume0_": 52256,                              # image
+    # The twelve material directories. `mc/` heads 496,666 names and `ec/` heads 25, which is
+    # exactly why they cannot be chosen by popularity.
+    "mc/": 496666, "wc/": 7979, "clt/": 5762, "splm/": 3899, "vd/": 2340, "cltp/": 2278,
+    "ei/": 1639, "mcs/": 1638, "vdd/": 110, "el/": 103, "mcp/": 40, "ec/": 25,
+}
+
+# The endings the game most depends on, and the same guard as the beginnings above.
+#
+# This list is capped too, and it displaces the same way. Measuring the sound tables pushed out
+# endings covering 115,606 published names in one run -- `_proxy`, `_maps1`, `_maps2` and `_col`
+# among them -- and nothing said so: the file still had its 4,800 lines. These forty are the
+# most-used trailing segments across models, materials, images and anims, covering 748,684
+# published names between them, and the run refuses to produce a list without them.
+#
+# The numbers are how many published names each ending closes, and they are the argument for the
+# entry being here. Anything added should carry the same.
+MUST_KEEP_ENDINGS = {
+    '_c': 120466, '_01': 105373, '_n': 95007, '_g': 51864,
+    '_02': 42455, '_o': 40176, '_m': 35669, '_s': 33768,
+    '_03': 20182, '_r': 18651, '_view': 14575, '_world': 14229,
+    '_04': 11420, '_metal': 9763, '_decal': 8879, '_dead': 7619,
+    '_16': 7607, '_05': 7132, '_a': 6923, '_b': 6705,
+    '_proxy': 6043, '_icon': 5754, '_maps1': 5748, '_on': 5660,
+    '_maps2': 5262, '_red': 4909, '_e': 4627, '_06': 4625,
+    '_white': 4474, '_wet': 4474, '_glass': 4399, '_black': 4214,
+    '_1': 4141, '_wood': 3904, '_cst': 3846, '_2': 3773,
+    '_base': 3704, '_large': 3625, '_blend': 3581, '_snow': 3458,
+}
+
 # Endings a family varies that no table can show, because a model's mesh entry hides them behind
 # its own hash.
 EXTRA = ["_lod0", "_lod1", "_lod2", "_lod3", "_lod4", "_lod5", "_lod6", "_s1", "_s2", "_s3",
@@ -81,7 +156,9 @@ def table_names(table):
         for line in handle:
             line = line.strip()
             if "," in line:
-                yield line.split(",", 1)[1].lower()
+                # Normalised to forward slashes so one list serves both normalisations -- see the
+                # note beside COLD_WAR. A `--no-fold` search translates them back.
+                yield line.split(",", 1)[1].lower().replace(chr(92), "/")
 
 
 def found_names():
@@ -132,6 +209,21 @@ def measure(names):
             directories[directory] += 1
             rooted[directory + parts[0] + "_"] += 1
 
+            # And every leading segment of it, not only the whole thing.
+            #
+            # A candidate is `beginning + stem + ending`, and the stem is any piece cut at a mark
+            # -- so `fly/footsteps/stakeout/fs_asphalt_walk_01` is reachable from the beginning
+            # `fly/` with a long stem just as well as from its entire directory. Counting only the
+            # full directory meant deep paths contributed one very specific beginning each and no
+            # short ones, and 700 slots cannot hold thousands of those. Measured: it left Black
+            # Ops 4's sound names 19.2% reachable, on the largest unnamed pool in the project.
+            #
+            # The short ones are worth far more per slot: `fly/` heads thousands of names where
+            # `fly/footsteps/stakeout_overrides/asphalt_walk/` heads 158.
+            for index, character in enumerate(directory[:-1]):
+                if character == "/":
+                    directories[directory[: index + 1]] += 1
+
     return dict(one=one, two=two, three=three, prefixes=prefixes,
                 directories=directories, rooted=rooted)
 
@@ -141,135 +233,253 @@ def measure(names):
 # every other pool's out of the ceiling -- the committed lists once carried 9 xanim-shaped
 # endings out of 4,800 against 47,859 published xanim names. Each table's own commonest
 # beginnings and endings are guaranteed a place first; global popularity fills the rest.
-per_table = {table: measure(table_names(table)) for table in COLD_WAR}
+def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes):
+    """Measure one group of tables into its own pair of lists.
 
-published = {key: collections.Counter() for key in
-             ("one", "two", "three", "prefixes", "directories", "rooted")}
-for measured in per_table.values():
-    for key in published:
-        published[key].update(measured[key])
-
-confirmed = measure(found_names())
-
-print(f"measured {sum(published['one'].values())} published names and "
-      f"{sum(confirmed['one'].values())} confirmed ones", file=sys.stderr)
-
-suffixes, seen = [], set()
-
-
-def take(counter, threshold, note, cap=None):
-    added = 0
-    for key, count in counter.most_common():
-        if count < threshold or (cap is not None and added >= cap):
-            break
-        if key not in seen:
-            seen.add(key)
-            suffixes.append(key)
-            added += 1
-    print(f"  {note}: +{added}", file=sys.stderr)
-
-
-# What the confirmed names show comes first, because it is what no published table holds and so
-# what the ceiling must never be the thing that drops.
-print("endings", file=sys.stderr)
-take(confirmed["one"], FOUND_ENDING_MIN, f"confirmed, one segment at >={FOUND_ENDING_MIN}")
-take(confirmed["two"], FOUND_ENDING_MIN, f"confirmed, two segments at >={FOUND_ENDING_MIN}")
-take(confirmed["three"], FOUND_ENDING_MIN, f"confirmed, three segments at >={FOUND_ENDING_MIN}")
-
-# Each pool's own conventions next, held to a share each, so that what xanim names end in
-# cannot be crowded out of the ceiling by the long tail of a table five times its size.
-for table in COLD_WAR:
-    pool = table.replace("fnv1a_", "")
-    take(per_table[table]["one"], ONE_MIN, f"{pool}, one segment", cap=400)
-    take(per_table[table]["two"], TWO_MIN, f"{pool}, two segments", cap=200)
-    take(per_table[table]["three"], THREE_MIN, f"{pool}, three segments", cap=100)
-
-take(published["one"], ONE_MIN, f"published, one segment at >={ONE_MIN}")
-take(published["two"], TWO_MIN, f"published, two segments at >={TWO_MIN}")
-take(published["three"], THREE_MIN, f"published, three segments at >={THREE_MIN}")
-for item in EXTRA:
-    if item not in seen:
-        seen.add(item)
-        suffixes.append(item)
-
-prefixes, seen_prefix = [], set()
-
-
-def take_prefix(counter, threshold, note, cap=None):
-    added = 0
-    for key, count in counter.most_common():
-        if count < threshold or (cap is not None and added >= cap):
-            break
-        if key not in seen_prefix:
-            seen_prefix.add(key)
-            prefixes.append(key)
-            added += 1
-    print(f"  {note}: +{added}", file=sys.stderr)
-
-
-print("beginnings", file=sys.stderr)
-# Every directory first, however little used, and from both sources. Ranking beginnings by use
-# keeps the largest directory and silently drops the rest, which is the whole of the naming for
-# everything that lives under them.
-take_prefix(confirmed["directories"], 1, "every confirmed directory")
-take_prefix(published["directories"], 1, "every published directory")
-take_prefix(confirmed["prefixes"], FOUND_PREFIX_MIN, f"confirmed at >={FOUND_PREFIX_MIN}")
-
-# Each pool's own commonest beginnings, held to a share each, for the same reason as the
-# endings above.
-for table in COLD_WAR:
-    pool = table.replace("fnv1a_", "")
-    take_prefix(per_table[table]["prefixes"], PREFIX_MIN, f"{pool} beginnings", cap=60)
-
-take_prefix(published["prefixes"], PREFIX_MIN, f"published at >={PREFIX_MIN}")
-take_prefix(published["rooted"], ROOTED_MIN, f"published directory plus token at >={ROOTED_MIN}")
-for item in EXTRA_PREFIX:
-    if item not in seen_prefix:
-        seen_prefix.add(item)
-        prefixes.append(item)
-
-
-def write(name, items, most):
-    """Write a list: what this measurement found, then whatever the previous list had that it
-    did not reach, and the whole thing held to a ceiling.
-
-    The ceiling binds the total rather than only the new part. Carrying forward every item any
-    past measurement ever produced is what a superset rule asks for, but the accuracy cost of a
-    search is set by how big the lists are and nothing else, so an unbounded carry spends that
-    budget on items too rare to have been measured twice. Measured items come first, so the
-    carry is what gets cut.
+    **One budget per search, not one budget shared.** The ceilings exist because coincidental
+    matches scale with `stems x beginnings x endings`, and that is a real cost -- but a sound
+    ending tried against a model id can only ever be a coincidence, never a match. Mixing every
+    table into one capped list therefore made both halves worse: the sound vocabulary displaced
+    endings covering 115,606 published names, and in exchange the model passes gained endings that
+    could not match anything they were hunting.
+    Measured separately, each search gets the whole ceiling for vocabulary that can actually reach
+    what it is looking for. Nothing is sacrificed and the coincidence rate per pass goes *down*,
+    because no pass carries the other's endings any more.
     """
-    path = os.path.join(DATA, name)
-    kept = []
-    if os.path.exists(path):
-        with open(path, encoding="utf-8") as handle:
-            previous = [line.strip() for line in handle if line.strip()]
-        have = set(items)
-        kept = [item for item in previous if item not in have]
+    global suffixes, seen, prefixes, seen_prefix, per_table, published, confirmed, COLD_WAR
+    COLD_WAR = tables
 
-    whole = (items + kept)[:most]
-    dropped = len(items) + len(kept) - len(whole)
+    per_table = {table: measure(table_names(table)) for table in COLD_WAR}
 
-    with open(path, "w", encoding="utf-8") as handle:
-        for item in whole:
-            handle.write(item + "\n")
+    published = {key: collections.Counter() for key in
+                 ("one", "two", "three", "prefixes", "directories", "rooted")}
+    for measured in per_table.values():
+        for key in published:
+            published[key].update(measured[key])
 
-    note = f", {dropped} past the ceiling of {most} dropped" if dropped else ""
-    print(f"{name}: {len(items)} measured, {len(kept)} carried{note}, {len(whole)} total",
-          file=sys.stderr)
-    return len(whole)
+    confirmed = measure(found_names())
 
+    print(f"measured {sum(published['one'].values())} published names and "
+          f"{sum(confirmed['one'].values())} confirmed ones", file=sys.stderr)
+
+    # Seeded with what must survive, before anything competes for the ceiling. A guard that only
+    # *detects* the loss leaves somebody to fix it by hand every time a table is added; taking these
+    # first means the loss cannot happen, and the guard below becomes the belt to this pair of braces.
+    suffixes, seen = list(keep_endings), set(keep_endings)
+
+
+    def take(counter, threshold, note, cap=None):
+        added = 0
+        for key, count in counter.most_common():
+            if count < threshold or (cap is not None and added >= cap):
+                break
+            if key not in seen:
+                seen.add(key)
+                suffixes.append(key)
+                added += 1
+        print(f"  {note}: +{added}", file=sys.stderr)
+
+
+    # What the confirmed names show comes first, because it is what no published table holds and so
+    # what the ceiling must never be the thing that drops.
+    print("endings", file=sys.stderr)
+    take(confirmed["one"], FOUND_ENDING_MIN, f"confirmed, one segment at >={FOUND_ENDING_MIN}")
+    take(confirmed["two"], FOUND_ENDING_MIN, f"confirmed, two segments at >={FOUND_ENDING_MIN}")
+    take(confirmed["three"], FOUND_ENDING_MIN, f"confirmed, three segments at >={FOUND_ENDING_MIN}")
+
+    # Each pool's own conventions next, held to a share each, so that what xanim names end in
+    # cannot be crowded out of the ceiling by the long tail of a table five times its size.
+    # Sound gets a much smaller share than the rest, and the reason is diversity rather than
+    # importance. Its endings are hundreds of near-identical variants -- `_01.rn75.pc.en.snd`,
+    # `_02.rn75.pc.en.snd`, on and on -- so each slot buys far less reach than a model ending does,
+    # and the numbered part is what `confirm_variants` walks anyway. Given the full share they took
+    # 418 slots and displaced endings covering 115,606 published names, `_proxy`, `_maps1`, `_maps2`
+    # and `_col` among them.
+    SOUND_TABLES = {"fnv1a_soundbanks_aliases", "fnv1a_english_xsounds", "fnv1a_xsounds"}
+
+    for table in COLD_WAR:
+        pool = table.replace("fnv1a_", "")
+        lean = table in SOUND_TABLES
+        take(per_table[table]["one"], ONE_MIN, f"{pool}, one segment", cap=60 if lean else 400)
+        take(per_table[table]["two"], TWO_MIN, f"{pool}, two segments", cap=30 if lean else 200)
+        take(per_table[table]["three"], THREE_MIN, f"{pool}, three segments", cap=15 if lean else 100)
+
+    take(published["one"], ONE_MIN, f"published, one segment at >={ONE_MIN}")
+    take(published["two"], TWO_MIN, f"published, two segments at >={TWO_MIN}")
+    take(published["three"], THREE_MIN, f"published, three segments at >={THREE_MIN}")
+    for item in EXTRA:
+        if item not in seen:
+            seen.add(item)
+            suffixes.append(item)
+
+    prefixes, seen_prefix = list(keep_prefixes), set(keep_prefixes)
+
+
+    def take_prefix(counter, threshold, note, cap=None):
+        added = 0
+        for key, count in counter.most_common():
+            if count < threshold or (cap is not None and added >= cap):
+                break
+            if key not in seen_prefix:
+                seen_prefix.add(key)
+                prefixes.append(key)
+                added += 1
+        print(f"  {note}: +{added}", file=sys.stderr)
+
+
+    print("beginnings", file=sys.stderr)
+    # Every *shallow* directory first, however little used. Ranking these by popularity keeps `mc/`
+    # and drops `ec/`, which heads only 25 names and is the whole of the naming for everything under
+    # it -- the failure this take exists to prevent.
+    #
+    # Deep directories are capped, and that distinction is not cosmetic. Sound paths are directories
+    # several segments long and there are thousands of them, so taking every one at threshold 1
+    # consumed the entire 700-slot ceiling the moment the sound tables were measured: `p9_`, `i_`,
+    # `mtl_`, `attach_` and `vm_` all vanished from the list, and `p9_` alone heads 45,879 xmodels.
+    # Shallow ones are few enough to take whole; deep ones have to earn their place.
+    def shallow(counter):
+        return collections.Counter({k: v for k, v in counter.items() if k.count("/") <= 1})
+
+
+    def deep(counter):
+        return collections.Counter({k: v for k, v in counter.items() if k.count("/") > 1})
+
+
+    take_prefix(shallow(confirmed["directories"]), 1, "every shallow confirmed directory")
+    take_prefix(shallow(published["directories"]), 1, "every shallow published directory")
+    take_prefix(deep(confirmed["directories"]), 1, "deep confirmed directories", cap=40)
+    take_prefix(deep(published["directories"]), 1, "deep published directories", cap=120)
+    take_prefix(confirmed["prefixes"], FOUND_PREFIX_MIN, f"confirmed at >={FOUND_PREFIX_MIN}")
+
+    # Each pool's own commonest beginnings, held to a share each, for the same reason as the
+    # endings above.
+    for table in COLD_WAR:
+        pool = table.replace("fnv1a_", "")
+        take_prefix(per_table[table]["prefixes"], PREFIX_MIN, f"{pool} beginnings", cap=60)
+
+    take_prefix(published["prefixes"], PREFIX_MIN, f"published at >={PREFIX_MIN}")
+    take_prefix(published["rooted"], ROOTED_MIN, f"published directory plus token at >={ROOTED_MIN}")
+    for item in EXTRA_PREFIX:
+        if item not in seen_prefix:
+            seen_prefix.add(item)
+            prefixes.append(item)
+
+
+
+
+    def guard_lists(prefixes, must_keep):
+        """Refuse to write a list that has lost a beginning the game depends on."""
+        have = set(prefixes)
+        missing = sorted(k for k in must_keep if k not in have)
+
+        if missing:
+            print("", file=sys.stderr)
+            print("REFUSING TO WRITE: the measurement dropped beginnings that must not be lost:", file=sys.stderr)
+            for key in missing:
+                print("    %-12s heads %d published names" % (key, must_keep[key]), file=sys.stderr)
+            print("", file=sys.stderr)
+            print("A capped list displaces rather than grows. Something newly measured has crowded", file=sys.stderr)
+            print("these out -- cap that take, or raise MOST_PREFIXES, but do not ship this.", file=sys.stderr)
+            raise SystemExit(1)
+
+
+
+
+    def guard_endings(endings, must_keep):
+        """Refuse to write an endings list that has lost one the game depends on."""
+        have = set(endings)
+        missing = sorted(k for k in must_keep if k not in have)
+
+        if missing:
+            print("", file=sys.stderr)
+            print("REFUSING TO WRITE: the measurement dropped endings that must not be lost:", file=sys.stderr)
+            for key in missing:
+                print("    %-14s closes %d published names" % (key, must_keep[key]), file=sys.stderr)
+            print("", file=sys.stderr)
+            print("A capped list displaces rather than grows. Cap whatever was newly measured, or", file=sys.stderr)
+            print("raise MOST_ENDINGS -- but do not ship this.", file=sys.stderr)
+            raise SystemExit(1)
+
+
+    def write(name, items, most, guard=None):
+        """Write a list: what this measurement found, then whatever the previous list had that it
+        did not reach, and the whole thing held to a ceiling.
+
+        The ceiling binds the total rather than only the new part. Carrying forward every item any
+        past measurement ever produced is what a superset rule asks for, but the accuracy cost of a
+        search is set by how big the lists are and nothing else, so an unbounded carry spends that
+        budget on items too rare to have been measured twice. Measured items come first, so the
+        carry is what gets cut.
+        """
+        path = os.path.join(DATA, name)
+        kept = []
+        if os.path.exists(path):
+            with open(path, encoding="utf-8") as handle:
+                previous = [line.strip() for line in handle if line.strip()]
+            have = set(items)
+            kept = [item for item in previous if item not in have]
+
+        whole = (items + kept)[:most]
+        dropped = len(items) + len(kept) - len(whole)
+
+        # Checked against what will actually be written, after the ceiling has cut it. Guarding the
+        # input would pass happily while the file that lands is gutted.
+        if guard is not None:
+            guard(whole)
+
+        with open(path, "w", encoding="utf-8") as handle:
+            for item in whole:
+                handle.write(item + "\n")
+
+        note = f", {dropped} past the ceiling of {most} dropped" if dropped else ""
+        print(f"{name}: {len(items)} measured, {len(kept)} carried{note}, {len(whole)} total",
+              file=sys.stderr)
+        return len(whole)
+
+
+    endings = write(suffix_file, suffixes, MOST_ENDINGS,
+                    (lambda got: guard_endings(got, keep_endings)) if keep_endings else None)
+    beginnings = write(prefix_file, prefixes, MOST_PREFIXES,
+                       (lambda got: guard_lists(got, keep_prefixes)) if keep_prefixes else None)
+
+    return endings, beginnings
+
+
+# The two groups. Each is measured on its own and gets the whole ceiling, because each is used by
+# a different search: an ordinary pass hunts models, materials, images and anims, and a sound pass
+# hunts `sound_asset` and `sound_alias`. Neither carries vocabulary that cannot reach what it is
+# looking for.
+GROUPS = [
+    (
+        "the general lists",
+        ["fnv1a_xanims", "fnv1a_xmodels", "fnv1a_xmaterials", "fnv1a_ximages"],
+        "suffixes.txt",
+        "prefixes.txt",
+        MUST_KEEP_ENDINGS,
+        MUST_KEEP_PREFIXES,
+    ),
+    (
+        "the sound lists",
+        ["fnv1a_soundbanks_aliases", "fnv1a_english_xsounds", "fnv1a_xsounds"],
+        "sound.suffixes.txt",
+        "sound.prefixes.txt",
+        {},
+        {},
+    ),
+]
 
 # Roughly what a general pass draws on, for reporting what the lists will cost it.
 PIECES = 25_000_000
 UNNAMED = 270_727
 
-endings = write("suffixes.txt", suffixes, MOST_ENDINGS)
-beginnings = write("prefixes.txt", prefixes, MOST_PREFIXES)
+for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
+    print("", file=sys.stderr)
+    print(f"=== {title} ===", file=sys.stderr)
+    endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p)
 
-per_stem = (beginnings + 1) * (endings + 1)
-print(f"\na stem now costs {beginnings + 1} forward hashes and reaches {per_stem} candidates",
-      file=sys.stderr)
-print(f"against {PIECES:,} pieces that is "
-      f"{PIECES * per_stem * UNNAMED / 9.223e18:.1f} names expected by coincidence",
-      file=sys.stderr)
+    per_stem = (beginnings + 1) * (endings + 1)
+    print(f"a stem costs {beginnings + 1} forward hashes and reaches {per_stem} candidates",
+          file=sys.stderr)
+    print(f"against {PIECES:,} pieces that is "
+          f"{PIECES * per_stem * UNNAMED / 9.223e18:.1f} names expected by coincidence",
+          file=sys.stderr)

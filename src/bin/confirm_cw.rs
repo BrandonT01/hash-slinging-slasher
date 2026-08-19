@@ -85,6 +85,14 @@ const COLD_WAR_TABLES: &[&str] = &[
 /// every other pool at no cost.
 const UNREACHABLE: &[&str] = &["xmodelmesh"];
 
+/// The pools a `--sounds` pass hunts, and that every other pass leaves alone.
+///
+/// Sound names look nothing like the rest -- dotted encoding tails, deep directories, and in
+/// Black Ops 4 backslashes -- so the vocabulary that reaches them reaches nothing else, and the
+/// vocabulary that reaches models reaches none of them. Splitting the run costs nothing and each
+/// half gets a whole ceiling of endings that can actually land.
+const SOUND_POOLS: &[&str] = &["sound_asset", "sound_alias"];
+
 /// How often a long pass writes what it has found so far.
 ///
 /// The point is not to lose an hour when the thing driving the search stops early, and a minute
@@ -187,13 +195,44 @@ fn main() {
     };
     let every_table = arguments.iter().any(|value| value == "all-tables");
     let no_fold = arguments.iter().any(|value| value == "--no-fold");
+    let sounds = arguments.iter().any(|value| value == "--sounds");
+    if sounds {
+        println!("hunting the sound pools, with the vocabulary measured from the sound tables");
+    }
     if no_fold {
         println!("hashing without folding backslashes (Black Ops 4 SAB sound names)");
     }
 
     let root = paths::root();
-    let endings = read_list(&root.join(paths::SUFFIX_LIST));
-    let prefixes = read_list(&root.join(paths::PREFIX_LIST));
+    // Which vocabulary this pass draws on. A sound pass and a general pass are different runs
+    // with different targets, so they read different lists -- see `paths::SOUND_SUFFIX_LIST`.
+    let (suffix_list, prefix_list) = if sounds {
+        (paths::SOUND_SUFFIX_LIST, paths::SOUND_PREFIX_LIST)
+    } else {
+        (paths::SUFFIX_LIST, paths::PREFIX_LIST)
+    };
+
+    let mut endings = read_list(&root.join(suffix_list));
+    let mut prefixes = read_list(&root.join(prefix_list));
+
+    // The measured lists are kept in one canonical form, with forward slashes, because a sound
+    // path's *shape* is identical in both games and only the separator differs. Measured across
+    // the tables: Black Ops 4's SAB names use backslashes throughout (8,403 of them), Cold War's
+    // use forward slashes throughout (49,189), and not one name mixes the two. Measuring both
+    // spellings would have spent half a capped list saying the same thing twice.
+    //
+    // So a run that does not fold translates them back as it loads. The ids it hunts are the hash
+    // of the unfolded string, so a beginning spelled `amb/environment/` misses every one of them
+    // where the same beginning spelled with backslashes lands.
+    if no_fold {
+        for item in endings.iter_mut().chain(prefixes.iter_mut()) {
+            if item.contains('/') {
+                *item = item.replace('/', "\\");
+            }
+        }
+
+        println!("translated the measured lists to backslashes for this run");
+    }
 
     println!(
         "sources: {}, {} beginnings, {} endings",
@@ -233,7 +272,25 @@ fn main() {
     let mesh: Vec<usize> = UNREACHABLE.iter().filter_map(|kind| slasher::pool_index(kind)).collect();
     let unreachable = all_unnamed.values().filter(|pool| mesh.contains(pool)).count();
 
-    let wanted = wanted_for_search(&assets, &known, UNREACHABLE);
+    let mut wanted = wanted_for_search(&assets, &known, UNREACHABLE);
+
+    // The targets split with the vocabulary. A general pass hunting sound ids with model endings
+    // cannot match any of them, but still pays for them: they enlarge the peeled batches, so the
+    // pass takes longer, and they enlarge the wanted set, so every candidate is likelier to hit
+    // one by coincidence. Both halves are worse off sharing a run, exactly as they were sharing a
+    // list. Measured on Black Ops 4: 216,217 ids hunted together against 122,000 and 94,000 apart.
+    {
+        let before = wanted.len();
+        wanted.retain(|_, pool| SOUND_POOLS.contains(&pool_label(*pool).as_str()) == sounds);
+
+        println!(
+            "hunting {} {} ids, leaving {} to the {} pass",
+            wanted.len(),
+            if sounds { "sound" } else { "non-sound" },
+            before - wanted.len(),
+            if sounds { "general" } else { "sound" }
+        );
+    }
     let not_targeted = all_unnamed.len() - unreachable - wanted.len();
     drop(all_unnamed);
 

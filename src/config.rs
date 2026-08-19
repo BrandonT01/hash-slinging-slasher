@@ -26,10 +26,17 @@ const CONFIG: &str = "config.toml";
 
 /// The asset types worth grinding first, when nothing says otherwise.
 ///
-/// These are the five that were asked for: models, animations, images, materials and sounds.
-/// Everything else the game holds is still captured and still confirmable -- it is simply not
-/// what a search spends its time looking for until these are close to done.
-pub const DEFAULT_POOLS: &[&str] = &["xmodel", "xanim", "image", "material", "sound_asset"];
+/// Models, animations, images, materials, sound files and sound aliases. Everything else the game
+/// holds is still captured and still confirmable -- it is simply not what a search spends its time
+/// on until these are close to done.
+///
+/// `sound_asset` and `sound_alias` are both here and are different things. Files are the audio
+/// itself and go to `fnv1a_xsounds.csv`; aliases are the names scripts and weapons refer to and go
+/// to `fnv1a_soundbanks_aliases.csv`. Neither is a loader asset in Black Ops 4 -- both were read
+/// out of the game and injected -- and filing one as the other would put names in the wrong table
+/// upstream.
+pub const DEFAULT_POOLS: &[&str] =
+    &["xmodel", "xanim", "image", "material", "sound_asset", "sound_alias"];
 
 /// Which pools the searches should look in.
 pub enum Targets {

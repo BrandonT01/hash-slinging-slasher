@@ -1,4 +1,4 @@
-BLKOPSCW -- 1626209 assets in 202 filled pools
+BLKOPSCW -- 1677099 assets in 203 filled pools
 
 index  asset type                             assets
 2      physpreset                                390
@@ -203,3 +203,4 @@ index  asset type                             assets
 218    compasstunables                             3
 219    execution                                 140
 220    scenario                                    1
+221    sound_alias                             50890

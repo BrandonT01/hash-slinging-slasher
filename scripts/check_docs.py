@@ -152,6 +152,24 @@ def main():
             "everything under them. See scripts/derive_lists.py." % ", ".join(missing)
         )
 
+    # And the beginnings that reach most of the game, for the same reason and a worse failure.
+    # The lists are capped, so measuring a new table displaces rather than grows -- and the file
+    # still looks healthy afterwards, at its full 700 lines, with the entries that mattered gone.
+    # `derive_lists.py` refuses to write such a list; this catches one that reached the repository
+    # some other way.
+    heads = {
+        "p9_": 77248, "p8_": 66172, "p7_": 42516, "attach_": 27504, "mtl_": 343794,
+        "i_": 403889, "vm_": 18088, "ai_": 11226, "ui_": 31742,
+    }
+    lost = sorted(k for k in heads if k not in prefixes)
+    if lost:
+        problems.append(
+            "data/prefixes.txt has lost %s -- beginnings heading %s published names between them. "
+            "A capped list displaces rather than grows; something newly measured crowded them out. "
+            "See MUST_KEEP_PREFIXES in scripts/derive_lists.py."
+            % (", ".join(lost), sum(heads[k] for k in lost))
+        )
+
     if problems:
         print("%d problem(s):\n" % len(problems))
         for problem in problems:

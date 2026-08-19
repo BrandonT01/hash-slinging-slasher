@@ -191,6 +191,15 @@ pub const POOLS: &[&str] = &[
     "craftweaponicontransformlist", "xanimcurve", "dynmodel", "vectorfield", "winddef",
     "vehicleassembly", "milestone", "milestonetable", "triggereffectdesc", "triggeractions",
     "playersettings", "compasstunables", "execution", "scenario",
+    // Appended past the real enum, like `sound_asset`, and for the same reason: sound *aliases*
+    // are not loader assets. They live inside the bank assets, as arrays of records whose names
+    // these games store only as hashes -- so no pool of the game's own holds them, and nothing in
+    // a capture could.
+    //
+    // Worth having: `fnv1a_soundbanks_aliases.csv` upstream already names 33,289, and the two
+    // games hold 93,663 between them. The ids were read out of the live loader with Amadeus,
+    // which is the reader that knows those record layouts.
+    "sound_alias",
 ];
 
 /// Black Ops 4's asset types, by pool index. A different enum entirely -- xmodel is 6 in Cold
@@ -245,6 +254,18 @@ pub const BO4_POOLS: &[&str] = &[
     // The name is Cold War's, because Cold War already draws exactly this distinction:
     // `sound_bank` at 18 for the banks, `sound_asset` at 19 for the files. Same split, same words.
     "sound_asset",
+    // Index 171. **Order matters here and cannot be changed.** The snapshot already carries
+    // 79,263 ids filed as pool 170, so anything inserted ahead of `sound_asset` silently relabels
+    // every one of them as something else.
+    // Appended past the real enum, like `sound_asset`, and for the same reason: sound *aliases*
+    // are not loader assets. They live inside the bank assets, as arrays of records whose names
+    // these games store only as hashes -- so no pool of the game's own holds them, and nothing in
+    // a capture could.
+    //
+    // Worth having: `fnv1a_soundbanks_aliases.csv` upstream already names 33,289, and the two
+    // games hold 93,663 between them. The ids were read out of the live loader with Amadeus,
+    // which is the reader that knows those record layouts.
+    "sound_alias",
 ];
 
 /// The pool names for the game being ground.

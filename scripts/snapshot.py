@@ -38,8 +38,9 @@ ID_MASK = 0x7FFFFFFFFFFFFFFF
 # LOW_VALUE_POOLS and UNREACHABLE on the Rust side; `check_docs.py` fails if they drift.
 SKIP = {"xmodelmesh", "streamkey", "localizeentry", "localize_entry"}
 
-# The five asset types this project is actually for.
-IMPORTANT = {"xmodel", "xanim", "image", "material", "sound_asset", "sound"}
+# The asset types this project is actually for. `sound` is Black Ops 4's *bank* pool and is not
+# one of them -- the files are `sound_asset` and the alias names are `sound_alias`.
+IMPORTANT = {"xmodel", "xanim", "image", "material", "sound_asset", "sound_alias"}
 
 
 def fnv1a(name):

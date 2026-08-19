@@ -33,7 +33,11 @@
 # The asset types to hunt. A pass costs what it costs because of how many ids it is looking
 # for, so hunting every pool when five hold what you want makes every pass several times
 # slower for names nobody needs yet.
-pools = ["xmodel", "xanim", "image", "material", "sound_asset"]
+pools = ["xmodel", "xanim", "image", "material", "sound_asset", "sound_alias"]
+
+# `sound_asset` and `sound_alias` are different things and go to different tables upstream: sound
+# *files* to fnv1a_xsounds.csv, alias *names* to fnv1a_soundbanks_aliases.csv. Black Ops 4's own
+# `sound` pool is neither -- it holds sound banks.
 
 # Hunt every pool the game holds. **Leave this alone.**
 #

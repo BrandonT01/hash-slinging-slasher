@@ -50,7 +50,18 @@ Per pool, the five types, unnamed / total:
 | `xmodel` | 20,826 / 85,612 | 20,922 / 61,139 |
 | `xanim` | 12,386 / 28,468 | 10,001 / 21,968 |
 | `sound_asset` (files) | 19,301 / 97,217 | **70,878 / 79,263** |
-| `sound` (banks) | — | 99 / 100 |
+| `sound_alias` (alias names) | **43,603 / 50,890** | 23,790 / 50,043 |
+| `sound` (banks — not wanted) | — | 99 / 100 |
+
+**The two sound pools are not loader assets and had to be put there.** Sound files live in SAB
+files Cordycep never opens; alias names live inside the bank assets as hashes. Both were read out
+of the games — the SABs directly, the aliases through Amadeus, which knows those record layouts —
+and injected. Cold War's aliases are only **14.3% named**, which makes them the least-worked
+ground in either game.
+
+They go to *different* tables upstream — files to `fnv1a_xsounds.csv`, aliases to
+`fnv1a_soundbanks_aliases.csv` — so the pools must not be confused. Aliases need no `--no-fold`;
+their names carry no backslashes.
 
 Nobody has come close to finishing either, and the two games are not the same problem:
 
@@ -185,7 +196,24 @@ other game.
 
 **Reaches** anything expressible as *beginning + stem + ending*. The workhorse and the widest net.
 
-**Run it with** `confirm_cw`. `confirm_cw seeds` uses only confirmed names, which is small enough
+**Run it with** `confirm_cw` for models, materials, images and anims, and `confirm_cw --sounds`
+for sound files and aliases — two passes, not one. Add `--no-fold` to a Black Ops 4 sound pass.
+
+They are separate because a sound ending tried against a model id can only ever be a coincidence,
+never a match: the vocabularies cannot reach each other's targets. Sharing one run made both
+halves worse, and sharing one capped list made them worse again — sound displaced endings covering
+115,606 published names while contributing endings the general pass could never use. Apart, each
+gets its own measured pair (`data/sound.*.txt`), its own full ceiling, and hunts only the ids it
+can reach: 121,549 and 94,668 on Black Ops 4 rather than 216,217 mixed.
+
+**Check the ceiling before blaming the method.** `python scripts/reach.py` reports what share of
+*known* names each list pair could rebuild — if it cannot express a name we already have, it will
+never find the unnamed ones beside it. That measurement found Black Ops 4's sound names 19.2%
+reachable: deep paths were contributing one hyper-specific beginning each, `fly/footsteps/
+stakeout_overrides/asphalt_walk/` heading 158 names, and never `fly/`, which heads thousands.
+Counting every leading segment took it to 100%.
+
+`confirm_cw seeds` uses only confirmed names, which is small enough
 to run in minutes and worth repeating after a long pass to pick up siblings.
 
 **Measured**, 2026-08-19, Cold War, committed lists (700 beginnings, 4,800 endings), fresh clone:

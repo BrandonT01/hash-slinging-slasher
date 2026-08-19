@@ -125,6 +125,18 @@ pub fn submissions() -> PathBuf {
 pub const SUFFIX_LIST: &str = "data/suffixes.txt";
 pub const PREFIX_LIST: &str = "data/prefixes.txt";
 
+/// The same, measured from the sound and alias tables instead.
+///
+/// A separate pair rather than a bigger shared one. The lists are capped because coincidental
+/// matches scale with `stems x beginnings x endings`, and that budget is real -- but a sound
+/// ending tried against a model id can only ever be a coincidence, never a match. Sharing one
+/// ceiling therefore made both halves worse: sound displaced endings covering 115,606 published
+/// names, and in return the model passes carried endings that could not match what they hunted.
+/// Measured apart, each search spends its whole budget on vocabulary that can actually reach its
+/// own targets.
+pub const SOUND_SUFFIX_LIST: &str = "data/sound.suffixes.txt";
+pub const SOUND_PREFIX_LIST: &str = "data/sound.prefixes.txt";
+
 /// Where this machine's view of the world is kept: what is claimed, what has been swept, and
 /// whether the startup checks passed. Always inside the repository, never beside the caller.
 pub fn state() -> PathBuf {

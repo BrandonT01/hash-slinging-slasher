@@ -10,7 +10,7 @@ A pool with three hundred unnamed ids cannot repay an hour, however clever the m
 with a hundred thousand can repay a week. That is the whole content of this script.
 
     python scripts/coverage.py                 every pool, both games
-    python scripts/coverage.py --five          only the five types that matter
+    python scripts/coverage.py --five          only the types that matter
     python scripts/coverage.py --game BLKOPS04
 
 Reads the committed snapshots and the fetched tables. Needs no game and no network.
@@ -56,14 +56,14 @@ def main(argv):
             if pool in snapshot.SKIP:
                 note = "<- not worth searching; see LOW_VALUE_POOLS"
             elif pool in snapshot.IMPORTANT:
-                note = "<- one of the five"
+                note = "<- one we want"
 
             print("%-28s %10d %10d %7.1f%%  %s" % (pool, unnamed, total, share, note))
 
         reachable = sum(u for u, _, p in rows if p not in snapshot.SKIP)
         five = sum(u for u, _, p in rows if p in snapshot.IMPORTANT)
         print(
-            "\n%s: %d unnamed in pools worth searching, %d of them in the five types"
+            "\n%s: %d unnamed in pools worth searching, %d of them in the types we want"
             % (snap.game, reachable, five)
         )
 

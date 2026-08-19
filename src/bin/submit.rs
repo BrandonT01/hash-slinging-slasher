@@ -175,13 +175,13 @@ fn send(
     // Drop anything already claimed: published in the tables, merged into submissions, or sitting
     // in somebody's open pull request. This is the cheap part and the whole reason a long grind
     // does not have to be redone when the world moves under it.
-    let mut batch: Vec<(String, String)> = Vec::new(); // (type, name)
+    let mut batch: Vec<(String, u64, String)> = Vec::new(); // (type, id as found, name)
     let mut dropped = 0_usize;
     let mut claimed_elsewhere = 0_usize;
     let mut worthless: std::collections::BTreeMap<String, usize> = Default::default();
 
     for folder in pending {
-        for (kind, name) in names_in(folder) {
+        for (kind, id, name) in names_in(folder) {
             // A pool that has already cost somebody a night for nothing does not go upstream,
             // whoever found it and however genuine the hash is. See LOW_VALUE_POOLS.
             if low_value_reason(&kind).is_some() {
@@ -189,20 +189,26 @@ fn send(
                 continue;
             }
 
+            // Both the id the run found and the hash of the name, because for every pool but
+            // the one that keeps its backslashes they are the same number, and for that one they
+            // are not. Excluding on either is right: a name already published is already
+            // published however it was reached.
             let hash = hash64(&name);
+            let seen = |set: &HashSet<u64>| {
+                set.contains(&id) || set.contains(&hash) || set.contains(&(hash & ID_MASK))
+            };
 
-            if known.contains(&hash) || known.contains(&(hash & ID_MASK)) {
+            if seen(known) {
                 dropped += 1;
                 continue;
             }
 
-            if landscape.holds(&name) || cached.contains(&hash) || cached.contains(&(hash & ID_MASK))
-            {
+            if landscape.holds(&name) || seen(cached) {
                 claimed_elsewhere += 1;
                 continue;
             }
 
-            batch.push((kind, name));
+            batch.push((kind, id, name));
         }
     }
 
@@ -244,17 +250,18 @@ fn send(
         std::process::exit(1);
     }
 
-    let mut by_kind: std::collections::BTreeMap<String, Vec<String>> = Default::default();
-    for (kind, name) in &batch {
-        by_kind.entry(kind.clone()).or_default().push(name.clone());
+    let mut by_kind: std::collections::BTreeMap<String, Vec<(u64, String)>> = Default::default();
+    for (kind, id, name) in &batch {
+        by_kind.entry(kind.clone()).or_default().push((*id, name.clone()));
     }
 
     println!("\n{:<24} {:>8}", "type", "names");
     for (kind, names) in &by_kind {
         let path = folder.join(format!("{kind}_{when}.txt"));
         let mut text = String::new();
-        for name in names {
-            text.push_str(&format!("{:x},{name}\n", hash64(name) & ID_MASK));
+        for (id, name) in names {
+            // The id the run actually matched, never a fresh hash of the name. See `names_in`.
+            text.push_str(&format!("{id:x},{name}\n"));
         }
 
         if let Err(error) = fs::write(&path, text) {
@@ -481,7 +488,15 @@ fn run_folders(findings: &Path) -> Vec<PathBuf> {
 }
 
 /// The `(type, name)` pairs in one run folder.
-fn names_in(folder: &Path) -> Vec<(String, String)> {
+/// The `(type, id, name)` triples in one run folder.
+///
+/// **The id is read, never recomputed.** A run records the id it actually matched, and that is
+/// the only thing that knows which normalisation produced it. Recomputing from the name assumes
+/// backslashes fold -- true for every pool but one. Black Ops 4's SAB sound names keep theirs, so
+/// `wave_crash_01.ln100.pc.snd` under a folding hash gives `43802e73bbb1bef9` where the game
+/// actually holds `100116a5a23b8100`. Every sound name from that game would have been submitted
+/// against a key belonging to nothing.
+fn names_in(folder: &Path) -> Vec<(String, u64, String)> {
     let mut found = Vec::new();
     let Ok(entries) = fs::read_dir(folder) else {
         return found;
@@ -504,13 +519,16 @@ fn names_in(folder: &Path) -> Vec<(String, String)> {
                 continue;
             }
 
-            let name = match line.split_once(',') {
-                Some((_, name)) => name.trim(),
-                None => line,
+            let (id, name) = match line.split_once(',') {
+                Some((key, name)) => match u64::from_str_radix(key.trim(), 16) {
+                    Ok(id) => (id & ID_MASK, name.trim()),
+                    Err(_) => continue,
+                },
+                None => continue,
             };
 
             if !name.is_empty() {
-                found.push((kind.to_owned(), name.to_owned()));
+                found.push((kind.to_owned(), id, name.to_owned()));
             }
         }
     }
