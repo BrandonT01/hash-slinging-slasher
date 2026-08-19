@@ -479,7 +479,8 @@ fn main() {
 /// one, and two methods sharing a label is the same bug wearing a different hat.
 fn run_label(sounds: bool, sources: Sources) -> &'static str {
     match (sounds, sources) {
-        (true, _) => "soundfiles",
+        (true, Sources::All) => "soundfiles",
+        (true, Sources::Seeds) => "soundseeds",
         (false, Sources::All) => "all",
         (false, Sources::Seeds) => "seeds",
     }
@@ -501,12 +502,12 @@ mod tests {
             run_label(true, Sources::Seeds),
         ];
 
-        assert_eq!(run_label(true, Sources::All), run_label(true, Sources::Seeds));
-
-        // The general pair, and the sound pass, must not collide.
-        assert_ne!(labels[0], labels[1]);
-        assert_ne!(labels[0], labels[2]);
-        assert_ne!(labels[1], labels[2]);
+        // All four are distinct. The seeds-only sound pass matters as much as the others: it is
+        // the cheap one, so it is the one somebody runs first, and if it answered to the same
+        // label as the full sound pass it would retire the expensive one before it ever ran.
+        for (left, right) in [(0, 1), (0, 2), (0, 3), (1, 2), (1, 3), (2, 3)] {
+            assert_ne!(labels[left], labels[right], "two passes share a run label");
+        }
 
         // Nor with the labels the other binaries write, which `start` reads from the same folder.
         for taken in ["sounds", "list", "localize", "swaps", "variants", "images", "techsets"] {

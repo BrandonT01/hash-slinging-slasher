@@ -412,7 +412,23 @@ fn library_name(name: &str, when: &str, bytes: &[u8]) -> String {
     }
 }
 
-/// The library's own copy of this script, byte for byte, under whatever stamp it carries.
+/// Whether two files are the same script, ignoring how they reached the disk.
+///
+/// Not a byte comparison, because on Windows that answers the wrong question. git checks a file
+/// out with CRLF while a script a run just wrote has LF, so the identical script differs in every
+/// line depending only on its route to the disk. Comparing raw bytes meant the library copy never
+/// matched: the first real submission after the stamping went in carried
+/// `image_siblings_20260819-232739.py` alongside the byte-for-byte identical
+/// `image_siblings_20260819-190013.py` already sitting there, and every run afterwards would have
+/// added another. A folder of identical scripts under different stamps is worse than the name
+/// collision this was all meant to fix.
+fn same_text(left: &[u8], right: &[u8]) -> bool {
+    let bare = |bytes: &[u8]| -> Vec<u8> { bytes.iter().copied().filter(|byte| *byte != b'\r').collect() };
+
+    bare(left) == bare(right)
+}
+
+/// The library's own copy of this script, under whatever stamp it carries.
 ///
 /// Best effort: the library is only as current as the clone, and `start` refreshes that. Missing
 /// a match costs one redundant file, which is why this is allowed to give up quietly. Claiming a
@@ -434,7 +450,7 @@ fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<Strin
             continue;
         }
 
-        if fs::read(&path).is_ok_and(|held| held == bytes) {
+        if fs::read(&path).is_ok_and(|held| same_text(&held, bytes)) {
             return Some(name.to_owned());
         }
     }
@@ -1055,6 +1071,21 @@ mod tests {
         // Extensionless, and non-python, both survive.
         assert_eq!(library_name("gen", when, b"x"), "gen_20260820-013000.py");
         assert_eq!(library_name("gen.sh", when, b"x"), "gen_20260820-013000.sh");
+    }
+
+    /// The same script is the same script however it reached the disk.
+    ///
+    /// This is the whole of the deduplication: git hands out CRLF on Windows and a run writes LF,
+    /// so a raw byte comparison says every library copy is a different script and every submission
+    /// adds another stamped duplicate of it.
+    #[test]
+    fn line_endings_do_not_make_a_new_script() {
+        assert!(same_text(b"print(1)\r\nprint(2)\r\n", b"print(1)\nprint(2)\n"));
+        assert!(same_text(b"same", b"same"));
+        assert!(!same_text(b"print(1)\n", b"print(2)\n"));
+
+        // A difference that is only a *missing* line must still count as different.
+        assert!(!same_text(b"a\r\nb\r\n", b"a\n"));
     }
 
     /// The rules a contributed script has to pass, asserted rather than trusted: a folder that
