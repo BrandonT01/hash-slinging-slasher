@@ -91,11 +91,49 @@ outcome** — it means the method is spent, and it is worth far more than a subm
 duplicates.
 
 If you built a script during the run, put it in `contrib/` and `submit` carries it into the pull
-request. See §6.
+request. See §7.
 
 ---
 
-# 4. The five asset types, and the pools that waste a night
+# 4. Which game — both, in turn, decided for you
+
+This is a **Cold War and Black Ops 4** solver, and until recently it was only ever solving one of
+them: `config.toml` does not exist in a fresh clone, the fallback was Cold War, so every
+contributor ground Cold War and Black Ops 4 received nothing.
+
+Black Ops 4 is the bigger prize of the two:
+
+| | Cold War | Black Ops 4 |
+|---|---|---|
+| unnamed in the five types | 136,467 | **141,889** |
+| images named so far | 81% | **64%** |
+| materials named so far | 76% | **59%** |
+
+So the two take turns, and **you do not have to do anything about it.** `start` counts how many
+passes each game has had on this machine, picks the one with fewer, and writes the choice down.
+Every search reads it. There is no flag to carry across from an earlier command.
+
+`--game <TAG>` exists to **force** one game for one run — re-running a method against the other
+title, chasing something specific, reproducing somebody's result. Use it when there is a reason,
+not as a habit; a game that stops getting passes stops getting names, and that is exactly how
+Black Ops 4 ended up with none.
+
+Note that a `game = ...` line in `config.toml` does **not** pin the game. The old template shipped
+that line uncommented, so plenty of clones still carry it, and honouring it would silently lock
+those contributors to Cold War forever. Only `alternate_games = false` stops the turn-taking.
+
+Two things follow that you need to know:
+
+- **Findings are kept per game**, in `findings/<game>/`. This is not tidiness: the two number
+  their asset types differently — `xmodel` is pool 6 in Cold War and 4 in Black Ops 4 — so a
+  mixed folder mislabels every name in it. Switching games loses nothing; both sets are kept and
+  each seeds the other, because Cold War carries a great deal of Black Ops 4's content.
+- **`submit` sends one pull request per game**, titled `[BLKOPS04] findings from ...`, so a
+  reviewer can tell at a glance which title a batch is for.
+
+---
+
+# 5. The five asset types, and the pools that waste a night
 
 Search these and nothing else unless the user says otherwise:
 
@@ -121,7 +159,7 @@ pools chosen because they had "sound" in the name. Neither helped anybody.
 
 ---
 
-# 5. What is already established — do not re-derive any of this
+# 6. What is already established — do not re-derive any of this
 
 **The hash.** FNV-1a, 64 bit. Basis `0xCBF29CE484222325`, prime `0x100000001B3`. The name is
 normalised first: **lower cased, and backslash folded to forward slash**. Missing that
@@ -154,7 +192,7 @@ every method here does, and it is why the seeding principle below is not a style
 
 ---
 
-# 6. The seeding principle, and the snowball
+# 7. The seeding principle, and the snowball
 
 **Candidates are always built from names already known to be real.** The published tables, the
 names already confirmed, everybody's merged submissions, strings scraped from a build. A method is
@@ -207,7 +245,7 @@ an assistant rather than run as a fixed program.
 
 ---
 
-# 7. Do not run a search somebody has already run
+# 8. Do not run a search somebody has already run
 
 Every run now carries a **fingerprint**: a digest of everything that decides what it will find —
 the method, the game, the pools, the lists, the seed corpus. It goes into the submission, and
@@ -224,14 +262,14 @@ When that happens, do one of these — never `--anyway`:
    into the beginnings and endings. That changes the fingerprint and genuinely reopens the method.
 2. **Run a method that reaches somewhere else.** `METHODS.md` says what each one gets at that
    nothing else does.
-3. **Invent one.** See §6.
+3. **Invent one.** See §7.
 
 > **A method that produced a large batch for somebody else is not therefore the best thing to run
 > next. It is the most likely thing to be exhausted.**
 
 ---
 
-# 8. Rules that are not negotiable
+# 9. Rules that are not negotiable
 
 1. **Results only ever grow.** Never rewrite a results file to be smaller. A rule change that no
    longer reaches an old name must not delete it.
@@ -255,7 +293,7 @@ resort.
 
 ---
 
-# 9. Where to look
+# 10. Where to look
 
 | | |
 |---|---|

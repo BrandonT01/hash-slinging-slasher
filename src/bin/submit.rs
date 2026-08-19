@@ -40,7 +40,9 @@ const CONTRIBUTED: &str = "contrib";
 const LEDGER: &str = ".submitted";
 
 fn main() {
-    let findings = paths::findings();
+    // Every game's findings, not just the configured one. A session may have ground both, and a
+    // run left unsent because the config moved on afterwards is a run lost.
+    let findings = paths::findings_root();
     let outbox = paths::submissions();
 
     // 1. Who we are. Without this the whole night has nowhere to go, which is why `preflight`
@@ -126,16 +128,59 @@ fn main() {
         );
     }
 
-    // 4. Drop anything already claimed: published in the tables, merged into submissions, or
-    //    sitting in somebody's open pull request. This is the cheap part and the whole reason a
-    //    long grind does not have to be redone when the world moves under it.
+    // 4. One batch per game, and one pull request per game.
+    //
+    //    A name means nothing without the game it came from: the two number their asset types
+    //    differently, so `xmodel` is pool 6 in Cold War and 4 in Black Ops 4. A batch mixing the
+    //    two cannot state its own game truthfully, and a reviewer cannot tell at a glance which
+    //    title a submission is for. The run folder's path says which game it was ground under,
+    //    and that is what groups them here.
+    let mut by_game: std::collections::BTreeMap<String, Vec<PathBuf>> = Default::default();
+    for folder in pending {
+        let game = paths::game_of(&folder).unwrap_or_else(config::game);
+        by_game.entry(game).or_default().push(folder);
+    }
+
     let cached = recon::load_cached();
+    let mut opened = 0;
+
+    for (game, runs) in &by_game {
+        println!("\n--- {game} ---");
+
+        if let Some(url) = send(game, runs, &repo, &outbox, &who, &known, &landscape, &cached) {
+            println!("\nsubmitted: {url}");
+            opened += 1;
+        }
+
+        record(&outbox, runs);
+    }
+
+    if opened == 0 {
+        println!("\nnothing was sent.");
+    }
+}
+
+/// Sends one game's runs, and returns the pull request it opened.
+#[allow(clippy::too_many_arguments)]
+fn send(
+    game: &str,
+    pending: &[PathBuf],
+    repo: &str,
+    outbox: &Path,
+    who: &str,
+    known: &HashSet<u64>,
+    landscape: &recon::Landscape,
+    cached: &HashSet<u64>,
+) -> Option<String> {
+    // Drop anything already claimed: published in the tables, merged into submissions, or sitting
+    // in somebody's open pull request. This is the cheap part and the whole reason a long grind
+    // does not have to be redone when the world moves under it.
     let mut batch: Vec<(String, String)> = Vec::new(); // (type, name)
     let mut dropped = 0_usize;
     let mut claimed_elsewhere = 0_usize;
     let mut worthless: std::collections::BTreeMap<String, usize> = Default::default();
 
-    for folder in &pending {
+    for folder in pending {
         for (kind, name) in names_in(folder) {
             // A pool that has already cost somebody a night for nothing does not go upstream,
             // whoever found it and however genuine the hash is. See LOW_VALUE_POOLS.
@@ -163,7 +208,7 @@ fn main() {
 
     for (kind, count) in &worthless {
         println!(
-            "\nheld back {count} `{kind}` name(s): {}",
+            "held back {count} `{kind}` name(s): {}",
             low_value_reason(kind).unwrap_or_default()
         );
     }
@@ -173,27 +218,27 @@ fn main() {
     batch.dedup();
 
     println!(
-        "\n{} names to send\n  {dropped} dropped: published in the tables\n  {claimed_elsewhere} \
+        "{} names to send\n  {dropped} dropped: published in the tables\n  {claimed_elsewhere} \
          dropped: already claimed by a merged submission or an open pull request",
         batch.len()
     );
 
     if batch.is_empty() {
         println!(
-            "\nnothing left to send -- every name found is already somebody's.\n\n\
+            "\nnothing left to send for {game} -- every name found is already somebody's.\n\n\
              That is not a failed night, it is an honest one, and a submission of zero is worth \
              more\nthan a submission of duplicates. What it means is that this method is spent at \
              these\ninputs. Widen the lists (`python scripts/derive_lists.py`), run a method that \
              reaches\nsomewhere else, or invent one -- METHODS.md says what each one gets at that \
              nothing else does."
         );
-        record(&outbox, &pending);
-        return;
+        return None;
     }
 
-    // 5. Write the batch, named for the moment it was sent so nothing ever collides.
+    // Write the batch, named for the game and the moment it was sent, so nothing ever collides
+    // and a folder says what it holds without being opened.
     let when = stamp();
-    let folder = outbox.join(format!("{who}_{when}"));
+    let folder = outbox.join(format!("{who}_{game}_{when}"));
     if let Err(error) = fs::create_dir_all(&folder) {
         eprintln!("could not make {}: {error}", folder.display());
         std::process::exit(1);
@@ -220,21 +265,21 @@ fn main() {
         println!("{kind:<24} {:>8}", names.len());
     }
 
-    // 6. The collision estimate, recorded rather than enforced. It is vanishingly small for any
-    //    seeded method; it is worth carrying so a strange batch can be traced afterwards.
+    // The collision estimate, recorded rather than enforced. It is vanishingly small for any
+    // seeded method; it is worth carrying so a strange batch can be traced afterwards.
     let estimate = expected_by_chance(batch.len() as u64, known.len());
 
     // What each run has to say for itself -- which method, and how long it ground for. Written
     // by the run into its own folder; a folder without one is from an older or interrupted run.
-    let accounts = run_accounts(&pending);
+    let accounts = run_accounts(pending);
 
     let notes = folder.join(format!("about_{when}.md"));
     let _ = fs::write(
         &notes,
         format!(
             "# Submission {when}\n\n\
+             - game: **{game}**\n\
              - from: {who}\n\
-             - game: {}\n\
              - names: {}\n\
              - dropped as already published: {dropped}\n\
              - dropped as already claimed by a merged or open submission: {claimed_elsewhere}\n\
@@ -246,7 +291,6 @@ fn main() {
              Every name here was confirmed against the game's own loaded assets, and checked \
              against the community tables immediately before sending.\n\
              \n## How these were found\n{accounts}",
-            config::game(),
             batch.len(),
             pending.len(),
             config::targets().describe(),
@@ -255,7 +299,7 @@ fn main() {
     );
 
     // Anything the run wants to teach the next contributor, rather than only feed them.
-    let scripts = contributed_scripts(&pending);
+    let scripts = contributed_scripts(pending);
     if !scripts.is_empty() {
         println!(
             "\ncarrying {} script(s) along with the names, so the next contributor inherits the \
@@ -266,23 +310,11 @@ fn main() {
 
     println!("\nwritten to {}", folder.display());
 
-    // 7. The pull request. One per job, deliberately: a session that dies has already sent
-    //    everything up to its last completed job.
     match open_pull_request(
-        &repo,
-        &folder,
-        &scripts,
-        &when,
-        &who,
-        batch.len(),
-        dropped,
-        claimed_elsewhere,
+        repo, game, &folder, &scripts, &when, who, batch.len(), dropped, claimed_elsewhere,
         &accounts,
     ) {
-        Ok(url) => {
-            println!("\nsubmitted: {url}");
-            record(&outbox, &pending);
-        }
+        Ok(url) => Some(url),
         Err(why) => {
             eprintln!("\nthe pull request could not be opened: {why}");
             eprintln!("the batch is saved at {} and will be sent next time.", folder.display());
@@ -571,6 +603,7 @@ fn github_user() -> Option<String> {
 /// as it was rather than a branch holding half a batch.
 fn open_pull_request(
     repo: &str,
+    game: &str,
     folder: &Path,
     scripts: &[PathBuf],
     when: &str,
@@ -580,7 +613,7 @@ fn open_pull_request(
     claimed: usize,
     accounts: &str,
 ) -> Result<String, String> {
-    let branch = format!("findings/{who}-{when}");
+    let branch = format!("findings/{who}-{game}-{when}");
     let base = default_branch(repo)?;
 
     // Push into a fork, unless this is the maintainer submitting to their own repository, where
@@ -611,7 +644,7 @@ fn open_pull_request(
 
         let bytes = fs::read(&file).map_err(|error| format!("could not read {name}: {error}"))?;
         let blob = make_blob(&fork, &bytes)?;
-        entries.push((format!("submissions/{who}_{when}/{name}"), blob));
+        entries.push((format!("submissions/{who}_{game}_{when}/{name}"), blob));
     }
 
     // Scripts go to the shared library rather than into the submission folder, because a method
@@ -630,7 +663,10 @@ fn open_pull_request(
         return Err("the batch folder held no files to send".to_owned());
     }
 
-    let title = format!("findings from {who}, {when} ({names} names)");
+    // The game leads the title. It is the first thing a reviewer needs, and a list of pull
+    // requests cannot otherwise show which title a submission is for -- which matters now that
+    // both games are ground rather than only whichever one the config happened to default to.
+    let title = format!("[{game}] findings from {who}, {when} ({names} names)");
     let tree = make_tree(&fork, &base_tree, &entries)?;
     let commit = make_commit(&fork, &title, &tree, &parent)?;
     make_branch(&fork, &branch, &commit)?;
@@ -653,7 +689,7 @@ fn open_pull_request(
     };
 
     let body = format!(
-        "{names} asset names, confirmed against the game's own loaded assets.\n\n\
+        "**{game}** — {names} asset names, confirmed against that game's own loaded assets.\n\n\
          **Checked against, at the moment of sending:** the community hash tables (refreshed \
          first), every merged submission in this repository, and every pull request open right \
          now. A name any of those already holds was dropped rather than sent.\n\n\

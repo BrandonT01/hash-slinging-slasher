@@ -337,12 +337,21 @@ mod tests {
         }
     }
 
+    /// Asserted against Cold War's table by name rather than through `pool_name`, which reads
+    /// whichever game this machine is currently set to grind. Index 6 is `xmodel` there and
+    /// `material` in Black Ops 4, so going through the configured game makes the test's answer
+    /// depend on the machine it runs on -- which it duly started doing the day both games began
+    /// being ground.
     #[test]
     fn pools_that_are_named_are_named_and_the_rest_are_numbered() {
-        assert_eq!(pool_name(6), "xmodel");
+        assert_eq!(slasher::POOLS[6], "xmodel");
         // 184 was the largest unidentified pool in the game until the enum named it.
-        assert_eq!(pool_name(184), "streamkey");
+        assert_eq!(slasher::POOLS[184], "streamkey");
         // Past the end of the enum is where the numbered fallback still applies.
         assert_eq!(pool_name(999), "pool_999");
+        assert_eq!(pool_name(slasher::BO4_POOLS.len().max(slasher::POOLS.len())), {
+            let past = slasher::BO4_POOLS.len().max(slasher::POOLS.len());
+            format!("pool_{past}")
+        });
     }
 }

@@ -216,8 +216,12 @@ pub fn run() -> bool {
     let landscape = survey(&mut warned);
 
     // 7. What this machine is set to hunt, and whether any of it is known to be a waste.
+    if let Some(moved) = paths::migrate_flat_findings() {
+        println!("  [fixed]   {moved}");
+    }
+
     let targets = config::targets();
-    println!("  [ok]      hunting {}", targets.describe());
+    println!("  [ok]      hunting {} in {}", targets.describe(), config::game());
 
     for (pool, _) in LOW_VALUE_POOLS {
         if crate::pool_index(pool).map(|index| targets.wants(index)).unwrap_or(false) {
@@ -318,13 +322,117 @@ fn report(landscape: &recon::Landscape) {
         );
     }
 
+    let game = which_game();
     library();
-    suggest();
+    suggest(&game);
 
     println!(
         "\nSubmit after each job rather than at the end of the night, and do not ask first --\n\
          `submit` re-checks all of this at the moment of sending and drops anything already taken."
     );
+}
+
+/// Which game to grind next, and why -- chosen rather than asked.
+///
+/// This project is called a Cold War **and** Black Ops 4 solver, and until now it was neither by
+/// default: `config.toml` does not exist in a fresh clone, the fallback is Cold War, and so every
+/// contributor ground the same title. Black Ops 4 has **more** unnamed assets in the five types
+/// that matter -- 141,889 against 136,467 -- and is far less picked over: 64% of its images are
+/// named against 81% of Cold War's.
+///
+/// Asking would be the obvious fix and it is the wrong one. The whole instruction to an assistant
+/// here is *do not stop and ask*, and a question at the top of every session is both a
+/// contradiction and one more thing for a tired user to get wrong at four in the morning.
+///
+/// So it alternates, per clone, by **how many passes each game has had here** -- and passes
+/// rather than names on purpose. Counting names starves whichever game yields fewer of them: one
+/// good Cold War night puts it thousands ahead, and a rule chasing the smaller number would send
+/// every pass to Black Ops 4 until it caught up, which could be weeks. Counting passes gives each
+/// game every other run whatever they return, which is the behaviour actually wanted.
+///
+/// A fresh clone has none of either, and the tie goes to Black Ops 4: it has more unnamed assets
+/// in the five types that matter (141,889 against 136,467) and is much less picked over -- 64% of
+/// its images are named against 81% of Cold War's -- and it has historically received nothing.
+///
+/// Nobody chooses, both get ground, and one flag overrides it for anybody who cares.
+fn which_game() -> String {
+    // Switched off deliberately, with a key that cannot be in an old config file.
+    if !config::alternates() {
+        let chosen = config::game();
+        println!(
+            "grinding {chosen} only: config.toml says `alternate_games = false`.\n\n  \
+             Remove that line and the two games take turns again, so neither is left behind.\n"
+        );
+        return chosen;
+    }
+
+    // Black Ops 4 first in the list, so it wins a tie without needing a special case.
+    let order = ["BLKOPS04", "BLKOPSCW"];
+
+    let mut standings: Vec<(usize, &str)> = order
+        .iter()
+        .filter(|game| config::GAMES.contains(game))
+        .map(|game| (passes_here(game), *game))
+        .collect();
+
+    standings.sort_by_key(|(passes, _)| *passes);
+
+    let least = standings[0].1;
+
+    // Written down rather than merely announced, so the searches pick it up without anybody
+    // having to carry a flag across from an earlier command's output.
+    let _ = config::choose_game(least);
+
+    println!("what to grind next:\n");
+
+    // No "<- configured" marker here on purpose: reaching this point means nothing was chosen,
+    // and pointing at the fallback as though it were a decision is how the fallback came to be
+    // treated as one.
+    for (passes, game) in &standings {
+        println!(
+            "  {game:<10} {passes:>4} pass(es) on this machine, {} name(s) confirmed",
+            confirmed_here(game)
+        );
+    }
+
+    println!(
+        "\n  Grinding {least} next -- it has had the fewer passes here, so the two take turns and\n  \
+         neither is left behind. Every search below picks this up on its own; no flag needed.\n  \
+         Findings are kept per game, so switching costs nothing.\n\n  \
+         `--game <TAG>` forces one game for one run, when there is a reason to. To stop the\n  \
+         turn-taking altogether, put `alternate_games = false` in config.toml."
+    );
+
+    println!();
+    least.to_owned()
+}
+
+/// How many search passes this machine has run for one game.
+fn passes_here(game: &str) -> usize {
+    let folder = paths::findings_root().join(game.to_lowercase());
+
+    std::fs::read_dir(&folder)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|entry| {
+            entry.path().is_dir()
+                && entry.file_name().to_string_lossy().starts_with("run_")
+        })
+        .count()
+}
+
+/// How many names this machine has confirmed for one game. Reported, never used to choose.
+fn confirmed_here(game: &str) -> usize {
+    let folder = paths::findings_root().join(game.to_lowercase());
+
+    std::fs::read_dir(&folder)
+        .into_iter()
+        .flatten()
+        .flatten()
+        .filter(|entry| entry.path().extension().and_then(|e| e.to_str()) == Some("txt"))
+        .map(|entry| std::fs::read_to_string(entry.path()).unwrap_or_default().lines().count())
+        .sum()
 }
 
 /// Everything already in the script library, printed before anything suggests inventing.
@@ -410,8 +518,11 @@ fn first_docstring_line(path: &Path) -> Option<String> {
 ///
 /// It is a suggestion and says so. Anything in `METHODS.md` is a legitimate choice, and inventing
 /// something that is not in it is the best choice of all.
-fn suggest() {
+fn suggest(game: &str) {
     let ran = methods_already_run();
+
+    // Every suggested command carries the game, so following it verbatim grinds the right one.
+    let on = if game == config::game() { String::new() } else { format!(" --game {game}") };
 
     // In the order METHODS.md ranks them, with what each reaches, so the choice is informed
     // rather than obeyed.
@@ -456,7 +567,7 @@ fn suggest() {
             continue;
         }
 
-        println!("  {command}\n      {what}\n");
+        println!("  {command}{on}\n      {what}\n");
         offered += 1;
 
         if offered == 2 {

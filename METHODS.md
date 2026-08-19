@@ -58,7 +58,15 @@ Nobody has come close to finishing either, and the two games are not the same pr
 - **Black Ops 4 is image and material rich and less than 60% named** — a larger absolute prize
   than Cold War in both, and less picked over.
 
-Both games use the same hash and the same normalisation, so one implementation serves both.
+Both games use the same hash and the same normalisation, so one implementation serves both, and
+`--game BLKOPS04` on any search is all it takes to switch.
+
+**Grind both.** Until recently the project ground only Cold War, because `config.toml` does not
+exist in a fresh clone and the fallback was Cold War -- so a repository calling itself a Cold War
+and Black Ops 4 solver had, in practice, never solved any Black Ops 4. `start` now alternates by
+how many passes each game has had on the machine, findings are kept per game in `findings/<game>/`,
+and `submit` opens one pull request per game titled `[BLKOPS04] findings from ...`. Setting `game`
+in `config.toml` turns the alternation off and that choice is then respected.
 
 ### Two figures that were wrong, and are corrected here
 

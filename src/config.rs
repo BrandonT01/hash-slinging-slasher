@@ -19,7 +19,7 @@ use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 
-use crate::{pool_index, POOLS};
+use crate::pool_index;
 
 /// Where the settings live, looked for beside the working directory.
 const CONFIG: &str = "config.toml";
@@ -54,9 +54,17 @@ impl Targets {
         match self {
             Self::Everything => "every pool".to_owned(),
             Self::Only(pools) => {
+                // `crate::pools()`, not the `POOLS` constant. The two games number their asset
+                // types differently, and this used to read Black Ops 4's indexes out of Cold
+                // War's list -- so a correctly targeted BO4 run announced itself as hunting
+                // "destructibledef, physconstraints, xmodelmesh". The search was right and the
+                // line describing it was wrong, which is the worst way round: it also went into
+                // every submission's notes as the record of what had been searched.
+                let table = crate::pools();
+
                 let mut names: Vec<&str> = pools
                     .iter()
-                    .filter_map(|index| POOLS.get(*index).copied())
+                    .filter_map(|index| table.get(*index).copied())
                     .collect();
                 names.sort_unstable();
 
@@ -83,18 +91,86 @@ pub fn path(key: &str) -> Option<std::path::PathBuf> {
     Some(std::path::PathBuf::from(raw))
 }
 
+/// The tags a snapshot can carry, and therefore the games that can be ground.
+pub const GAMES: &[&str] = &["BLKOPSCW", "BLKOPS04"];
+
+/// Where `start` records which game it chose, so a search does not have to be told.
+///
+/// The alternation would be worthless as advice alone: it would mean every search needed a flag
+/// remembered from the output of an earlier command, which is exactly the shape of instruction
+/// this project keeps finding does not survive. So the decision is written down and read back.
+const CHOSEN: &str = "state/game.txt";
+
+/// Whether the alternation has been deliberately switched off.
+///
+/// **Deliberately, and by a key that did not exist before.** `game = "BLKOPSCW"` cannot mean this,
+/// and that is the whole point: `config.example.toml` shipped that line uncommented, so anybody
+/// who copied the template months ago has it. Reading it as a decision would pin every one of
+/// those contributors to Cold War forever, silently -- which is the precise failure being fixed,
+/// reintroduced through the back door. A new key cannot be in an old file.
+pub fn alternates() -> bool {
+    let text = fs::read_to_string(CONFIG).unwrap_or_default();
+    flag(&text, "alternate_games") != Some(false)
+}
+
 /// Which game to grind, as the tag a snapshot carries internally.
 ///
 /// The hash and the normalisation are identical across these games, and the tables are a plain
 /// hash to name mapping with no game in them, so nothing about a search is Cold War specific
 /// except which ids it is hunting. That is a snapshot, and a snapshot is a setting.
+///
+/// Four places are asked, most explicit first:
+///
+/// 1. `--game BLKOPS04` on the command line -- this run, whatever anything else says.
+/// 2. `state/game.txt`, which is `start`'s alternation. This outranks `config.toml` on purpose:
+///    the config's `game` line is in every clone copied from the old template, and letting it win
+///    would pin those contributors to one title forever.
+/// 3. `config.toml`, when the alternation has been switched off with `alternate_games = false`.
+/// 4. The built-in default.
 pub fn game() -> String {
+    let arguments: Vec<String> = std::env::args().collect();
+    if let Some(at) = arguments.iter().position(|argument| argument == "--game") {
+        if let Some(named) = arguments.get(at + 1) {
+            let named = named.to_uppercase();
+
+            if GAMES.contains(&named.as_str()) {
+                return named;
+            }
+
+            eprintln!(
+                "`--game {named}` is not a game this holds a snapshot for. It is one of: {}",
+                GAMES.join(", ")
+            );
+            std::process::exit(2);
+        }
+    }
+
+    if alternates() {
+        if let Some(chosen) = fs::read_to_string(CHOSEN)
+            .ok()
+            .map(|raw| raw.trim().to_uppercase())
+            .filter(|raw| GAMES.contains(&raw.as_str()))
+        {
+            return chosen;
+        }
+    }
+
     let text = fs::read_to_string(CONFIG).unwrap_or_default();
 
     value_of(&text, "game")
         .map(|raw| raw.trim().trim_matches('"').trim_matches('\'').to_uppercase())
-        .filter(|raw| !raw.is_empty())
+        .filter(|raw| GAMES.contains(&raw.as_str()))
         .unwrap_or_else(|| crate::GAME.to_owned())
+}
+
+/// Records the game the alternation picked, for the searches that follow.
+pub fn choose_game(game: &str) -> std::io::Result<()> {
+    let path = Path::new(CHOSEN);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+
+    fs::write(path, game)
 }
 
 /// Reads the settings, falling back to the defaults when there is no file or it says nothing.
@@ -220,6 +296,34 @@ mod tests {
         assert!(!targets.wants(pool_index("xmodel").unwrap()));
 
         let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// The turn-taking is on unless a key that could not be in an old file says otherwise.
+    ///
+    /// This is the guard on a nasty one. `config.example.toml` shipped `game = "BLKOPSCW"`
+    /// uncommented, so clones copied from it months ago still carry it -- and if that counted as
+    /// "this contributor chose Cold War", every one of them would be locked to Cold War forever
+    /// without ever being told. `alternate_games` did not exist then, so it cannot be in an old
+    /// file, which is the entire reason it is a separate key rather than a reading of `game`.
+    #[test]
+    fn an_old_config_naming_a_game_does_not_stop_the_turn_taking() {
+        let legacy = "[search]\ngame = \"BLKOPSCW\"\n";
+        assert_ne!(flag(legacy, "alternate_games"), Some(false));
+
+        let switched_off = "[search]\ngame = \"BLKOPSCW\"\nalternate_games = false\n";
+        assert_eq!(flag(switched_off, "alternate_games"), Some(false));
+    }
+
+    /// Only a game there is a snapshot for. A typo used to fall through as a game name and then
+    /// silently match nothing; now it is rejected in favour of the default.
+    #[test]
+    fn a_game_the_snapshots_do_not_hold_is_not_accepted() {
+        for game in GAMES {
+            assert!(GAMES.contains(game));
+        }
+
+        assert!(!GAMES.contains(&"BLKOPS03"));
+        assert!(!GAMES.contains(&""));
     }
 
     #[test]

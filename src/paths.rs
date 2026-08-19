@@ -34,8 +34,85 @@ pub fn snapshots() -> PathBuf {
 
 /// What this machine has confirmed: a file per asset type, plus a folder per run holding only
 /// what that run was the first to reach. The run folders are what gets submitted.
+/// Where this machine's confirmed names go, **for the game being ground**.
+///
+/// Per game, and that is a correctness requirement rather than tidiness. The two games number
+/// their asset types differently -- `xmodel` is 6 in Cold War and 4 in Black Ops 4 -- so a name is
+/// filed under a label that only means anything alongside the game it came from. A single flat
+/// folder made switching `game` in config.toml silently mix the two into one `material.txt`, and
+/// `submit` would then send them as one batch under whichever game happened to be configured at
+/// the time. That is exactly the thing rule 3 in AGENTS.md says must never happen, and until this
+/// it was one edited config line away.
 pub fn findings() -> PathBuf {
+    findings_root().join(config::game().to_lowercase())
+}
+
+/// The folder holding every game's findings.
+///
+/// Two callers want this rather than one game's. **Seeding**: a name confirmed in one game is
+/// good candidate material for the other, because Cold War carries a great deal of Black Ops 4's
+/// content -- so a search reads all of them and writes only its own. **Submitting**: a session
+/// may have ground both, and the run folder's path is what says which game each batch is.
+pub fn findings_root() -> PathBuf {
     config::path("findings").unwrap_or_else(|| PathBuf::from(DEFAULT_FINDINGS))
+}
+
+/// Which game a path under the findings root belongs to, by the folder it sits in.
+///
+/// The path is the record. A run folder carries no game inside it, and inferring one from the
+/// config at submission time is how a batch ends up labelled with the wrong game hours later.
+pub fn game_of(path: &std::path::Path) -> Option<String> {
+    let root = findings_root();
+    let rest = path.strip_prefix(&root).ok()?;
+
+    Some(rest.components().next()?.as_os_str().to_string_lossy().to_uppercase())
+}
+
+/// Moves a flat `findings/` from before the per-game split into the game it was ground under.
+///
+/// Everything written before the split was Cold War, because that was the only default there was.
+/// Left where it is, it would be read as seeds and never submitted, so it is moved rather than
+/// abandoned -- results only ever grow.
+pub fn migrate_flat_findings() -> Option<String> {
+    let root = findings_root();
+    let into = root.join(crate::GAME.to_lowercase());
+
+    if into.exists() {
+        return None;
+    }
+
+    let mut strays: Vec<PathBuf> = Vec::new();
+    for entry in std::fs::read_dir(&root).ok()?.flatten() {
+        let path = entry.path();
+        let name = entry.file_name().to_string_lossy().to_string();
+
+        let is_result = path.extension().and_then(|e| e.to_str()) == Some("txt");
+        let is_run = path.is_dir() && name.starts_with("run_");
+
+        if is_result || is_run {
+            strays.push(path);
+        }
+    }
+
+    if strays.is_empty() {
+        return None;
+    }
+
+    std::fs::create_dir_all(&into).ok()?;
+
+    for stray in &strays {
+        if let Some(name) = stray.file_name() {
+            let _ = std::fs::rename(stray, into.join(name));
+        }
+    }
+
+    Some(format!(
+        "moved {} existing result file(s) and run folder(s) into {} -- findings are now kept per \
+         game, because the two number their asset types differently and mixing them mislabels \
+         every name",
+        strays.len(),
+        into.display()
+    ))
 }
 
 /// Where a run's own findings are gathered before being sent.
@@ -110,6 +187,27 @@ mod tests {
             assert!(!default.contains(':'), "{default} should not name a drive");
             assert!(!default.starts_with(".."), "{default} should not escape the repository");
         }
+    }
+
+    /// Findings live under the game they were ground for, and the path is what says which.
+    ///
+    /// This is the guard on rule 3 in AGENTS.md. Before the split, changing `game` in config.toml
+    /// wrote Black Ops 4 names into the same `material.txt` as Cold War's, and `submit` sent them
+    /// as one batch under whichever game happened to be configured at the time.
+    #[test]
+    fn a_run_folder_says_which_game_it_belongs_to() {
+        let root = findings_root();
+
+        for game in crate::config::GAMES {
+            let run = root.join(game.to_lowercase()).join("run_20260819-000000_all");
+            assert_eq!(game_of(&run).as_deref(), Some(*game), "for {game}");
+        }
+    }
+
+    /// A path outside the findings tree has no game, rather than being given a wrong one.
+    #[test]
+    fn a_path_outside_the_findings_tree_has_no_game() {
+        assert_eq!(game_of(std::path::Path::new("somewhere/else/run_x")), None);
     }
 
     /// The machine-specific ones are absent rather than wrong when nobody has set them.

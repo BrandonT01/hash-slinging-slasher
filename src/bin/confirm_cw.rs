@@ -252,6 +252,17 @@ fn main() {
     println!("confirmed names as seeds: {}", lines.len());
 
     if sources == Sources::All {
+        // What the *other* game has confirmed. Findings are kept per game because the two number
+        // their asset types differently and a mixed folder mislabels every name -- but that is a
+        // rule about where results are written, not about where candidates come from. Cold War
+        // carries a great deal of Black Ops 4's content, so each game's confirmed names are
+        // among the best seed material the other has.
+        for other in config::GAMES.iter().filter(|game| **game != config::game()) {
+            let borrowed = folder_names(paths::findings_root().join(other.to_lowercase()));
+            println!("confirmed in {other} and worth trying here: {}", borrowed.len());
+            lines.extend(borrowed);
+        }
+
         for (label, folder) in [
             ("harvested from the alpha", paths::harvest().unwrap_or_default()),
             ("harvested from the retail build", paths::harvest().unwrap_or_default()),
@@ -334,7 +345,18 @@ fn main() {
         }
     });
 
-    println!("{} names found across the run", found.len());
+    // Matches and names are different numbers and this used to print the first under the second's
+    // name. `found` is one entry per beginning-stem-ending combination that landed, so a name
+    // reachable three ways is in it three times -- 7,640 matches over one measured pass were 1,029
+    // distinct names. Reporting the raw figure as "names found" overstates a pass by a factor of
+    // seven and is precisely how wrong numbers have got into this project's documentation before.
+    let distinct: std::collections::HashSet<u64> = found.iter().map(|(id, _)| *id).collect();
+    println!(
+        "{} matches across the run, {} distinct name(s) -- see the table below for how many were \
+         new",
+        found.len(),
+        distinct.len()
+    );
 
     results.write(paths::findings()).expect("the results");
 

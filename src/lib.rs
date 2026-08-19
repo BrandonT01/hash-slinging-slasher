@@ -231,7 +231,15 @@ const ALIASES: &[&[&str]] = &[
 /// Tried three ways, most exact first: the name as given, the name ignoring underscores, and then
 /// the name the other game uses for the same thing.
 pub fn pool_index(kind: &str) -> Option<usize> {
-    let table = pools();
+    pool_index_in(pools(), kind)
+}
+
+/// The same lookup against a named table rather than the game being ground.
+///
+/// Split out so it can be tested. `pool_index` reads which game is configured, and a test that
+/// goes through it is a test whose answer depends on this machine's settings -- which is exactly
+/// how one here started failing the moment the game stopped always being Cold War.
+pub fn pool_index_in(table: &'static [&'static str], kind: &str) -> Option<usize> {
 
     if let Some(found) = table.iter().position(|pool| *pool == kind) {
         return Some(found);
@@ -916,21 +924,38 @@ pub fn expected_by_chance(candidates: u64, wanted: usize) -> f64 {
 mod tests {
     use super::*;
 
-    /// The five default types must resolve in Cold War, which is the game the defaults describe.
+    /// The five default types must resolve in **both** games, since both are ground now.
+    ///
+    /// Against the tables directly rather than through `pool_index`, which reads the configured
+    /// game -- a test that goes through it passes or fails depending on this machine's settings,
+    /// and one here duly started failing the day the game stopped always being Cold War.
     #[test]
-    fn the_default_types_resolve_in_cold_war() {
-        for kind in config::DEFAULT_POOLS {
-            assert!(pool_index(kind).is_some(), "{kind} did not resolve");
+    fn the_default_types_resolve_in_both_games() {
+        for table in [POOLS, BO4_POOLS] {
+            for kind in config::DEFAULT_POOLS {
+                assert!(pool_index_in(table, kind).is_some(), "{kind} did not resolve");
+            }
         }
     }
 
     /// Cold War must never be answered with an alias when it has the exact name itself.
     #[test]
     fn an_exact_name_wins_over_an_alias() {
-        assert_eq!(pool_index("sound_asset"), Some(19), "sound_asset is 19, not sound at 17");
-        assert_eq!(pool_index("sound"), Some(17));
-        assert_eq!(pool_index("xmodel"), Some(6));
-        assert_eq!(pool_index("streamkey"), Some(184));
+        assert_eq!(pool_index_in(POOLS, "sound_asset"), Some(19), "sound_asset is 19, not 17");
+        assert_eq!(pool_index_in(POOLS, "sound"), Some(17));
+        assert_eq!(pool_index_in(POOLS, "xmodel"), Some(6));
+        assert_eq!(pool_index_in(POOLS, "streamkey"), Some(184));
+    }
+
+    /// And the same five in Black Ops 4, where the numbering is different and `sound_asset` has
+    /// to fall through to its one `sound` pool.
+    #[test]
+    fn the_black_ops_4_numbering_is_its_own() {
+        assert_eq!(pool_index_in(BO4_POOLS, "xanim"), Some(3));
+        assert_eq!(pool_index_in(BO4_POOLS, "xmodel"), Some(4));
+        assert_eq!(pool_index_in(BO4_POOLS, "material"), Some(6));
+        assert_eq!(pool_index_in(BO4_POOLS, "image"), Some(9));
+        assert_eq!(pool_index_in(BO4_POOLS, "sound_asset"), Some(10), "aliases to `sound`");
     }
 
     /// The lookup used against Black Ops 4's table, which is where the mismatches bite. Written

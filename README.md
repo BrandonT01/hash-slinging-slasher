@@ -11,7 +11,9 @@ Call of Duty stores most of its asset names as hashes rather than text. The name
 the number survives. This recovers them — and proves each one against the real game, so what
 comes out is a fact rather than a guess.
 
-Currently **Black Ops Cold War** and **Black Ops 4**.
+Currently **Black Ops Cold War** and **Black Ops 4** — and it grinds both. Left alone it
+alternates between them, because Black Ops 4 actually has *more* unnamed assets in the types that
+matter (141,889 against 136,467) and far less of it has been recovered so far.
 
 ## You do not need the game
 
