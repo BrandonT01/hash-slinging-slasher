@@ -1,0 +1,10 @@
+23eaaa0ed427f793,arcade_machine
+27a0396529960d05,craft_global
+3075409d8c7d89a5,doa_player
+1934c36f8ae40fff,killstreak_reward
+40fddda36e5a6aca,pc_global
+6f120f13772c9d16,quick_spray
+4f4eb156da9d36c,specialist_base
+2b6eb80c52e67a80,storage_global
+2bf958a355503d00,vehicle_ac130
+593f03dd48d5bc1f,warzone_global

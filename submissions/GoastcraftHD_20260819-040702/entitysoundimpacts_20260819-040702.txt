@@ -1,0 +1,8 @@
+7447c631ef6d2877,entity_bounce
+5bfd5685b0999b5f,entity_exit
+1eca12023bf08c25,entity_impact
+14b68d0970eb6a02,victim_bullet
+3e9fb00584239bed,victim_crate
+600eda7a228a2c12,victim_crossbow
+17142e7a354c1c7d,victim_hatchet
+1731539f8ccca03e,victim_recurvebow
