@@ -104,11 +104,12 @@ build a process-memory reader they cannot use.
 Findings arrive as pull requests, opened for you — you do not need to know git. They are
 checked automatically and reviewed by hand before going upstream.
 
-The most useful non-grinding contribution: **the unidentified pools**. A game holds assets in
-numbered pools, and only some of those numbers have known asset types. Cold War has 67 pools
-holding confirmed names that are labelled `pool_184` and the like, because nobody has worked out
-what they are — and a name in an unidentified pool cannot be submitted upstream until its type is
-known. `pool_184` alone holds over 52,000 confirmed names. See `snapshots/*.pools.txt`.
+The most useful non-grinding contribution: **a home for the types that have no table**. Every
+pool in both games is identified — `snapshots/*.pools.txt` is the complete map of every index,
+its asset type, and how many assets it holds. What some types still lack is a *destination*:
+cod-name-db carries tables for models, anims, images, materials and sounds, but a confirmed
+`technique_set` name, for example, has no csv upstream to land in yet. Proposing and seeding
+those tables is how whole pools' worth of findings become publishable.
 
 ## The hash tables
 
