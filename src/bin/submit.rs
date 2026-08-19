@@ -1073,6 +1073,55 @@ mod tests {
         assert_eq!(library_name("gen.sh", when, b"x"), "gen_20260820-013000.sh");
     }
 
+    /// A script already in the library is recognised, against the library that actually exists.
+    ///
+    /// `same_text` on its own only proves the comparison; this proves the lookup around it --
+    /// that `strip_stamp` recovers the base name from a stamped file, that the extension check
+    /// does not reject it, and that the folder is found where `paths::root()` says. The stamping
+    /// had a passing unit test and still shipped a live bug that only a real submission exposed,
+    /// which is the reason this one goes through the real folder rather than a fixture.
+    ///
+    /// Skips rather than fails when the library is empty: a fresh clone has nothing to match, and
+    /// a test that demanded otherwise would fail for everyone but us.
+    #[test]
+    fn a_script_already_in_the_library_is_recognised() {
+        let folder = paths::root().join("scripts").join("contributed");
+        let Ok(entries) = fs::read_dir(&folder) else {
+            return;
+        };
+
+        let mut checked = 0;
+        for entry in entries.flatten() {
+            let path = entry.path();
+            let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+                continue;
+            };
+            if !name.ends_with(".py") {
+                continue;
+            }
+
+            let Ok(held) = fs::read(&path) else { continue };
+
+            // Offered back under its bare name, exactly as a contributor's `contrib/` copy would
+            // arrive, and with the line endings a freshly written file carries rather than the
+            // ones git checked this one out with.
+            let bare = format!("{}.py", strip_stamp(name.trim_end_matches(".py")));
+            let unix: Vec<u8> = held.iter().copied().filter(|byte| *byte != b'\r').collect();
+
+            assert_eq!(
+                library_name(&bare, "20260820-013000", &unix),
+                name,
+                "{bare} should have been recognised as the library's {name}, not stamped afresh"
+            );
+
+            checked += 1;
+        }
+
+        if checked > 0 {
+            println!("{checked} library script(s) recognised");
+        }
+    }
+
     /// The same script is the same script however it reached the disk.
     ///
     /// This is the whole of the deduplication: git hands out CRLF on Windows and a run writes LF,
