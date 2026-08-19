@@ -535,7 +535,7 @@ fn suggest(game: &str) {
         (
             "list",
             "python scripts/continuations.py --depth 2 --cap 24 | confirm_list - --label \"per-prefix continuations\"",
-            "offers each prefix the tokens measured to follow *that* prefix; 496 new names in 51s on its first run here",
+            "offers each prefix the tokens measured to follow *that* prefix, rather than the globally commonest words",
         ),
         (
             "images",

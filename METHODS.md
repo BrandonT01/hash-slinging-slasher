@@ -18,7 +18,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | # | method | reaches | run it with | status |
 |---|---|---|---|---|
 | 1 | general search | anything as *beginning + stem + ending* | `confirm_cw` | **exhausted at the committed lists.** Re-measure first — see below |
-| 2 | per-prefix continuations | families the global lists cannot express | `scripts/continuations.py` → `confirm_list` | **productive.** 496 new in 51 s, first run |
+| 2 | per-prefix continuations | families the global lists cannot express | `scripts/continuations.py` → `confirm_list` | reaches 496 the general search misses, but only **5** were new to the community |
 | 3 | materials → images | `image`, through the strongest measured cross-type seam | `images_from_materials` | productive after any material gain |
 | 4 | numbers in place | family members whose number sits mid-name | `confirm_variants` | productive; widen with `swaps` |
 | 5 | family gap filling | holes between confirmed family members | `scripts/families.py --gaps` → `confirm_list` | thin (1 new in 22,594) — mostly covered by 4 |
@@ -89,6 +89,37 @@ remaining.
 
 **Everything the tables resolve.** By far the largest saving: 1,626,209 Cold War assets narrow to
 136,467 actually hunted.
+
+---
+
+## "New" means new to the community, not new to your machine
+
+Read this before quoting a number at anybody, including yourself.
+
+A run reports what it was the first *on this clone* to reach. On a fresh clone that is everything
+it finds, which makes a first pass look spectacular and means almost nothing: the 430 the general
+search returns on a fresh clone are the same 430 that five contributors have already submitted,
+and the honest figure for them is **zero**.
+
+Measured here, 2026-08-19 — four Cold War runs on a clone that started with no findings at all:
+
+| run | found | new to the community |
+|---|---|---|
+| general search, committed lists | 430 | **0** |
+| per-prefix continuations | 496 | **5** |
+| family gap filling | 1 | **1** |
+| general search, widened sound corpus | 102 | **24** |
+| **distinct across all four** | **1,029** | **30** |
+
+`submit` gets this right on its own — it drops everything already merged or sitting in an open pull
+request, so those four runs send 30 names rather than 1,029. The trap is in the *reporting*: a run
+note saying `new: 496` means new to this machine, and quoting that as the method's yield overstates
+it by two orders of magnitude. That is exactly how the entry for method 2 above came to be wrong
+the first time it was written down.
+
+**Judge a method by what `submit` actually sent.** And note which way the surprise ran here: the
+widened sound corpus looked like the weakest of the four by run-note figures and was in fact the
+strongest by a factor of five.
 
 ---
 
@@ -170,12 +201,17 @@ python scripts/continuations.py --depth 2 --cap 24 \n    | confirm_list - --labe
 **Measured**, first run, Cold War, 2026-08-19:
 
 ```
-39,490,781 candidates   51 s   1,837 matched   496 new   0.0000 expected by chance
+39,490,781 candidates   51 s   1,837 matched   496 new to this clone   5 new to the community
 ```
 
-**496 new names in 51 seconds, against 430 from an 18-minute exhaustive general pass.** The
-generator was the bottleneck, not the search — `confirm_list` sustains 64.3 M candidates/s from a
-file and saw 0.8 M/s through a Python pipe.
+It reaches ground the general search's committed lists do not: 496 names in 51 seconds against 430
+from an 18-minute exhaustive pass. **But only 5 of those 496 were new to the community.** The other
+491 had already been found by other contributors, mostly through `images_from_materials` and
+`confirm_variants`. So this reaches *differently*, not *further* — worth running because it gets at
+families the global lists cannot express, not because it out-yields what already exists.
+
+The generator was the bottleneck, not the search — `confirm_list` sustains 64.3 M candidates/s from
+a file and saw 0.8 M/s through a Python pipe.
 
 Directory prefixes are given the entire vocabulary rather than a capped list, because there are
 only about fifty of them and they head a large share of what this recovers.

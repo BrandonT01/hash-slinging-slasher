@@ -169,8 +169,9 @@ been adopted:
 - **Per-prefix continuations beat a global word list.** Offering `i_c_t8_mp_spe_` the words that
   have actually followed `spe` beats offering it the 256 commonest words in the game — measured at
   2.4× the names for less than half the search. This is now `scripts/continuations.py`, and its
-  first run here returned **496 new names in 51 seconds**, against 430 from an 18-minute exhaustive
-  general pass.
+  first run here reached **496 names in 51 seconds** that the general search's committed lists did
+  not — though only 5 of those were new to the community; see METHODS.md for why that
+  distinction matters.
 - **Names are long, so word composition cannot work.** Measured on 22,481 recovered Black Ops 4
   names, the median has nine words and only 4.4% have three or fewer. Measured on this project's
   own confirmed names, the median has seven or eight underscore-separated segments. Past four

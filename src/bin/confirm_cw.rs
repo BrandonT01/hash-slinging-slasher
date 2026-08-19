@@ -384,7 +384,9 @@ fn main() {
                 .measured("beginnings", prefixes.len())
                 .measured("endings", endings.len())
                 .measured("ids hunted", wanted.len())
-                .measured("names found", found.len())
+                .measured("matches", found.len())
+                .measured("distinct names reached", distinct.len())
+                .measured("new here", results.added())
                 .fingerprint(&fingerprint)
                 .next_step(
                     "this configuration is now exhausted. Re-measure the lists with \
