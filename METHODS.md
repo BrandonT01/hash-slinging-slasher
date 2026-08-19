@@ -477,6 +477,43 @@ Do not spend a night rediscovering these. Each cost real time.
 
 ---
 
+## A quirk worth knowing, and deliberately not fixed: ids in two of the five types
+
+**This is not a correctness problem and it does not block anything.** It is written down so the
+next person who notices the numbers does not spend an evening on it.
+
+`loader::unnamed` maps each id to **one** pool, and the one it keeps is whichever has the lowest
+index — `wanted.entry(id).or_insert(pool)`. Where an id sits in two of the five targeted types at
+once, that choice is arbitrary rather than correct, and the name is written to the wrong file
+locally.
+
+Measured 2026-08-19: **141 such ids in Black Ops 4, 94 in Cold War.** Regenerate with
+
+```
+python scripts/coverage.py            # per-pool totals
+```
+
+and a short script over `snapshot.read(...).records` grouping pools by id.
+
+**Almost all of it is `image` + `material`** — 139 of the 141 in Black Ops 4, 90 of the 94 in Cold
+War. And an id in both pools means exactly what it says: the game holds an image *and* a material
+under that one name, because the id is the hash of the name and both assets carry it. Filing it as
+either is **true**. What happens is that it is not *also* listed under the other, so one CSV
+upstream is short a row it could have had.
+
+So this under-reports; it does not mis-report. `validate` passes it because the id genuinely is in
+the pool it was filed under, and nothing wrong reaches the community tables. The remaining four
+ids across both games are single instances of `xanim`+`xmodel`, `image`+`xmodel` and
+`material`+`xmodel`.
+
+**Fixing it means `wanted` becoming `id -> Vec<pool>` and every search emitting a row per pool** —
+a signature change through six binaries, to gain a couple of hundred duplicate rows. Not worth it
+now. If somebody does it, drive the choice from name shape the way `misfiled` does: three separate
+bugs in this codebase have come from guessing an asset type against the wrong evidence, and every
+one of them looked perfectly reasonable in the log.
+
+---
+
 ## What is still not recorded
 
 The fingerprint records that a *configuration* was swept. It does not record which *ranges* within
