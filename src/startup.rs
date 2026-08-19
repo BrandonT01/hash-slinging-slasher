@@ -357,6 +357,21 @@ fn report(landscape: &recon::Landscape) {
 ///
 /// Nobody chooses, both get ground, and one flag overrides it for anybody who cares.
 fn which_game() -> String {
+    // `start --game X` means X, and it has to be written down as well as obeyed. Without this the
+    // flag was accepted, silently ignored, and then *contradicted*: the turn-taking overwrote
+    // `state/game.txt` with its own pick, so every search afterwards went to the other game. A
+    // flag that quietly does the opposite of what it says is worse than no flag.
+    if std::env::args().any(|argument| argument == "--game") {
+        let chosen = config::game();
+        let _ = config::choose_game(&chosen);
+
+        println!(
+            "grinding {chosen}, because `--game` said so. That holds for the searches that follow \
+             too.\n\n  Run `start` with no flag to go back to the two taking turns.\n"
+        );
+        return chosen;
+    }
+
     // Switched off deliberately, with a key that cannot be in an old config file.
     if !config::alternates() {
         let chosen = config::game();
