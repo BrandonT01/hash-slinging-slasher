@@ -1,0 +1,3 @@
+106235507bece962,wz_dest_golova_house_culture
+7e8f4082fcc13cb4,wz_dest_golova_police_station
+1f1708999c2009dd,wz_dest_golova_town_hall

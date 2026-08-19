@@ -1,0 +1,2 @@
+5b0fac3585c2a4c3,grapple_impact
+415fba9edcdfd2e4,shotgun_impact
