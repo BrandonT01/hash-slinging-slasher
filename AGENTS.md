@@ -27,6 +27,161 @@ to and carry on.**
 `preflight` checks all of this and exits non-zero if anything would stop a grind. Run it, read it,
 and fix what it says before starting a pass.
 
+### Keep the application up to date
+
+**Always make sure the local repository and application are up to date before starting a search.**
+
+Users may be running an older version of the application that does not contain the latest fixes, search methods, asset tables, submission handling, or duplicate-prevention logic. Running an outdated version can therefore cause the agent to repeat old mistakes or miss findings that have already been discovered by other contributors.
+
+Before beginning meaningful work:
+
+1. Check the current Git repository state.
+2. Fetch the latest changes from the remote repository.
+3. Update the local checkout using the repository's normal update procedure.
+4. Make sure the application/code being executed is built from the current version.
+5. Make sure the latest `submissions/` and other repository data are available locally.
+6. Only then begin the search workflow.
+
+**Do not assume that the user's installed/local version is current.**
+
+Keeping the application up to date is especially important because new submissions, fixes, search improvements, exclusions, and workflow changes are continuously added to the repository.
+
+If the local repository cannot be updated because of a Git problem, **treat that as a blocking issue and resolve it before continuing** rather than knowingly running an outdated version.
+
+The intended workflow is:
+
+`update repository → verify/build current version → check latest submissions/data → search → verify → deduplicate → submit`
+
+The goal is for every search to benefit from the latest work already completed by the project and its contributors.
+
+### Mandatory Git and GitHub CLI setup
+
+Git and GitHub CLI are **required prerequisites**, not optional conveniences.
+
+The purpose of this application is to autonomously search for useful findings and submit them to the repository. An agent must therefore ensure that the required Git and GitHub tooling is available and authenticated before doing meaningful search work.
+
+* **Do not ask the user what they would like to do instead of setting up Git/GitHub.**
+* **Do not continue with a search workflow that cannot ultimately submit its results.**
+* Verify that Git is installed and the repository is correctly configured.
+* Verify that GitHub CLI (`gh`) is installed and authenticated.
+* If GitHub CLI is not authenticated, instruct the user to authenticate with `gh auth login` and stop until it is working.
+* If Git or GitHub configuration is broken, fix it where possible or clearly report the blocking prerequisite. Do not silently fall back to a manual workflow.
+* The workflow should be treated as incomplete until the agent can actually commit/push changes and create the required GitHub submission/PR.
+
+These requirements exist because **being able to search without being able to submit defeats the purpose of the application**.
+
+### Submission is automatic
+
+**Do not ask the user whether they want to submit the findings.**
+
+If the search has produced valid, new findings and the required Git/GitHub setup is working, the agent should proceed with the normal submission workflow automatically.
+
+Do not ask questions such as:
+
+* "Would you like me to submit these?"
+* "Do you want me to create a PR?"
+* "Should I push these results?"
+* "Do you want to continue?"
+
+The expected workflow is:
+
+`search → verify → remove duplicates → write results → commit → push → create/update submission`
+
+The user should not have to manually approve the normal completion of this workflow. **Submitting valid findings is the purpose of the application.**
+
+Only stop and ask the user when there is a genuine blocker that requires user intervention, such as missing GitHub authentication, unavailable credentials, or an unexpected situation where proceeding could cause damage or an incorrect submission.
+
+### Focus on important asset types
+
+By default, **stick to the important asset types only**:
+
+* `model`
+* `material`
+* `image`
+* `anim`
+* `sound file`
+
+Do not spend search time on other asset types or hash categories unless the **user explicitly specifies otherwise**.
+
+This keeps the search focused on the assets that are actually useful to the project. If a search method happens to encounter something outside these categories, ignore it rather than pursuing it as a separate target.
+
+The user may explicitly request work on another asset type; in that case, follow the user's request for that run.
+
+### Important lesson: do not chase irrelevant hash categories
+
+A previous search focused on `streamkey` produced approximately **290,000 results**. The hashes were genuine, but the overwhelming majority were not useful asset discoveries.
+
+For example, the search produced huge runs of entries like:
+
+```text
+4707cb555753e007,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000079
+46e94c55573a0aab,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000080
+46e94b55573a08f8,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000081
+46e94e55573a0e11,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000082
+46e94d55573a0c5e,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000083
+46e95055573a1177,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000084
+46e94f55573a0fc4,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000085
+46e95255573a14dd,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000086
+46e95155573a132a,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000087
+46e944555739fd13,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000088
+46e943555739fb60,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000089
+46e5c6555736f122,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000090
+46e5c7555736f2d5,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000091
+46e5c4555736edbc,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000092
+46e5c5555736ef6f,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000093
+46e5c2555736ea56,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000094
+46e5c3555736ec09,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000095
+46e5c0555736e6f0,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000096
+46e5c1555736e8a3,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000097
+46e5ce555736feba,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000098
+46e5cf555737006d,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000099
+3fa12155537e1e48,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000100
+3fa12255537e1ffb,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000101
+3fa12355537e21ae,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000102
+3fa12455537e2361,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000103
+3fa12555537e2514,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000104
+3fa12655537e287a,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000105
+3fa12755537e26c7,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000106
+3fa12855537e2a3d,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000107
+3fa11955537e10b0,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000108
+3fa11a55537e1263,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000109
+3fa4a755538137d1,maps/mp/mp_apocalypse.d3dbsp_s1__terrain_l01_n000110
+```
+
+These are genuine hashes, but they are `d3dbsp` terrain-related entries and provide essentially no useful information for the project's current goals. The same search also produced sound files that had **already been found and submitted previously**.
+
+This demonstrates an important distinction:
+
+**A hash being genuine does not mean that it is worth recovering or submitting.**
+
+Do not assume that a successful hash recovery is valuable simply because the hash resolves correctly. Search effort should be judged by whether the resulting asset is a useful, relevant, and previously unknown discovery.
+
+In particular, **do not repeat the `streamkey` search simply because it produces a large number of valid results**. A search producing hundreds of thousands of irrelevant results is not a successful search. It wastes time, produces enormous amounts of garbage output, and can obscure the genuinely useful findings.
+
+Prioritize:
+
+* useful asset types;
+* unresolved hashes;
+* names that provide meaningful game data;
+* genuinely new findings.
+
+Avoid spending significant time generating enormous quantities of results that cannot contribute to the project's goals.
+
+### Avoid duplicate submissions
+
+Before submitting results, check the existing `submissions/` directory in the repository.
+
+The submissions from other contributors are part of the repository and should be treated as previously submitted work. **Do not submit names that another contributor has already submitted**, even if you independently rediscovered them using a different method.
+
+Before creating a submission:
+
+1. Check the existing submission files for the names you intend to submit.
+2. Remove any names that have already been submitted by another contributor.
+3. Submit only genuinely new findings that are not already present in the repository's existing submissions.
+4. It is fine to independently rediscover an existing name during a search; simply do not submit it again.
+
+The goal of a submission is to contribute **new information**, not to repost findings that are already present in another contributor's submission.
+
 ## Running the tools
 
 On Windows use the committed binaries and skip cargo entirely:
