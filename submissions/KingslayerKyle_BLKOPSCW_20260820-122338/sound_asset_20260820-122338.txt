@@ -1,0 +1,6 @@
+188b34351293e05d,vox/scripted/mpl/ahva/vox_ahva_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
+18be692e2568c983,vox/scripted/mpl/abnd/vox_abnd_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
+1c462485890e4b43,vox/scripted/mpl/ami6/vox_ami6_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
+35ca014bc6619f7b,vox/scripted/mpl/anme/vox_anme_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
+6327821952e6c383,vox/scripted/mpl/adgi/vox_adgi_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
+6d77ff097f885b1d,vox/scripted/mpl/anbo/vox_anbo_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
