@@ -28,6 +28,9 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 9 | cross-game techset pairs | `techset` / `technique_set` | `techset_probe`, `techset_pair` | BO4 productive; Cold War conclusively ruled out |
 | 10 | sibling token substitution | one **non-numeric** token in the *middle*, both sides kept | `scripts/contributed/slotswap_20260819-225818.py` → `confirm_list` | productive: 2,789 names over four runs. Widen with `--cap`, `--context` |
 | 11 | family column cross product | names differing in **two or more** places at once | `scripts/contributed/templates_20260819-220821.py` → `confirm_list` | 115 on top of a freshly-swept slotswap. Narrow ground, real ground |
+| 12 | sound language and encoding variants | the same sound in the other eleven languages | `scripts/sound_languages.py` → `confirm_list` | Black Ops 4 only: 38. Cold War returns 0 — its language tables are already complete |
+| 13 | image channel completion | the other channels of an image we hold one channel of | `scripts/image_channels.py` → `confirm_list` | 456 BO4, 59 CW. Compounds with method 3, which seeds from the other side |
+| 14 | token insertion and deletion | names one token **longer or shorter** than a known name | `scripts/token_edits.py` → `confirm_list` | 700 BO4, 384 CW across all four types. The only method that changes a name's length |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ---
@@ -539,6 +542,82 @@ not a prefix are never compared. Re-run with a different `--key` before calling 
 
 ---
 
+## 12. Sound language and encoding variants
+
+**Builds from** the fact that every shipped language is a separate asset with its own id, and the
+name differs by two characters. Measured across the twelve per-language tables: `en` 123,368,
+`ru` 121,209, `es` 121,207, `fj` 121,155, `fr` 121,115, `ea` 121,097, `bp` 121,083, `ge` 121,082,
+`ko` 121,032, `po` 121,011, `it` 120,930, `ms` 112,060. Those being so close is the argument — the
+sets are near-parallel, so a name in one is evidence about eleven ids.
+
+**Reaches** `sound_asset`, and it is the only method that gets there without rebuilding the whole
+path from the lists.
+
+**Run it with** `python scripts/sound_languages.py | confirm_list - --no-fold` (Black Ops 4).
+
+Measured: **38 on Black Ops 4, 0 on Cold War.** The zero is the useful half — Cold War's twelve
+language tables are already complete, so this is spent there and will stay spent. Black Ops 4's
+SAB names have **no language segment at all** (`fly\emotes	eddybear_in.ln100.pc.snd` is stem,
+encoding, platform), and a first version that required one silently skipped every Black Ops 4
+name — that is, it skipped the entire pool it was written for while looking like it ran.
+
+**Spent by** the language tables being complete. Re-run only after a pass that confirms new sound
+files.
+
+---
+
+## 13. Image channel completion
+
+**Builds from** a texture being authored once and exported as several maps. Measured on
+`fnv1a_ximages`: **110,517 of 124,417 distinct cores (88.8%) already appear under more than one
+channel**, so the odds a confirmed image is the only channel that exists are under one in eight.
+
+**Reaches** `image`, from confirmed **images**. Method 3 (`images_from_materials`) reaches the same
+pool from confirmed **materials**, so the two seed from disjoint material and feed each other: a
+channel found here is a core for the next material pass and vice versa.
+
+**Run it with** `python scripts/image_channels.py | confirm_list -`.
+
+Measured: **456 on Black Ops 4, 59 on Cold War**, from 2.35 M candidates.
+
+**Spent by** the channel list. Widen it from the table when new suffixes appear; it is measured,
+not guessed.
+
+---
+
+## 14. Token insertion and deletion
+
+**Builds from** the observation that every other method here *substitutes* and none changes a
+name's length. The general search rebuilds `beginning + stem + ending`; `confirm_variants` swaps a
+number; `slotswap` swaps one token; `templates` swaps several. All keep the token count the seed
+had. So a name that is a known name **plus or minus one word** is unreachable by all of them,
+however long they run:
+
+```
+p9_rus_apartment_tower_sign_01
+p9_rus_apartment_stone_tower_sign_01      an insertion -- reachable by nothing else
+```
+
+That shape is common here because artists qualify a name as an asset set grows — a `wall` becomes
+a `stone_wall` when a second material appears — and both spellings survive in the build.
+
+**Reaches** all four of model, material, image and anim.
+
+**Run it with** `python scripts/token_edits.py --type model | confirm_list -`.
+
+Measured, one pass each: Black Ops 4 **model 139, material 423, image 72, anim 66**; Cold War
+**model 21, material 179, image 112, anim 72**. 13.1 M candidates for models.
+
+Deletions need no vocabulary and are the higher-precision half (`--no-insert`). Insertions are
+seeded per position *and per leading token*, so a name beginning `p9_` is offered what follows
+`p9_` elsewhere rather than the type's globally common words — a global vocabulary at every
+position produces more candidates than the general search and reaches less.
+
+**Spent by** `--cap` and the corpus. Deletions exhaust in one pass against a fixed corpus;
+insertions reopen whenever either changes.
+
+---
+
 ## Adding a method
 
 **This is the highest-value thing anybody does here**, and it no longer requires writing Rust.
@@ -590,6 +669,9 @@ Do not spend a night rediscovering these. Each cost real time.
 
 | Tried | Outcome |
 |---|---|
+| Sound **alias** names as sound **file** stems | 706 of 101,673 distinct file stems are exactly an alias name — **0.7%**. The two vocabularies are unrelated: aliases are bare underscore names (`amb_computer_loop_1`), files are deep paths with encoding tails. Do not build a generator on this seam. |
+| Model cores against anim cores | **Zero** shared, out of 154,525 model and 30,337 anim cores. Taking an anim's name minus its last token as a model name hits 16 of 30,337 (**0.1%**). There is no model/anim seam to exploit. |
+| Model cores against material cores | 3,300 shared of 154,525 and 266,575 — about 2%, against the 15,770 that material and image share. Weak enough not to be worth a pass. |
 | Scanning `xsub` files for names | They hold none. 85 GB of nothing. |
 | A NUL-terminated-only string scanner over xpak/ff/fd | Misses roughly 800,000 names. |
 | Salsa20 for the encrypted fast files | Wrong cipher. It is AES-256-CTR, little-endian counter. |

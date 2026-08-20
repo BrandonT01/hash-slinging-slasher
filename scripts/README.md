@@ -38,6 +38,9 @@ a program that prints names; anything that can print names is a method.
 | `continuations.py` | offering each prefix the tokens measured to follow **that** prefix, rather than the tokens that are globally common. Directory prefixes get the whole vocabulary. |
 | `families.py --gaps` | filling the holes in numbered families — a family with three confirmed members is evidence about a fourth that no global rule can match. |
 | `cross_type.py --from A --to B` | taking cores that exist in one asset type and spelling them the way another type spells things. Check `--measure` first: some pairs have no seam at all. |
+| `sound_languages.py` | respelling a known sound in each of the twelve shipped languages and three encoding tags. Black Ops 4 only — Cold War's language tables are already complete. |
+| `image_channels.py` | offering every other channel (`_c`, `_n`, `_g`, `_o`, `_m`, `_s`, `_r` …) of an image we hold one channel of. 88.8% of cores carry more than one. |
+| `token_edits.py` | names one token longer or shorter than a known name. The only generator here that changes a name's length; everything else substitutes. |
 
 ## Measuring
 
