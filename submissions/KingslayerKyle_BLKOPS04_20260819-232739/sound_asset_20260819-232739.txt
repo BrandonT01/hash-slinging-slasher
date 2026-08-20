@@ -1,2 +1,2 @@
-1169a13f301e4362,fly/emotes/teddybear_in.ln100.pc.snd
-2c67b48a87af0e47,fly/emotes/teddybear_out.ln100.pc.snd
+1169a13f301e4362,fly\emotes\teddybear_in.ln100.pc.snd
+2c67b48a87af0e47,fly\emotes\teddybear_out.ln100.pc.snd

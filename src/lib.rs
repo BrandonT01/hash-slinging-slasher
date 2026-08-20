@@ -814,6 +814,21 @@ pub struct Results {
     by_kind: HashMap<String, HashMap<u64, String>>,
     before: HashMap<String, usize>,
     added: HashMap<String, HashMap<u64, String>>,
+
+    /// Whether to leave a name spelled exactly as the search hashed it.
+    ///
+    /// Almost always true, and for those pools the two spellings reach the same asset, so a name
+    /// is written in the spelling the published tables use. **Black Ops 4's SAB sound names are
+    /// the exception, and it is not cosmetic:** their ids are the hash of the string *with* its
+    /// backslashes, so rewriting them as forward slashes leaves a row whose name no longer
+    /// produces its own id. Three submissions went out that way -- 37 rows nothing downstream can
+    /// verify or use, because a table keyed on the name resolves it to a different hash entirely.
+    ///
+    /// Phrased as "keep" rather than "fold" so that `Default` -- which is `false`, and which the
+    /// tests and any future caller get for free -- means *fold*, the behaviour every pool but one
+    /// wants. Named the other way round, forgetting to set it would quietly disable folding
+    /// everywhere, and a wrong default that fails silently is how this bug happened once already.
+    keep_spelling: bool,
 }
 
 impl Results {
@@ -868,7 +883,18 @@ impl Results {
             by_kind,
             before,
             added: HashMap::new(),
+            keep_spelling: false,
         }
+    }
+
+    /// Keeps names exactly as the search spelled them, for a run whose hash did not fold.
+    ///
+    /// Call this on any `--no-fold` run. The default is to fold, because every pool but Black Ops
+    /// 4's SAB sounds wants it and a wrong default there would be silent -- a folded name still
+    /// hashes to the right id when the hash itself folds, so nothing would ever complain.
+    pub fn keeping_spelling(mut self) -> Self {
+        self.keep_spelling = true;
+        self
     }
 
     /// Every id already held, whatever type it is filed under.
@@ -931,10 +957,16 @@ impl Results {
     /// A name already held is not an addition, however it was arrived at, so a run's own folder
     /// stays a list of what that run was the first to reach.
     pub fn add(&mut self, kind: &str, id: u64, name: String) {
-        // A scraped line may separate its directories with backslashes. The hash folds those to
-        // forward slashes, so the two spellings reach the same asset, but only one of them is
-        // the spelling the published tables use and it is the one worth writing down.
-        let name = if name.contains('\\') {
+        // A scraped line may separate its directories with backslashes. Where the hash folded
+        // them, both spellings reach the same asset and only one is the spelling the published
+        // tables use, so that is the one written down.
+        //
+        // Where the hash did *not* fold -- `--no-fold`, which is the only way Black Ops 4's SAB
+        // sound names are reachable at all -- the backslashes are load-bearing: the id is the hash
+        // of exactly that string. Rewriting them here produced rows whose name does not hash to
+        // the id beside it, which is worse than finding nothing, because it looks like a find.
+        // See `Results::keeping_spelling`.
+        let name = if !self.keep_spelling && name.contains('\\') {
             name.replace('\\', "/")
         } else {
             name
@@ -1111,6 +1143,41 @@ pub fn expected_by_chance(candidates: u64, wanted: usize) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    /// A stored name must reproduce the id stored beside it. That is the only thing a row means.
+    ///
+    /// Black Ops 4's SAB sound names are hashed *unfolded*, so their backslashes are part of the
+    /// input. `add` used to rewrite them to forward slashes unconditionally, which left rows whose
+    /// name hashes to something else entirely -- 37 of them reached three merged submissions
+    /// before anything noticed, because every other pool folds and folding a folded name is a
+    /// no-op. Nothing complained until `validate` re-derived them.
+    #[test]
+    fn an_unfolded_name_keeps_the_spelling_its_id_was_hashed_from() {
+        let name = "fly\\emotes\\teddybear_in.ln100.pc.snd";
+        let id = feed_raw(BASIS, name.as_bytes()) & ID_MASK;
+
+        let folder = std::env::temp_dir().join(format!("keepspell_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&folder);
+        fs::create_dir_all(&folder).unwrap();
+
+        let mut kept = Results::load(&folder).keeping_spelling();
+        kept.add("sound_asset", id, name.to_owned());
+
+        let stored = kept.names("sound_asset");
+        assert_eq!(stored, vec![name.to_owned()], "the spelling was rewritten");
+        assert_eq!(
+            feed_raw(BASIS, stored[0].as_bytes()) & ID_MASK,
+            id,
+            "a stored name must hash to the id stored beside it"
+        );
+
+        // And the default still tidies a scraped backslash away, which every folded pool wants.
+        let mut folded = Results::load(&folder);
+        folded.add("xmodel", 1, "a\\b".to_owned());
+        assert_eq!(folded.names("xmodel"), vec!["a/b".to_owned()]);
+
+        let _ = fs::remove_dir_all(&folder);
+    }
+
     use super::*;
 
     /// The five default types must resolve in **both** games, since both are ground now.

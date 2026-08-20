@@ -308,7 +308,13 @@ fn main() {
     drop(known);
 
     // The confirmed names are proven patterns, so they always go back in as seeds.
+    // A run that did not fold must keep its names spelled exactly as they were hashed;
+    // see `Results::keeping_spelling`. Folding them here is what left 37 submitted rows
+    // whose name does not produce the id beside it.
     let mut results = Results::load(paths::findings());
+    if no_fold {
+        results = results.keeping_spelling();
+    }
     let mut lines = results.seed_names();
     println!("confirmed names as seeds: {}", lines.len());
 

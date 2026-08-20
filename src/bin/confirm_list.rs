@@ -142,7 +142,13 @@ fn main() {
     // is what lets this keep up with a generator rather than becoming the bottleneck itself.
     let filter = Filter::sized(wanted.keys(), wanted.len());
 
+    // A run that did not fold must keep its names spelled exactly as they were hashed;
+    // see `Results::keeping_spelling`. Folding them here is what left 37 submitted rows
+    // whose name does not produce the id beside it.
     let mut results = Results::load(paths::findings());
+    if !fold {
+        results = results.keeping_spelling();
+    }
     let seen = AtomicU64::new(0);
     let mut matched = 0_usize;
     let mut last_saved = Instant::now();
