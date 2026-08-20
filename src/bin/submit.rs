@@ -830,6 +830,16 @@ fn run_folders(findings: &Path) -> Vec<PathBuf> {
 
         let name = entry.file_name().to_string_lossy().to_string();
         if name.starts_with("run_") {
+            // A run still being written is not a run to send. Sending one ledgers its folder
+            // name, and every name the pass finds afterwards then has no route: `already_sent`
+            // skips the folder for ever, and `recover_stranded` will not strand a name that
+            // sits inside a run folder. Skipping it here closes both, and loses nothing if the
+            // pass is abandoned -- the folder is left out of `accounted` too, so its names come
+            // back as stranded and are recovered.
+            if slasher::Results::run_unfinished(&path) {
+                continue;
+            }
+
             found.push(path);
         } else if name != "superseded" {
             found.extend(run_folders(&path));

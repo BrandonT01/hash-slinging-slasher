@@ -857,6 +857,9 @@ pub struct Results {
     keep_spelling: bool,
 }
 
+/// The file a run folder carries while it is still being written to. See `write_run_as`.
+pub const INCOMPLETE: &str = ".incomplete";
+
 impl Results {
     /// Reads whatever is already in a folder, and in the per-run folders under it.
     ///
@@ -1031,7 +1034,15 @@ impl Results {
     /// Nothing is written at all when a run found nothing, because an empty folder per barren
     /// pass buries the ones that were not.
     pub fn write_run(&self, directory: impl AsRef<Path>, label: &str) -> std::io::Result<Option<PathBuf>> {
-        self.write_run_as(directory, label, &stamp())
+        let written = self.write_run_as(directory, label, &stamp())?;
+
+        // A one-shot write is finished the moment it returns, so it seals itself. Only a
+        // checkpointing caller has to say when it is done.
+        if let Some(folder) = &written {
+            Self::seal_run(folder)?;
+        }
+
+        Ok(written)
     }
 
     /// The same, into a folder named for a stamp the caller keeps, so it can be written *during*
@@ -1060,6 +1071,24 @@ impl Results {
         let folder = PathBuf::from(directory).join(format!("run_{when}_{label}"));
         fs::create_dir_all(&folder)?;
 
+        // Marked unfinished until the caller seals it. `submit` decides what to send by looking
+        // for `run_*` folders, so before this the folder's *existence* was the only signal a run
+        // had ended -- and a checkpoint made that signal appear sixty seconds in. A `submit`
+        // running meanwhile sent the partial batch and wrote the folder's name into its ledger,
+        // after which `already_sent` skipped it for ever and every name the pass went on to find
+        // was unreachable: `recover_stranded` will not strand a name that sits in a run folder.
+        // The names stayed on disk, valid and unsubmittable, which is the same silent loss the
+        // checkpointing was added to prevent.
+        //
+        // Written every time rather than only on the first checkpoint, so a folder cannot be left
+        // sealed by an earlier run of the same stamp.
+        fs::write(
+            folder.join(INCOMPLETE),
+            "This run had not finished when this folder was last written.\n\
+             `submit` skips a folder holding this file, and picks the names up as stranded\n\
+             instead, so an abandoned run is still recovered. Removed when the run ends.\n",
+        )?;
+
         let mut kinds: Vec<&String> = self.added.keys().collect();
         kinds.sort();
 
@@ -1076,6 +1105,22 @@ impl Results {
         }
 
         Ok(Some(folder))
+    }
+
+    /// Marks a run folder finished, so `submit` will send it.
+    ///
+    /// Idempotent, and not an error when the marker is already gone -- a caller that seals twice,
+    /// or seals a folder written before this existed, is not doing anything wrong.
+    pub fn seal_run(folder: &Path) -> std::io::Result<()> {
+        match fs::remove_file(folder.join(INCOMPLETE)) {
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Ok(()),
+            other => other,
+        }
+    }
+
+    /// Whether a run folder is still being written to.
+    pub fn run_unfinished(folder: &Path) -> bool {
+        folder.join(INCOMPLETE).exists()
     }
 
     /// Writes a run's account of itself into its folder, and the submission carries it upstream.
@@ -1190,6 +1235,74 @@ pub fn expected_by_chance(candidates: u64, wanted: usize) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
+    /// A checkpoint marks its folder unfinished; the end of the run clears it.
+    ///
+    /// This is the whole of the guard. `submit` decides what to send by looking for `run_*`
+    /// folders, so once checkpointing made that folder appear sixty seconds into a pass, a
+    /// `submit` running meanwhile sent the partial batch and ledgered the folder -- after which
+    /// `already_sent` skipped it for ever and `recover_stranded` would not strand names sitting
+    /// inside a run folder. Every name the pass went on to find was unreachable by both routes.
+    #[test]
+    fn a_checkpointed_run_is_marked_unfinished_until_it_ends() {
+        let dir = std::env::temp_dir().join(format!("seal_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::create_dir_all(&dir);
+
+        let mut results = Results::default();
+        results.add("xmodel", 1, "one".to_owned());
+
+        // A checkpoint, written mid-pass under a stamp fixed at the start.
+        let folder = results
+            .write_run_as(&dir, "all", "20260820-210000")
+            .unwrap()
+            .expect("a run folder");
+
+        assert!(
+            Results::run_unfinished(&folder),
+            "a checkpointed run folder must say it is unfinished, or submit will send it              part-written and orphan everything the pass finds afterwards"
+        );
+
+        // A second checkpoint keeps it unfinished rather than accidentally sealing it.
+        results.add("xmodel", 2, "two".to_owned());
+        results.write_run_as(&dir, "all", "20260820-210000").unwrap();
+        assert!(Results::run_unfinished(&folder), "a later checkpoint must not seal the folder");
+
+        Results::seal_run(&folder).unwrap();
+        assert!(!Results::run_unfinished(&folder), "sealing must clear the marker");
+
+        // Sealing twice is not an error: a caller that seals a folder written before this
+        // existed is not doing anything wrong.
+        Results::seal_run(&folder).unwrap();
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    /// A one-shot `write_run` seals itself, because it is finished the moment it returns.
+    ///
+    /// The binaries that do not checkpoint -- `confirm_sounds`, `confirm_variants`,
+    /// `images_from_materials` and the rest -- go through this. If it did not seal, every one of
+    /// their runs would look unfinished and `submit` would stop sending them entirely.
+    #[test]
+    fn a_one_shot_run_is_finished_when_it_is_written() {
+        let dir = std::env::temp_dir().join(format!("seal_once_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        let _ = fs::create_dir_all(&dir);
+
+        let mut results = Results::default();
+        results.add("image", 3, "three".to_owned());
+
+        let folder = results.write_run(&dir, "sounds").unwrap().expect("a run folder");
+
+        assert!(
+            !Results::run_unfinished(&folder),
+            "a one-shot run must be sendable immediately, or submit would never send one again"
+        );
+
+        let _ = fs::remove_dir_all(&dir);
+    }
+
     /// A run note actually *writes* which engine confirmed it.
     ///
     /// The field existed, the builder existed, `submit` read it back -- and the format string in

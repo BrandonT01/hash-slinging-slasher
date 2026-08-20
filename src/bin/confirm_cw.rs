@@ -449,6 +449,8 @@ fn main() {
 
     results.write(paths::findings()).expect("the results");
 
+    // Sealed below, once written: until then `submit` treats the folder as a live run and
+    // leaves it alone. See `Results::write_run_as`.
     match results.write_run_as(paths::findings(), label, &when) {
         Ok(Some(folder)) => {
             println!("this run's own names: {}", folder.display());
@@ -484,6 +486,12 @@ fn main() {
                      reaches somewhere else entirely (METHODS.md).",
                 ),
             );
+
+            // Everything the run owes its folder is in it now, so it stops being a live run and
+            // becomes one `submit` will send.
+            if let Err(error) = Results::seal_run(&folder) {
+                eprintln!("the run folder could not be marked finished: {error}");
+            }
         }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),

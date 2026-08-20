@@ -263,6 +263,7 @@ fn main() {
     println!("fingerprint: {fingerprint}");
     recon::note_if_swept(&fingerprint);
 
+    // Sealed below, once written. See `Results::write_run_as`.
     match results.write_run_as(paths::findings(), "list", &when) {
         Ok(Some(folder)) => {
             println!("this run's own names: {}", folder.display());
@@ -293,6 +294,12 @@ fn main() {
                     }
                     Err(why) => eprintln!("{path} could not be carried along: {why}"),
                 }
+            }
+
+            // After the note and the script, so a folder is never sent without the generator
+            // that produced it.
+            if let Err(error) = Results::seal_run(&folder) {
+                eprintln!("the run folder could not be marked finished: {error}");
             }
         }
         Ok(None) => println!("this run found nothing new"),
