@@ -1,0 +1,2 @@
+58d4e8c079f5a543,wpn\turret\pbr\plr\wpn_pbr_stop_ads.ln100.pc.snd
+7b60ce9c8c728ecd,wpn\turret\pbr\plr\wpn_pbr_stop_act.ln100.pc.snd
