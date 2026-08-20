@@ -711,6 +711,98 @@ returns exactly what it returned before; re-running over new ones is a new searc
 
 ---
 
+## Candidates worth building, with the measurement that decides each
+
+**Read this before inventing a method from scratch.** These are ideas that have been thought
+through but not built, each with the cheap check that says whether it is worth the effort. Measuring
+first killed three plausible-sounding ideas in an hour on 2026-08-20 — the seams below marked as
+dead are *measured* dead, not guessed.
+
+### The ranking metric
+
+A method's worth is what it returns **per candidate**, not what it returns in a pass. Measured on
+Black Ops 4 models:
+
+| method | names per candidate |
+|---|---|
+| `token_edits` | 1 per 94,000 |
+| `affix_sweep`, run blind | 1 per 532,000,000 |
+
+**5,600× apart.** Estimate this before committing CPU, not after.
+
+And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` has 70,878 unnamed ids
+— more than anything else — and a dedicated pass returned 169, while the general search returned
+5,869 the same day. Unnamed-id count tells you what is *left*, not what is *reachable*.
+
+### Measured seams
+
+| seam | measured | verdict |
+|---|---|---|
+| material ↔ image cores | **15,770 shared** — 11.7% of material's, 12.8% of image's | **strong**, ~60× the model/image pair |
+| sound alias names as sound file stems | 706 of 101,673 (0.7%) | dead |
+| model cores vs anim cores | **0** shared of 154,525 / 30,337 | dead |
+| anim minus last token → model core | 16 of 30,337 (0.1%) | dead |
+| model cores vs material cores | 3,300 of 154,525 / 266,575 (~2%) | too weak to pass |
+
+### The two cheapest checks with the biggest upside
+
+**1. Do confirmed image cores appear as material cores?** `images_from_materials` (method 3) runs
+material → image. The reverse direction is unexploited and it is the same 15,770-core seam. If the
+overlap looks like the forward direction, `materials_from_images.py` is a short script exploiting
+the strongest measured relationship in the project, in the direction nobody uses — and it compounds
+with the forward one, each feeding the other.
+
+**2. Do confirmed model names hash into the `xcollision` and `xskeleton` pools?** `odd_for_pool` in
+`src/lib.rs` notes a model id "with the usual `xcollision` and `xskeleton` beside it". If those
+siblings share the model's name, every one of ~6,444 confirmed model names is a free name in two
+more pools. Ten minutes to test: hash confirmed model names and look for the ids in those pools.
+**Ask before grinding it** — neither is among the five wanted types, and check cod-name-db has a
+destination table, since a name with nowhere to land is worth less than one that can be published.
+
+### Others, briefly
+
+- **`numbered_grids.py`** — families numbered on *two* axes. `families.py --gaps` walks one; nothing
+  fills a hole in the second. Measure: how many names carry two separate numeric tokens.
+- **`suffix_chains.py`** — endings compose (`_01` + `_c`). The list is capped at 4,800 *observed*
+  endings, so rare compositions are structurally absent. Measure: how many pairwise compositions of
+  the top 50 endings are already published but missing from `data/suffixes.txt`.
+- **`compound_splice.py`** — head of one name, tail of another, joined at a shared token. Distinct
+  from `slotswap` (substitutes in place) and `templates` (crosses within one family). Cap by
+  requiring a *rare* shared token or the pair count is quadratic.
+- **`token_order.py`** — permute two adjacent middle tokens. Nothing here reorders anything.
+  Measure: do any permutations of confirmed names already appear in the tables? If none do, the
+  convention is stable and this finds nothing.
+- **`cross_game.py`** — try a name confirmed in one title verbatim in the other. `confirm_cw` seeds
+  *pieces* across games already, but nothing tries whole names. Nearly free: no generation, just
+  hashing a list that exists.
+- **`cross_era.py`** — the `_v2` tables (Vanguard, MWII, MWIII, BO6, BO7) re-hashed under *this*
+  era's rules. Those games reuse older assets. Note they use a different mask — see `docs/HASHES.md`
+  — so re-hash their *names*, never reuse their ids.
+- **`map_sets.py`** — map prefixes (`p9_` heads 77,248 published names, `p8_` 66,172, `p7_` 42,516)
+  crossed with faction codes and confirmed bodies. Overlaps `slotswap`; measure what it reaches that
+  slotswap does not.
+- **Black Ops 4 `sound_asset`** — 70,878 unnamed and ~102 ever found, the largest untouched ground.
+  The general sound pass gets ~169 a time because its beginnings cannot express deep SAB paths.
+  Characterise the 8,385 known SAB names first; a generator built from their path structure is the
+  most valuable unbuilt thing here *if* the structure is learnable.
+- **`methods_report.py --efficiency`** — not a generator. Every run folder records candidates,
+  matches and time. Nothing computes names-per-candidate across them, so the ranking above will go
+  stale. Once computed, the rotation could order itself by measured yield.
+
+### Infrastructure, not generators
+
+- **`images_from_materials` has no checkpointed run folder.** `confirm_cw` and `confirm_list` write
+  theirs every sixty seconds so a killed pass stays submittable; this one does not. It is also the
+  most expensive slot in the rotation (~2.5 h) and has never run to completion — see the UNFINISHED
+  note under method 3.
+- **`--shard i/n` on `confirm_cw`.** Needed before anyone runs several machines. The search is
+  deterministic, so N machines running one method produce identical output.
+- **Feed the in-flight survey into `suggest`.** `start` surveys every open pull request and then
+  never passes it to `suggest`, so every fresh clone is told to do the same thing. Also break the
+  fresh-clone game tie randomly rather than by list order.
+
+---
+
 ## Adding a method
 
 **This is the highest-value thing anybody does here**, and it no longer requires writing Rust.

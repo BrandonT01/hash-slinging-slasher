@@ -262,6 +262,10 @@ later contributor faster.** So:
   it is *spent by*.
 - If it did not work, add it to the dead ends table. A measured negative is worth as much as a
   find and costs the next person nothing.
+- **Before inventing anything, read the candidate list.** `METHODS.md` has a section,
+  *Candidates worth building*, holding ideas already thought through with the cheap measurement that
+  decides each -- plus the seams measured **dead**, so a plausible-sounding generator is not built
+  on one. Measuring first killed three such ideas in an hour.
 - **Before inventing anything, read what already exists.** `start` prints the whole script
   library with each script's purpose, precisely so nobody spends an evening re-deriving
   `continuations.py` under a new name. If you skipped that output, get it back with:
