@@ -82,22 +82,7 @@ fn main() {
     // file which happens to be named the same as the label is still read -- comparing against the
     // label's text would silently drop it, and a candidate file not read is a run that reports
     // success having tested nothing.
-    let mut sources: Vec<String> = Vec::new();
-    let mut skip_next = false;
-
-    for argument in &arguments {
-        if skip_next {
-            skip_next = false;
-            continue;
-        }
-
-        if argument.starts_with("--") {
-            skip_next = matches!(argument.as_str(), "--label" | "--describe" | "--script");
-            continue;
-        }
-
-        sources.push(argument.clone());
-    }
+    let sources = sources_from(&arguments);
 
     if sources.is_empty() {
         eprintln!(
@@ -113,6 +98,24 @@ fn main() {
              its output."
         );
         std::process::exit(2);
+    }
+
+    // Every named file is opened *now*, before the snapshot is read and the candidates are swept.
+    //
+    // This used to be checked inside the sweep, which meant a mistyped filename cost the entire
+    // run: the tool confirmed everything piped in, then hit the bad name and exited, discarding
+    // what it had found. A run is an hour of somebody's evening. Failing on the first second of it
+    // is free; failing on the last is not.
+    for source in sources.iter().filter(|source| *source != "-") {
+        if let Err(error) = std::fs::File::open(source) {
+            eprintln!(
+                "{source} could not be read: {error}\n\n\
+                 Candidate sources are positional; `-` means standard input. If that was meant to \
+                 be a flag's value, the flag is missing from this build's list of flags that take \
+                 one -- see TAKES_A_VALUE in src/bin/confirm_list.rs."
+            );
+            std::process::exit(1);
+        }
     }
 
     let (assets, _) = match loaded_assets() {
@@ -506,6 +509,34 @@ fn argument(arguments: &[String], flag: &str) -> Option<String> {
 mod tests {
     use super::*;
 
+    fn args(list: &[&str]) -> Vec<String> {
+        list.iter().map(|value| (*value).to_owned()).collect()
+    }
+
+    /// A flag's value is never mistaken for a candidate file.
+    ///
+    /// `--game` was missing from the list, and the cost was the whole run: `confirm_list - --game
+    /// BLKOPS04` took `BLKOPS04` for a filename, confirmed 596,049 candidates happily, and *then*
+    /// exited 1 trying to open it -- throwing away everything it had just found. Every contributed
+    /// method aimed at one game hit this.
+    #[test]
+    fn flag_values_are_not_sources() {
+        assert_eq!(sources_from(&args(&["-", "--game", "BLKOPS04"])), vec!["-"]);
+        assert_eq!(
+            sources_from(&args(&["-", "--label", "m", "--script", "s.py", "--game", "BLKOPSCW"])),
+            vec!["-"]
+        );
+
+        // Real files still arrive, including one named like a flag's value.
+        assert_eq!(sources_from(&args(&["names.txt", "--label", "names.txt"])), vec!["names.txt"]);
+        assert_eq!(sources_from(&args(&["a.txt", "b.txt"])), vec!["a.txt", "b.txt"]);
+
+        // Every flag that takes a value must be listed, or its value becomes a phantom source.
+        for flag in TAKES_A_VALUE {
+            assert_eq!(sources_from(&args(&["-", flag, "VALUE"])), vec!["-"], "{flag} kept its value");
+        }
+    }
+
     fn candidate_of(line: &str) -> String {
         String::from_utf8_lossy(candidate_bytes(line.as_bytes())).into_owned()
     }
@@ -557,4 +588,37 @@ mod tests {
         assert_eq!(candidate_of("mc/mtl_thing\r"), "mc/mtl_thing");
         assert_eq!(candidate_of("1a2b,mc/mtl_thing\r"), "mc/mtl_thing");
     }
+}
+
+/// Flags that are followed by a value, which is therefore not a candidate file.
+///
+/// `--game` was missing, and the cost was total: `confirm_list - --game BLKOPS04` took `BLKOPS04`
+/// for a filename, confirmed the whole run happily, and *then* exited 1 trying to open it --
+/// throwing away every name it had just found. Any contributed method aimed at one game hit this.
+const TAKES_A_VALUE: &[&str] = &["--label", "--describe", "--script", "--game"];
+
+/// Everything that is not a flag and not the value belonging to one.
+///
+/// Positional, so that a file which happens to be named the same as the label is still read --
+/// comparing against the label's text would silently drop it, and a candidate file not read is a
+/// run that reports success having tested nothing.
+fn sources_from(arguments: &[String]) -> Vec<String> {
+    let mut sources: Vec<String> = Vec::new();
+    let mut skip_next = false;
+
+    for argument in arguments {
+        if skip_next {
+            skip_next = false;
+            continue;
+        }
+
+        if argument.starts_with("--") {
+            skip_next = TAKES_A_VALUE.contains(&argument.as_str());
+            continue;
+        }
+
+        sources.push(argument.clone());
+    }
+
+    sources
 }
