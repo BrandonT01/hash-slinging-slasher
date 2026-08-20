@@ -749,6 +749,14 @@ pub struct RunNote {
     what: String,
     took: std::time::Duration,
 
+    /// Which operating system and architecture the run happened on.
+    ///
+    /// Recorded because the project now ships binaries for three platforms but has only ever been
+    /// *run* on one. Tests passing on Linux and macOS in CI is not the same as somebody grinding
+    /// there -- a path assumption or a `gh` invocation could be wrong on either and no test would
+    /// notice. This is how that stops being a guess: count the submissions per platform.
+    platform: String,
+
     /// Which engine actually did the confirming: `CPU`, or a GPU backend once one exists.
     ///
     /// Recorded per run and carried into the submission, so that if a GPU backend is ever found to
@@ -766,6 +774,7 @@ impl RunNote {
             method: method.into(),
             what: what.into(),
             took,
+            platform: format!("{} {}", std::env::consts::OS, std::env::consts::ARCH),
             compute: "CPU".to_owned(),
             fingerprint: None,
             measurements: Vec::new(),
@@ -799,10 +808,12 @@ impl RunNote {
 
     fn render(&self) -> String {
         let mut text = format!(
-            "- method: {}\n- what it does: {}\n- ran for: {}\n- confirmed on: {}\n",
+            "- method: {}\n- what it does: {}\n- ran for: {}\n- platform: {}\n\
+             - confirmed on: {}\n",
             self.method,
             self.what,
             human_duration(self.took),
+            self.platform,
             self.compute
         );
 
@@ -1190,6 +1201,15 @@ mod tests {
         let note = RunNote::new("a method", "what it does", std::time::Duration::from_secs(1));
         assert!(note.render().contains("- confirmed on: CPU
 "), "default backend not written");
+
+        // The platform is recorded too, and it is the only way we will ever know whether anybody
+        // actually grinds on Linux or macOS rather than merely compiling there.
+        let rendered = note.render();
+        assert!(
+            rendered.contains(&format!("- platform: {} {}
+", std::env::consts::OS, std::env::consts::ARCH)),
+            "the platform was not written: {rendered}"
+        );
 
         let gpu = RunNote::new("a method", "what it does", std::time::Duration::from_secs(1))
             .computed_on("GPU (OpenCL, gfx1100)");

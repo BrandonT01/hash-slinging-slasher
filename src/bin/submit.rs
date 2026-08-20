@@ -301,6 +301,7 @@ fn send(
              - dropped as already claimed by a merged or open submission: {claimed_elsewhere}\n\
              - runs included: {}\n\
              - searched: {}\n\
+             - platform: {}\n\
              - confirmed on: {}\n\
 {breakdown}\
              - expected coincidental matches: {estimate:.6}\n\
@@ -312,6 +313,7 @@ fn send(
             batch.len(),
             pending.len(),
             config::targets().describe(),
+            platforms_used(pending),
             backends_used(pending),
             landscape.open.len(),
         ),
@@ -523,6 +525,36 @@ fn per_type(batch: &[(String, u64, String)]) -> String {
 /// The point is traceability. If a GPU backend is ever found to have a fault, the batches it
 /// produced can be identified and re-checked rather than guessed at — and provenance is cheap to
 /// write now and impossible to reconstruct afterwards.
+fn platforms_used(runs: &[PathBuf]) -> String {
+    field_across(runs, "- platform: ", "not recorded (run predates this field)")
+}
+
+/// One field, read out of every run's notes, distinct values in the order first seen.
+fn field_across(runs: &[PathBuf], prefix: &str, missing: &str) -> String {
+    let mut seen: Vec<String> = Vec::new();
+
+    for run in runs {
+        let Ok(notes) = fs::read_to_string(run.join("notes.md")) else {
+            continue;
+        };
+
+        for line in notes.lines() {
+            if let Some(value) = line.strip_prefix(prefix) {
+                let value = value.trim().to_owned();
+                if !value.is_empty() && !seen.contains(&value) {
+                    seen.push(value);
+                }
+            }
+        }
+    }
+
+    if seen.is_empty() {
+        return missing.to_owned();
+    }
+
+    seen.join(", ")
+}
+
 fn backends_used(runs: &[PathBuf]) -> String {
     let mut seen: Vec<String> = Vec::new();
 

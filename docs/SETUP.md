@@ -35,10 +35,15 @@ That is it. It will:
 - read what other contributors have submitted and what they have in flight
 - tell you if anything is still in the way
 
-On Linux, run `bin/linux/start` instead. Those binaries are committed and rebuilt by CI on every
-change to the source, so there is nothing to install and no Rust toolchain needed.
+On Linux run `bin/linux/start`, and on macOS `bin/macos/start`. The macOS one is a universal
+binary, so it runs on Apple Silicon and Intel alike. Both are committed and rebuilt by CI on every
+change to the source -- and only after that platform's own tests pass -- so there is nothing to
+install and no Rust toolchain needed.
 
-On macOS, or if you would rather build it yourself, install Rust (`https://rustup.rs`) and run
+If macOS refuses to run it, clear the quarantine flag: `xattr -d com.apple.quarantine
+bin/macos/*`. A `git clone` does not normally set it, but a downloaded zip does.
+
+If you would rather build it yourself, install Rust (`https://rustup.rs`) and run
 `cargo run --release --bin start`. The build takes about a minute and has no dependencies.
 
 ## 3. The one step nobody can do for you
