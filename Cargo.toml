@@ -90,6 +90,20 @@ name = "verify_against_loader"
 path = "src/bin/verify_against_loader.rs"
 required-features = ["cordycep"]
 
+# Reads the loader's entry.id and the asset header's own first field side by side, to settle
+# whether a captured id is the name's hash or a pointer that was dereferenced wrongly.
+[[bin]]
+name = "name_field_probe"
+path = "src/bin/name_field_probe.rs"
+required-features = ["cordycep"]
+
+# Measures how much of a snapshot is explained by strings the loader already holds: the fast
+# file names and the script string pool.
+[[bin]]
+name = "loader_strings"
+path = "src/bin/loader_strings.rs"
+required-features = ["cordycep"]
+
 [[bin]]
 name = "consolidate"
 path = "src/bin/consolidate.rs"

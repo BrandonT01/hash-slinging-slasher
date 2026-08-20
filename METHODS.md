@@ -743,6 +743,8 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | model cores vs anim cores | **0** shared of 154,525 / 30,337 | dead |
 | anim minus last token → model core | 16 of 30,337 (0.1%) | dead |
 | model cores vs material cores | 3,300 of 154,525 / 266,575 (~2%) | too weak to pass |
+| loader string pool as candidates | **0** of the 159,170 ids a Cold War pass hunts | dead |
+| loader string pool, all pools | 23,301 of 1,480,510 ids (1.6%), 18,691 unnamed — but `scriptbundle` is 17,304 of them | free names, wrong pools |
 
 ### The two cheapest checks with the biggest upside
 
@@ -800,6 +802,14 @@ destination table, since a name with nowhere to land is worth less than one that
 - **Feed the in-flight survey into `suggest`.** `start` surveys every open pull request and then
   never passes it to `suggest`, so every fresh clone is told to do the same thing. Also break the
   fresh-clone game tie randomly rather than by list order.
+- **`snapshot` will silently destroy an injected pool.** Run with no argument it rewrites
+  `snapshots/<game>.ids` purely from the loader — which drops Cold War's 50,890 injected
+  `sound_alias` ids and Black Ops 4's 79,263 SAB `sound_asset` ids, because Cordycep has no pool
+  for either. It takes an output path; a guard that refuses to overwrite a file holding pools the
+  loader does not have would be better than remembering to pass one.
+- **`name_field_probe` and `loader_strings` need the game open**, and answer two questions that
+  have now cost more than one session each: where a pool keeps its name, and what the string pool
+  can reach. Both are Cold War-measured only — the Black Ops 4 halves are unrun.
 
 ---
 
@@ -857,8 +867,10 @@ Do not spend a night rediscovering these. Each cost real time.
 | Sound **alias** names as sound **file** stems | 706 of 101,673 distinct file stems are exactly an alias name — **0.7%**. The two vocabularies are unrelated: aliases are bare underscore names (`amb_computer_loop_1`), files are deep paths with encoding tails. Do not build a generator on this seam. |
 | Model cores against anim cores | **Zero** shared, out of 154,525 model and 30,337 anim cores. Taking an anim's name minus its last token as a model name hits 16 of 30,337 (**0.1%**). There is no model/anim seam to exploit. |
 | Model cores against material cores | 3,300 shared of 154,525 and 266,575 — about 2%, against the 15,770 that material and image share. Weak enough not to be worth a pass. |
+| Harvesting the loader's **script string pool** for candidates | Plausible and completely dead for the grind. Every string the loader holds, hashed against the live game: 23,301 of 1,480,510 ids, **1.6%** — and **0 of the 159,170 ids a Cold War pass actually hunts**. The 4,038 hits that do land in targeted pools (2,467 image, 1,567 xmodel) are *all* already in the tables. The reason is structural, not a matter of trying harder: an asset type is reachable from the string pool only if the engine addresses it **by name**, and models, materials and images are addressed by hash. Measure with `loader_strings`. |
 | Scanning `xsub` files for names | They hold none. 85 GB of nothing. |
 | A NUL-terminated-only string scanner over xpak/ff/fd | Misses roughly 800,000 names. |
+| Suspecting the captured id is a **name pointer** rather than a hash | It is a hash. `snapshot` stores `entry.id`, the loader's own pool-entry field, never a dereferenced header. Measured over every asset in all 202 live Cold War pools: bits 0-62 uniform, bit 63 always clear, 12.5% 8-byte aligned (random gives 1/8), and tens of thousands of published names hash straight into it. Separately, `header+0x00` *is* the id in 180 of 202 pools and something else in 22 — `xanim` keeps its id at **+0x70** — but nothing reads that field, so it changes nothing. Re-measure with `name_field_probe`. |
 | Salsa20 for the encrypted fast files | Wrong cipher. It is AES-256-CTR, little-endian counter. |
 | Training a name classifier on the `_v2` tables | Those are MW2022/BO6 and teach the wrong conventions. |
 | Stripping `_geo_rigid_bs_` as its own rule | Underscore truncation already covers it, and mesh names are unobtainable anyway. |

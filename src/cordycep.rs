@@ -259,8 +259,10 @@ impl CordycepInstance {
         })
     }
 
-    #[allow(dead_code)] // Kept from the original: useful for reading anything not yet wrapped.
-    pub(crate) fn reader(&self) -> &ProcessReader {
+    /// The process reader itself, for anything not yet wrapped in a method here. A binary that
+    /// needs to look at a structure this module does not model -- an asset header's own fields,
+    /// say -- reads it through this rather than opening a second handle to the same process.
+    pub fn reader(&self) -> &ProcessReader {
         &self.reader
     }
 
