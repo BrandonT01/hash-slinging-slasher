@@ -1,0 +1,4 @@
+edf3ca28bdaec15,vdd/gfx8_decal_blood_pool_02|dup
+189dedf5285c5b12,vd/gfx8_decal_blood_pool_01|dup
+2798c9bc9ff3d3c7,vd/gfx8_decal_blood_pool_02|dup
+33c55891d7e27cdc,vdd/gfx8_decal_blood_pool_01|dup
