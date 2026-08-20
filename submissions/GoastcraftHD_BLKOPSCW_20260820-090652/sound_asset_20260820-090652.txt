@@ -1,0 +1,12 @@
+bf02748cebfa827,vox/scripted/mpl/ami6/vox_ami6_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+cd4e120ae370555,vox/scripted/mpl/anbo/vox_anbo_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+23e1a1f7bcd75667,vox/scripted/mpl/adgi/vox_adgi_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+28a74cdf379fce25,vox/scripted/mpl/anbo/vox_anbo_dbl_rnd_start_01.rn75.pc.en.snd
+2a475c884db775bf,vox/scripted/mpl/anme/vox_anme_dbl_rnd_start_01.rn75.pc.en.snd
+3681bffacafc4c67,vox/scripted/mpl/abnd/vox_abnd_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+419dbf2e4c612357,vox/scripted/mpl/abnd/vox_abnd_dbl_rnd_start_01.rn75.pc.en.snd
+5c19fe8a53897f65,vox/scripted/mpl/ahva/vox_ahva_dbl_rnd_start_01.rn75.pc.en.snd
+6221485027dadd95,vox/scripted/mpl/ahva/vox_ahva_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+6562dfe16aa14517,vox/scripted/mpl/ami6/vox_ami6_dbl_rnd_start_01.rn75.pc.en.snd
+6b0bf012bbeebe3f,vox/scripted/mpl/anme/vox_anme_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+6d64d5cae10d7157,vox/scripted/mpl/adgi/vox_adgi_dbl_rnd_start_01.rn75.pc.en.snd

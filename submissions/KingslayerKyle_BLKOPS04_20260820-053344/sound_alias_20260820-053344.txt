@@ -1,0 +1,7 @@
+7d30fee41f23b48,evt_audio_log_7_sfx
+288545c847844b07,evt_audio_log_6_sfx
+2a1131e0593119ba,evt_audio_log_5_sfx
+355d37b9c1946339,evt_audio_log_4_sfx
+5346bbe612df529e,mus_im_12_intro
+67e89194e89d21e4,mus_im_10_intro
+786dda30612f932f,mus_im_11_intro
