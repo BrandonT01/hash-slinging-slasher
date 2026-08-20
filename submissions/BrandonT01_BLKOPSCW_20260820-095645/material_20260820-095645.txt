@@ -1,0 +1,2 @@
+37ff70477e80e493,mc/mtl_veh_t9_mil_ru_helicopter_transport_door_paint_inner_a
+37ff71477e80e646,mc/mtl_veh_t9_mil_ru_helicopter_transport_door_paint_inner_b
