@@ -1,0 +1,75 @@
+# Builds the macOS executables and commits them to `bin/macos/`, so somebody on a Mac can grind
+# without installing Rust first.
+#
+# **Universal binaries, not one per architecture.** A `macos-latest` runner is Apple Silicon, and
+# a binary built there will not run on an Intel Mac at all. Rather than shipping two folders and
+# asking people to know which they are, both architectures are built and `lipo` fuses them into
+# one file that runs on either. It costs one extra target and about ten seconds.
+#
+# The default build has no platform-specific code -- there is not one `cfg(windows)` or
+# `cfg(target_os)` outside the optional `cordycep` feature, and the only dependency is gated
+# behind it -- so this compiles the same source everybody else runs.
+name: macos binaries
+
+on:
+  push:
+    branches: [main]
+    # Not on a binaries-only commit, or this workflow triggers itself for ever.
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: macos-binaries
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-apple-darwin,aarch64-apple-darwin
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Tests first, and this is most of the point of the job. Until now the suite had only ever
+      # run on Windows and on Linux; a binary that fails its own tests must never reach `bin/`,
+      # because every contributor pulling it inherits the fault.
+      - run: cargo test --release
+
+      - name: build both architectures
+        run: |
+          cargo build --release --target aarch64-apple-darwin
+          cargo build --release --target x86_64-apple-darwin
+
+      - name: fuse them into universal binaries
+        run: |
+          mkdir -p bin/macos
+          for path in target/aarch64-apple-darwin/release/*; do
+            name=$(basename "$path")
+            case "$name" in *.d|*.rlib|deps|build|examples|incremental|.fingerprint) continue;; esac
+            [ -f "$path" ] && [ -x "$path" ] || continue
+            other="target/x86_64-apple-darwin/release/$name"
+            [ -f "$other" ] || continue
+            lipo -create -output "bin/macos/$name" "$path" "$other"
+          done
+          ls -la bin/macos
+          # Prove they really are universal rather than quietly one-architecture.
+          file bin/macos/* | head -5
+
+      - name: commit them
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f bin/macos
+          git diff --cached --quiet && echo "binaries unchanged" && exit 0
+          git commit -m "Build macOS binaries from ${GITHUB_SHA::7}"
+          git push
