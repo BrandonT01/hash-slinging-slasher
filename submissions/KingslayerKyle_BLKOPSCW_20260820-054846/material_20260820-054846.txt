@@ -1,0 +1,4 @@
+1073e9c510b58156,ei/gfx9_fire_xsm_base_1_anim_hdrg
+2194ca05ff5d7ccf,ei/gfx9_fire_xsm_base_2_anim_hdrg
+4be9b608386d7b92,wc/t9_exp_metal_panels_02
+7cce83818e26a0e6,ei/gfx9_fire_sm_lick_short_curl_anim_hdrg
