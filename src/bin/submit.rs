@@ -746,6 +746,20 @@ fn open_pull_request(
         };
 
         let bytes = fs::read(script).map_err(|error| format!("could not read {name}: {error}"))?;
+
+        // Already in the library, byte for byte bar line endings: send nothing at all.
+        //
+        // Reusing the name was not enough. The blob still went up, and since git checks the
+        // library copy out with CRLF while the copy being sent has LF, the pull request rewrote
+        // every line of a file whose content had not changed -- 95 insertions and 95 deletions on
+        // a no-op. Two pull requests carried that before anybody looked.
+        let (stem, extension) = name.rsplit_once('.').unwrap_or((name, "py"));
+        if let Some(existing) = already_in_library(strip_stamp(stem), extension, &bytes) {
+            println!("  {name} is already in the library as {existing}; not sending it again");
+            landed.push(existing);
+            continue;
+        }
+
         let target = library_name(name, &when, &bytes);
         let blob = make_blob(&fork, &bytes)?;
         entries.push((format!("scripts/contributed/{target}"), blob));
