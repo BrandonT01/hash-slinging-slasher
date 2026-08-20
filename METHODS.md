@@ -298,6 +298,21 @@ image's seven commonest trailing tokens by a distance), and also try it with no 
 **Spent when** the confirmed material set has not grown. Purely derivative — it yields exactly
 nothing on unchanged input, so run it *after* a general pass, never before.
 
+> **UNFINISHED, 2026-08-20 — this method has not been run to completion and is not exhausted.**
+> A pass on that day was stopped at **2.9%** of 4.35 trillion candidates, having found nothing
+> yet, and there is no submission from it. Read no conclusion into the zero: it had not reached
+> the part of the space where matches live.
+>
+> The reason it was stopped is worth knowing before starting it again: it reported **~2.5 hours
+> remaining** at 2.9%, which makes it by far the most expensive slot in the rotation. Whether it
+> earns that is an open question and the measurement does not exist yet. Anyone picking this up
+> should run it to completion once, on an idle machine, and record what it actually returns — and
+> if it is small, move it after the list re-measure or drop it from the rotation.
+>
+> It is also the one confirming binary with **no checkpointed run folder**, so a pass killed part
+> way through leaves nothing submittable at all. `confirm_cw` and `confirm_list` write theirs
+> every sixty seconds; this does not, and should before it is trusted with a long run.
+
 Material names are paths, and there are **twelve** directories: `mc/ wc/ clt/ splm/ vd/ mcs/ ei/
 cltp/ vdd/ el/ mcp/ ec/`. Verified against the tables — `mc/` heads 496,666 names and `ec/` heads
 25. Popularity ranking keeps the first two and discards the naming of everything under the other
