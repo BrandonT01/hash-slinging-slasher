@@ -799,10 +799,11 @@ impl RunNote {
 
     fn render(&self) -> String {
         let mut text = format!(
-            "- method: {}\n- what it does: {}\n- ran for: {}\n",
+            "- method: {}\n- what it does: {}\n- ran for: {}\n- confirmed on: {}\n",
             self.method,
             self.what,
-            human_duration(self.took)
+            human_duration(self.took),
+            self.compute
         );
 
         for (label, value) in &self.measurements {
@@ -1157,6 +1158,27 @@ pub fn expected_by_chance(candidates: u64, wanted: usize) -> f64 {
 
 #[cfg(test)]
 mod tests {
+    /// A run note actually *writes* which engine confirmed it.
+    ///
+    /// The field existed, the builder existed, `submit` read it back -- and the format string in
+    /// `render` was never updated, so the line was written nowhere and every submission reported
+    /// "not recorded". It compiled, the tests passed, and the feature was dead. Nothing catches a
+    /// missing line in a format string except asserting on the rendered text.
+    #[test]
+    fn a_run_note_records_which_engine_confirmed_it() {
+        let note = RunNote::new("a method", "what it does", std::time::Duration::from_secs(1));
+        assert!(note.render().contains("- confirmed on: CPU
+"), "default backend not written");
+
+        let gpu = RunNote::new("a method", "what it does", std::time::Duration::from_secs(1))
+            .computed_on("GPU (OpenCL, gfx1100)");
+        assert!(
+            gpu.render().contains("- confirmed on: GPU (OpenCL, gfx1100)
+"),
+            "an explicit backend is not written"
+        );
+    }
+
     /// A stored name must reproduce the id stored beside it. That is the only thing a row means.
     ///
     /// Black Ops 4's SAB sound names are hashed *unfolded*, so their backslashes are part of the

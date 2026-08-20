@@ -31,6 +31,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 12 | sound language and encoding variants | the same sound in the other eleven languages | `scripts/sound_languages.py` → `confirm_list` | Black Ops 4 only: 38. Cold War returns 0 — its language tables are already complete |
 | 13 | image channel completion | the other channels of an image we hold one channel of | `scripts/image_channels.py` → `confirm_list` | 456 BO4, 59 CW. Compounds with method 3, which seeds from the other side |
 | 14 | token insertion and deletion | names one token **longer or shorter** than a known name | `scripts/token_edits.py` → `confirm_list` | 700 BO4, 384 CW across all four types. The only method that changes a name's length |
+| 15 | affix sweep | affixes used **once** in the game, which no measured list can hold | `scripts/affix_sweep.py` → `confirm_list` | **targeted only.** Blind: 1 name per 532 M candidates. Aimed at a family you suspect: the only thing that reaches it |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ---
@@ -615,6 +616,83 @@ position produces more candidates than the general search and reaches less.
 
 **Spent by** `--cap` and the corpus. Deletions exhaust in one pass against a fixed corpus;
 insertions reopen whenever either changes.
+
+---
+
+## 15. Affix sweep
+
+**Contributed 2026-08-20.** The only method here that does not require a token to have been
+measured before it can be offered.
+
+**Builds from** nothing but the alphabet. For each stem it emits every combination of a short
+leading and trailing token — `a_stem_a`, `a_stem_b`, … `aa_stem_a`, … `aba_stem_zz` — over the
+36 characters real affixes actually use.
+
+**Reaches** a permanent blind spot in every other method. Everything else recombines *measured*
+vocabulary, and a frequency-ranked list of 4,800 endings structurally **cannot hold a token used
+once**. Measured across the four general tables there are 341 distinct leading tokens of one to
+three characters and 2,044 trailing ones; the common ones are carried by every list, and the long
+tail — which is most of the distinct values — is carried by none.
+
+Brute force is the *right* tool here, and only here, because the space is genuinely small: 36
+characters over four positions is 1.7 million, a rounding error beside the 2^63 that makes word
+composition hopeless. Point the same idea at whole words and it becomes the mistake `Order of
+resort` warns about.
+
+**Run it with**
+
+```
+python scripts/affix_sweep.py --type model --stems 200 | bin\windows\confirm_list.exe - ^
+    --label "affix sweep" --script scripts/affix_sweep.py
+```
+
+### Targeted, not scheduled — and the measurement says so plainly
+
+A blind run on Black Ops 4 models: **62 stems, 532,497,168 candidates, 1 name.**
+
+| method, BO4 models | names per candidate |
+|---|---|
+| `token_edits` | 1 per 94,000 |
+| **affix sweep, blind** | **1 per 532,000,000** |
+
+That is roughly **5,600× less efficient per candidate**, and it is the whole argument. An hour buys
+about 500 stems against a corpus of 250,000 — 0.2% coverage. As a rotation item it is poor value
+next to almost anything else here.
+
+**Its value is entirely in choosing the stems.** Use it when you have a reason to believe a
+particular family holds more — a set a pass has just cracked open, a map whose assets are half
+recovered — and sweep *those* stems exhaustively. It answers "is there more here?" completely,
+which no other method can, rather than "what is there?" cheaply, which several do better.
+
+The one it found blind shows the shape it reaches:
+`c_t8_zmb_dlc3_mannequin_female_static_standpose_body_color_01` — a common `c_` prefix *and* a
+common `_01` suffix, on the same stem, which needs both ends varying at once on a stem the general
+search never cut as a piece.
+
+**A negative result here is worth recording.** A targeted sweep is exhaustive over its stems, so if
+a family you expected to be productive returns nothing, that is a strong measured statement about
+that family rather than a shrug — and it is expensive to rediscover.
+
+### Sized before it runs, and it refuses to exceed it
+
+Candidates go as `stems x (L+1) x 36^L` for combined affix length `L`, so `L` is solved for rather
+than chosen: 186,624 candidates per stem at L=3, 8.4 million at L=4. `--hours` sets the budget
+(default 1) and the script prints the plan before emitting a line. There is no flag to force a
+longer sweep, because one that takes a fortnight is not a method, it is a mistake nobody notices
+for a fortnight.
+
+**Do not reach for this when a pass returns little.** Low findings usually mean the *lists* need
+re-measuring, not that brute force is needed — re-measuring took sound-file ending reach from 27.8%
+to 96.7% in one command. Running a sweep when a starved list is the real problem burns an hour and
+finds nothing.
+
+**Separators are gated per type, and that is measured.** `/` appears 98,384 times in short material
+affixes but always closing a directory code (`mc/`, `wc/`), never scattered through one — so it is
+applied as a separator rather than swept as a character, which is both correct and 1.12x cheaper at
+L=4. `.` is swept nowhere: sound dots live in long fixed tails the endings list already reaches.
+
+**Spent by** its stems, never by the alphabet. Re-running over the same stems at the same length
+returns exactly what it returned before; re-running over new ones is a new search.
 
 ---
 
