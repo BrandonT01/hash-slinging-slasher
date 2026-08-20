@@ -89,14 +89,25 @@ while :; do
     rotation=$((rotation + 1))
     say "=== rotation $rotation ==="
 
-    # 1. Sound first, both games. The largest unnamed ground there is, and the pass that needs a
-    #    flag rather than happening by default -- which is exactly why it gets neglected.
-    job "cw_sound"  "$WIN/confirm_cw$EXE" --game BLKOPSCW --sounds
-    job "bo4_sound" "$WIN/confirm_cw$EXE" --game BLKOPS04 --sounds --no-fold
-
-    # 2. The general search, both games.
-    job "cw_general"  "$WIN/confirm_cw$EXE" --game BLKOPSCW
+    # 1. The general search, both games, and it leads because the measurements say so.
+    #
+    #    Ordered by what each actually returned rather than by how big its pool is. On 2026-08-20
+    #    `bo4_general` returned 5,869 in one pass while `bo4_sound` returned 169 -- sound has the
+    #    most unnamed ids but the ground is picked over, and unnamed-id count is a poor predictor
+    #    of yield once a pool has been worked. The general lists also gained ten to fifteen points
+    #    of ending reach in the ceiling fix that morning, which nothing had yet run against.
     job "bo4_general" "$WIN/confirm_cw$EXE" --game BLKOPS04
+    job "cw_general"  "$WIN/confirm_cw$EXE" --game BLKOPSCW
+
+    # 2. Whole-word and numeric family walking. `swaps` returned 1,174 in one pass, the best of
+    #    any generator measured, and both compound with whatever the general search just added.
+    job "swaps"    "$WIN/confirm_variants$EXE" swaps
+    job "variants" "$WIN/confirm_variants$EXE"
+
+    # 3. Sound, both games. Still the largest unnamed ground and still the pass that needs a flag
+    #    rather than happening by default -- just no longer the best first bet.
+    job "bo4_sound" "$WIN/confirm_cw$EXE" --game BLKOPS04 --sounds --no-fold
+    job "cw_sound"  "$WIN/confirm_cw$EXE" --game BLKOPSCW --sounds
 
     # 3. Every generator, both games. Ordered by what each returned when it was measured.
     for game in BLKOPS04 BLKOPSCW; do
@@ -129,8 +140,6 @@ while :; do
 
     # 5. The cross-type and variant binaries, which are their own methods.
     job "images_from_materials" "$WIN/images_from_materials$EXE"
-    job "variants"              "$WIN/confirm_variants$EXE"
-    job "swaps"                 "$WIN/confirm_variants$EXE" swaps
 
     # 6. Re-measure. Every name confirmed this rotation becomes a new beginning, a new ending and
     #    a new numbered family for the next one -- which is what makes the next rotation find
