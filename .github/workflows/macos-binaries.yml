@@ -72,4 +72,20 @@ jobs:
           git add -f bin/macos
           git diff --cached --quiet && echo "binaries unchanged" && exit 0
           git commit -m "Build macOS binaries from ${GITHUB_SHA::7}"
-          git push
+
+          # Rebase and retry rather than pushing once and giving up.
+          #
+          # `main` moves constantly: the other platform's workflow pushes its own binaries, and
+          # merged submissions land between this job starting and finishing. A single push loses
+          # that race often, and the failure is misleading -- the build and the tests had both
+          # passed, only the push was rejected, so the run reads as "the binaries failed to build"
+          # when they were sitting there ready.
+          #
+          # The two workflows touch different folders, so a rebase never conflicts.
+          for attempt in 1 2 3 4 5; do
+            git pull --rebase --quiet origin main && git push && exit 0
+            echo "push race on attempt $attempt, retrying"
+            sleep $((attempt * 5))
+          done
+          echo "could not push after five attempts"
+          exit 1
