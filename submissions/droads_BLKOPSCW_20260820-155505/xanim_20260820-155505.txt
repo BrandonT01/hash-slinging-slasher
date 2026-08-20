@@ -1,0 +1,2 @@
+2edb5e46fc51ad7c,pt_rifle_t9_tr_longburst_fem_prone_reload_empty_fastmag
+7306d11db259dab3,pt_rifle_t9_ar_mobility_fem_stand_reload_fast_mag
