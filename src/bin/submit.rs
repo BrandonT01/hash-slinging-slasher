@@ -434,8 +434,24 @@ fn same_text(left: &[u8], right: &[u8]) -> bool {
 /// a match costs one redundant file, which is why this is allowed to give up quietly. Claiming a
 /// match that is not one would overwrite somebody's version, so the comparison is exact bytes.
 fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<String> {
-    let folder = paths::root().join("scripts").join("contributed");
+    // Both halves of the library. A generator that earned its place is moved into `scripts/`
+    // proper and listed in `scripts/README.md`; `scripts/contributed/` is where a submission
+    // files one on arrival. Checking only the second meant a script promoted to the first was
+    // re-sent by every run afterwards, under a fresh stamp each time -- so an overnight grind
+    // would have left a folder full of dated copies of a file already sitting one level up.
+    let root = paths::root().join("scripts");
 
+    for folder in [root.join("contributed"), root] {
+        if let Some(found) = matching_in(&folder, base, extension, bytes) {
+            return Some(found);
+        }
+    }
+
+    None
+}
+
+/// The one file in this folder that is this script, byte for byte bar line endings.
+fn matching_in(folder: &Path, base: &str, extension: &str, bytes: &[u8]) -> Option<String> {
     for entry in fs::read_dir(folder).ok()?.flatten() {
         let path = entry.path();
 
