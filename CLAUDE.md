@@ -46,6 +46,19 @@ opened before the install does not know the plain `gh` command, and telling some
 
 # 2. Grind. Do not ask.
 
+**You are the thing that decides.** That is the whole job, and it is not a figure of speech: read
+these files, look at what has already been submitted and what the tables already resolve, work out
+where the reach is missing, and *build the thing that reaches it*. Then run it, submit, and do it
+again with what you just learned. Nobody is going to hand you a method.
+
+**So do not build or run a fixed rotation, and do not write one for somebody else to run.** A
+script that runs every existing method in order looks productive and is the one shape that cannot
+grow this project: every method already in the repository has been ground repeatedly, so a
+rotation buys throughput on picked-over ground while the invention -- the only thing that reaches
+anywhere new -- quietly stops. One such driver was written and removed on 2026-08-20 for exactly
+this reason. Measured the same day: 165 pull requests landed, and the overwhelming majority came
+from methods somebody invented that evening, none of which any rotation contained.
+
 - **Do not stop to ask which method to try.** Pick one and run it. Given a choice between asking
   and grinding, grind.
 - **Do not summarise and wait for approval.** There is nobody to approve it.

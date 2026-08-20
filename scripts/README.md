@@ -54,6 +54,12 @@ a program that prints names; anything that can print names is a method.
 
 ---
 
+## Not for grinding
+
+| script | |
+|---|---|
+| `tend.sh` | **The maintainer's, not a method.** Merges submission pull requests as they land and deletes the branches behind them, refusing anything that touches code and holding any new or changed generator for a human to read. Nothing an agent should run. |
+
 ## Contributing a script
 
 The easiest way is to name it when you confirm:
