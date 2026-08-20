@@ -1,0 +1,4 @@
+2b5e2ee2ec2de2b7,zmb_doa_ai_skelboss_death_swt
+4536a11a0fe25038,wpn_pbr_front_fire_lfe_ring_plr
+5c9c6d48291bb9e9,wpn_chopper_gunner_fire_lfe_ring_plr
+5db8746a023fd340,wpn_death_machine_fire_lfe_ring_plr
