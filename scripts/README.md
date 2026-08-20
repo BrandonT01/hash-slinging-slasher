@@ -41,6 +41,7 @@ a program that prints names; anything that can print names is a method.
 | `sound_languages.py` | respelling a known sound in each of the twelve shipped languages and three encoding tags. Black Ops 4 only — Cold War's language tables are already complete. |
 | `image_channels.py` | offering every other channel (`_c`, `_n`, `_g`, `_o`, `_m`, `_s`, `_r` …) of an image we hold one channel of. 88.8% of cores carry more than one. |
 | `token_edits.py` | names one token longer or shorter than a known name. The only generator here that changes a name's length; everything else substitutes. |
+| `materials_from_images.py` | stripping an image name to its core and offering it as a material, under all twelve directories and in both the `mtl_` and bare spellings. The material/image seam run backwards -- `images_from_materials` is the forward direction. **Measured near-spent**: 7 names in Cold War and 10 in Black Ops 4. |
 | `affix_sweep.py` | **every** short prefix and suffix exhaustively, around stems you choose. The only generator that does not need a token to have been measured first — so it reaches affixes used once in the game, which no frequency-ranked list can hold. Sizes itself against a time budget and refuses to exceed it. Targeted, not scheduled: see METHODS.md. |
 
 ## Measuring

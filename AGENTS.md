@@ -298,13 +298,17 @@ because it is the staging area for work that is not committed yet, and `submit` 
 finds there into the pull request as `scripts/contributed/`. `scripts/` is the promoted half of
 the library -- for generators that already earned their place and are already in git.
 
-Putting a *new* file in `scripts/` loses it, quietly. `submit` will not send a script the library
-already holds, because sending one produced pull requests that rewrote 95 lines of an unchanged
-file on a CRLF no-op. It decides that by reading `scripts/` and `scripts/contributed/` off the
-disk -- so a file you just wrote into `scripts/` matches *itself*, and is skipped as already
-present when nothing upstream has it. It happened on 2026-08-20: `materials_from_images.py` was
-named by two merged pull requests and carried by neither, and only a later commit put it in the
-repository at all.
+The reason is worth knowing, because it used to lose files. `submit` will not send a script the
+library already holds -- sending one produced pull requests that rewrote 95 lines of an unchanged
+file on a CRLF no-op. It used to decide that by reading `scripts/` off the disk, so a file you had
+just written there matched *itself* and was skipped while nothing upstream held it. That happened
+on 2026-08-20: `materials_from_images.py` was named by two merged pull requests and carried by
+neither. It now asks `git ls-files` instead, so an uncommitted file is no longer mistaken for the
+library.
+
+One case is still open: a script **committed locally but not pushed** counts as tracked, and the
+pull request branch is built through GitHub's API from the fork's head rather than from your
+commits -- so it would again be named and not carried. `contrib/` avoids the whole question.
 
 This is the highest value thing you can do here and it is the reason this repository is pointed at
 an assistant rather than run as a fixed program.

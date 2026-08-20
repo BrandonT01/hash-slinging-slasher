@@ -17,15 +17,19 @@
 //! The point is the proportion. Anyone can find one string that hashes to something; the
 //! question is whether this accounts for a lot of a snapshot or a rounding error.
 //!
-//! Every hit is a real name, already confirmed by construction, so they are written out too --
-//! the file is in `confirm_list` order and can be piped straight into it.
+//! Every hit is a real name, already confirmed by construction, so they are written out too, as
+//! `hash,name` rows -- the shape `confirm_list` reads, so the file can be piped straight into it.
+//! It takes the hex up to the first comma and everything after it as the name, which is why the
+//! source of a row is reported in the breakdown rather than added as a third column.
 
+use std::cell::RefCell;
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::fs;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 
 use slasher::cordycep::{CordycepInstance, POOL_COUNT};
-use slasher::{id_of, ID_MASK};
+use slasher::{id_of, paths, ID_MASK};
 
 fn main() {
     let instance = match CordycepInstance::open() {
@@ -73,8 +77,24 @@ fn main() {
     println!("{} strings in the string pool, {} distinct", pool_strings.len(), distinct.len());
 
     // ---- hash both, and see what they explain ----
-    let out_path = format!("logs/names_from_strings_{}.csv", game.to_lowercase());
-    let mut out = BufWriter::new(File::create(&out_path).expect("logs/ exists"));
+    // Against the repository, never the working directory. Every default path goes through
+    // `paths::root()` because a relative one broke the moment somebody ran a binary from
+    // anywhere but the repository root -- and here that would panic *after* the whole pool walk
+    // and string-pool read had been paid for, losing the measurement it just took.
+    let logs = paths::root().join("logs");
+    let _ = fs::create_dir_all(&logs);
+    let out_path = logs.join(format!("names_from_strings_{}.csv", game.to_lowercase()));
+
+    let Ok(file) = File::create(&out_path) else {
+        eprintln!("{} could not be written to", out_path.display());
+        return;
+    };
+    let mut out = BufWriter::new(file);
+
+    // The two sources overlap -- a fast file name is often in the string pool as well -- so the
+    // headline figure is the size of the union. Adding the two counts double-counts every id both
+    // reach, in the one number this whole binary exists to report.
+    let union: RefCell<HashSet<u64>> = RefCell::new(HashSet::new());
 
     let report = |label: &str,
                       candidates: Vec<String>,
@@ -94,7 +114,11 @@ fn main() {
                     for pool in pools {
                         *per_pool.entry(*pool).or_default() += 1;
                     }
-                    let _ = writeln!(out, "{id:016x},{text},{label}");
+                    // `hash,name` and nothing else: `confirm_list` takes the hex up to the
+                    // first comma and *everything* after it as the name, so a third column
+                    // would be swallowed into the name and hash to nothing. Which source a
+                    // row came from is in the per-source breakdown printed above.
+                    let _ = writeln!(out, "{id:016x},{text}");
                 }
             }
         }
@@ -118,6 +142,10 @@ fn main() {
         }
         println!();
 
+        for id in &hit_ids {
+            union.borrow_mut().insert(*id);
+        }
+
         (tested.len(), hit_ids.len())
     };
 
@@ -136,12 +164,14 @@ fn main() {
     // and plenty of asset names are those tokens under a directory.
     let _ = out.flush();
 
+    let together = union.borrow().len();
+
     println!("\n---");
     println!(
         "of {} distinct ids the loader holds, the fast file names explain {ff_hits} and the\n\
-         string pool explains {xs_hits}: {:.3}% between them.",
+         string pool explains {xs_hits}: {together} between them, {:.3}%.",
         loaded.len(),
-        (ff_hits + xs_hits) as f64 * 100.0 / loaded.len() as f64
+        together as f64 * 100.0 / loaded.len() as f64
     );
-    println!("\nhits written to {out_path}");
+    println!("\nhits written to {}", out_path.display());
 }

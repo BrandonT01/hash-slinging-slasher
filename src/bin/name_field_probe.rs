@@ -28,7 +28,7 @@ use std::fs::File;
 use std::io::{BufWriter, Write};
 
 use slasher::cordycep::CordycepInstance;
-use slasher::{id_of, ID_MASK};
+use slasher::{id_of, paths, ID_MASK};
 
 /// How many assets of a pool the offset scan looks at. The scan only has to *find* the offset;
 /// the walk that follows confirms it over everything, so this buys speed and costs nothing.
@@ -72,8 +72,18 @@ fn main() {
     println!("the loader has {game} open");
     println!("scanning {SCAN_BYTES} bytes of each asset header, {sample} assets per pool\n");
 
-    let out_path = format!("logs/names_from_headers_{}.csv", game.to_lowercase());
-    let mut out = BufWriter::new(File::create(&out_path).expect("logs/ exists"));
+    // Against the repository rather than the working directory -- see `paths::root`. A relative
+    // path here panicked from anywhere but the repository root, and did it after the pool walk
+    // had already been paid for.
+    let logs = paths::root().join("logs");
+    let _ = std::fs::create_dir_all(&logs);
+    let out_path = logs.join(format!("names_from_headers_{}.csv", game.to_lowercase()));
+
+    let Ok(file) = File::create(&out_path) else {
+        eprintln!("{} could not be written to", out_path.display());
+        return;
+    };
+    let mut out = BufWriter::new(file);
     let mut recovered_total = 0_usize;
 
     let mut rows: Vec<(usize, usize, &'static str, usize, usize)> = Vec::new();
@@ -154,7 +164,10 @@ fn main() {
                         if !text.is_empty() && id_of(&text) == id {
                             covered += 1;
                             recovered_total += 1;
-                            let _ = writeln!(out, "{id:016x},{text},{pool}");
+                            // `hash,name` only: `confirm_list` reads everything after the
+                            // first comma as the name, so a pool column would be swallowed
+                            // into it. The pool is in the per-pool table printed above.
+                            let _ = writeln!(out, "{id:016x},{text}");
                         }
                     }
                 }
@@ -188,7 +201,10 @@ fn main() {
     println!("id at some other offset:             {elsewhere}");
     println!("name readable as text, hash checked: {as_text}");
     println!("name not in the header at all:       {nowhere}");
-    println!("\nnames recovered and hash-verified:   {recovered_total}  -> {out_path}");
+    println!(
+        "\nnames recovered and hash-verified:   {recovered_total}  -> {}",
+        out_path.display()
+    );
     println!(
         "\nEvery one of those hashes to an id the loader is holding, so they are confirmed by\n\
          construction. Whether they are *wanted* is a separate question: submit files only the\n\

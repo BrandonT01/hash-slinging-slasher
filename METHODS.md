@@ -748,11 +748,9 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 
 ### The two cheapest checks with the biggest upside
 
-**1. Do confirmed image cores appear as material cores?** `images_from_materials` (method 3) runs
-material → image. The reverse direction is unexploited and it is the same 15,770-core seam. If the
-overlap looks like the forward direction, `materials_from_images.py` is a short script exploiting
-the strongest measured relationship in the project, in the direction nobody uses — and it compounds
-with the forward one, each feeding the other.
+**1. Do confirmed image cores appear as material cores?** — **built and measured, 2026-08-20.**
+See method 16 below. The seam is real and the yield is poor: 7 names in Cold War, 10 in Black Ops
+4. Do not re-derive it.
 
 **2. Do confirmed model names hash into the `xcollision` and `xskeleton` pools?** `odd_for_pool` in
 `src/lib.rs` notes a model id "with the usual `xcollision` and `xskeleton` beside it". If those
@@ -855,6 +853,31 @@ If you do get there, constrain it with what has been measured — known director
 known segment shapes, known endings. This is also the only regime where collisions matter: a
 41.7 T candidate pass expects 0.617 coincidental matches, and a seeded pass of forty million
 expects 0.0000. Every binary prints the figure.
+
+---
+
+## 16. Materials from image cores
+
+`scripts/materials_from_images.py` | **7** (CW), **10** (BO4) | 4.57M candidates per game
+
+The material ↔ image seam run backwards. `images_from_materials` (method 3) goes material → image;
+this strips an image name to its core — directory, a leading `i_`, one channel suffix — and offers
+that core as a material under all twelve directories, in both the `mtl_` prefixed and bare
+spellings. Both forms are needed: of 329,846 material names measured, **67.4% carry `mtl_` and
+32.6% do not**, so emitting only the prefixed form gives up a third of the space.
+
+**What it reaches that nothing else does:** material names whose core was only ever confirmed as an
+image. There are far more published image names than confirmed materials, so the reverse direction
+has the larger corpus — which is why it looked promising.
+
+**Spent by:** its own corpus. It reopens only when new image names are confirmed.
+
+**The estimate was wrong, and how it was wrong is the useful part.** Beforehand this was measured
+at 158 hits for Black Ops 4 (1 per 14,456 candidates, against `token_edits` at 1 per 94,000) and it
+returned 10. The estimate excluded only names in the *published tables*; the real run also excludes
+the **9,583 ids already claimed** by merged submissions and open pull requests, which is what
+`wanted_for_search` does and a hand-rolled estimate does not. Estimate against the claimed set, not
+the tables, or expect to be out by an order of magnitude.
 
 ---
 

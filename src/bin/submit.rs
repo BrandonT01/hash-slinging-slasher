@@ -443,11 +443,6 @@ fn same_text(left: &[u8], right: &[u8]) -> bool {
     bare(left) == bare(right)
 }
 
-/// The library's own copy of this script, under whatever stamp it carries.
-///
-/// Best effort: the library is only as current as the clone, and `start` refreshes that. Missing
-/// a match costs one redundant file, which is why this is allowed to give up quietly. Claiming a
-/// match that is not one would overwrite somebody's version, so the comparison is exact bytes.
 /// The scripts git actually tracks, as repository-relative paths with forward slashes.
 ///
 /// `None` when git cannot answer -- outside a checkout, or without git on the path -- and every
@@ -509,6 +504,12 @@ fn is_tracked(path: &Path, tracked: Option<&HashSet<String>>) -> bool {
     tracked.contains(&relative.to_string_lossy().replace('\\', "/"))
 }
 
+/// The library's own copy of this script, under whatever stamp it carries.
+///
+/// Best effort: the library is only as current as the clone, and `start` refreshes that. Missing
+/// a match costs one redundant file, which is why this is allowed to give up quietly. Claiming a
+/// match that is not one would overwrite somebody's version, so the comparison is deliberately
+/// narrow: the same base name, the same extension, and the same text bar line endings.
 fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<String> {
     // Both halves of the library. A generator that earned its place is moved into `scripts/`
     // proper and listed in `scripts/README.md`; `scripts/contributed/` is where a submission

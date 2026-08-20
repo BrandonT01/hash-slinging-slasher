@@ -37,16 +37,17 @@ them by popularity keeps `mc/` and `wc/` and discards the naming of everything u
 Reads the community image tables and this machine's confirmed image names, via `snapshot.py`.
 Writes candidates to standard output, one per line; sizing to standard error.
 
-## Measured before it was written
+## What it returned, and why the estimate was wrong
 
-Naive form only (`mtl_` prefixed, twelve directories, 2.28M candidates):
+**Measured, 2026-08-20: 7 names in Cold War, 10 in Black Ops 4**, from 4.57M candidates each. The
+seam is real and close to spent.
 
-    BLKOPS04   158 hits on unnamed material ids   1 per 14,456 candidates
-    BLKOPSCW    32 hits on unnamed material ids   1 per 71,380 candidates
+Beforehand it estimated 158 for Black Ops 4 -- 1 per 14,456 candidates, against `token_edits` at
+1 per 94,000 -- and returned 10. The estimate excluded only names in the *published tables*. A real
+run also drops the ids **already claimed** by merged submissions and open pull requests (9,583 of
+them on the day), which `wanted_for_search` does and a hand-rolled estimate does not.
 
-For scale, `METHODS.md` records `token_edits` at 1 per 94,000 and a blind `affix_sweep` at
-1 per 532,000,000. The bare-form half of the output is unmeasured and is the reason this is worth
-running rather than just reading.
+Estimate against the claimed set, not the tables, or expect to be out by an order of magnitude.
 
 ## Options
 
@@ -119,12 +120,32 @@ def cores():
 
 def main():
     argv = sys.argv[1:]
+
+    # Mutually exclusive by construction: honouring both leaves nothing to emit, and a generator
+    # that prints nothing and exits 0 reads downstream as a spent method rather than a bad
+    # invocation -- `confirm_list` records a run that found nothing and looks perfectly healthy.
+    if "--prefixed-only" in argv and "--bare-only" in argv:
+        print(
+            "--prefixed-only and --bare-only cannot both be given; they leave no form to emit.",
+            file=sys.stderr,
+        )
+        return 2
+
     prefixed = "--bare-only" not in argv
     bare = "--prefixed-only" not in argv
 
     directories = DIRECTORIES
     if "--dirs" in argv:
-        wanted = argv[argv.index("--dirs") + 1].split(",")
+        at = argv.index("--dirs") + 1
+        if at >= len(argv) or argv[at].startswith("-"):
+            print("--dirs needs a comma separated list, e.g. --dirs mc,wc", file=sys.stderr)
+            return 2
+
+        wanted = [d for d in argv[at].split(",") if d]
+        if not wanted:
+            print("--dirs was given nothing to use", file=sys.stderr)
+            return 2
+
         directories = tuple(d if d.endswith("/") else d + "/" for d in wanted)
 
     found, source_names = cores()
@@ -139,7 +160,7 @@ def main():
     )
 
     if "--count" in argv:
-        return
+        return 0
 
     out = sys.stdout
     for core in found:
@@ -149,6 +170,8 @@ def main():
             if bare:
                 out.write(directory + core + "\n")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
