@@ -291,8 +291,20 @@ A method is now a script that prints names. Generate them any way you like.
 **Always pass `--script`.** It copies your generator into the run, and `submit` puts it in the
 pull request. Without it the method dies with your session -- seven generators are named in past
 submissions here and **not one of them exists**, so every contributor since has started without
-them. `submit` also picks up anything new you left in `scripts/`, so being right about where it
-belongs cannot lose it either.
+them.
+
+**Write a new generator into `contrib/`, not `scripts/`.** `contrib/` is gitignored precisely
+because it is the staging area for work that is not committed yet, and `submit` copies what it
+finds there into the pull request as `scripts/contributed/`. `scripts/` is the promoted half of
+the library -- for generators that already earned their place and are already in git.
+
+Putting a *new* file in `scripts/` loses it, quietly. `submit` will not send a script the library
+already holds, because sending one produced pull requests that rewrote 95 lines of an unchanged
+file on a CRLF no-op. It decides that by reading `scripts/` and `scripts/contributed/` off the
+disk -- so a file you just wrote into `scripts/` matches *itself*, and is skipped as already
+present when nothing upstream has it. It happened on 2026-08-20: `materials_from_images.py` was
+named by two merged pull requests and carried by neither, and only a later commit put it in the
+repository at all.
 
 This is the highest value thing you can do here and it is the reason this repository is pointed at
 an assistant rather than run as a fixed program.
