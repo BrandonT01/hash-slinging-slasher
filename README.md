@@ -71,9 +71,19 @@ If you would rather drive it yourself:
 
 ```
 bin\windows\start.exe             # always first; every search refuses to run until it passes
-bin\windows\confirm_cw.exe        # the general search
+bin\windows\confirm_cw.exe        # the general search: models, materials, images, anims
+bin\windows\confirm_cw.exe --sounds --no-fold    # sound files and aliases (drop --no-fold on Cold War)
 bin\windows\submit.exe            # send what was found
 ```
+
+Sound is a **separate pass**, and it is the largest untouched ground in either game: 70,878 of
+Black Ops 4's 79,263 `sound_asset` ids are unnamed, and 43,603 of Cold War's 50,890 `sound_alias`
+ids. It is separate because sound names look nothing like the rest — deep paths, dotted tails, and
+in Black Ops 4 backslashes — so a sound ending tried against a model id can only ever be a
+coincidence. Split, each half gets its own measured lists and hunts only the ids its vocabulary can
+reach. `--no-fold` is Black Ops 4 only: its sound names keep their backslashes and their ids are
+the hash of exactly that, so without the flag a pass matches nothing while looking perfectly
+healthy. `start` tells you which to run, so you do not have to remember any of this.
 
 Or invent a method, which is the useful thing to do here — a generator that prints candidate
 names, and one command that confirms them against the game:

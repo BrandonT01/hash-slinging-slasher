@@ -19,7 +19,7 @@ correct. Every rule below was verified empirically against the file contents.
 | `fnv1a_xmaterials.csv` | **BO4, BOCW** | FNV-1a 64, Treyarch offset | 63-bit |
 | `fnv1a_<language>_xsounds.csv` (×12) | **BO4, BOCW** | FNV-1a 64, Treyarch offset | 63-bit |
 | `fnv1a_xsounds.csv` | **BO4, BOCW** *(legacy — superseded by the per-language files; not loaded by current Saluki)* | FNV-1a 64, Treyarch offset | 63-bit |
-| `fnv1a_soundbanks_aliases.csv` | *(legacy — not loaded by current Saluki)* | FNV-1a 64, Treyarch offset | 63-bit |
+| `fnv1a_soundbanks_aliases.csv` | **BO4, BOCW** *(not loaded by current Saluki, but where both games' alias names belong)* | FNV-1a 64, Treyarch offset | 63-bit |
 | `fnv1a_strings.csv` | **BOCW** (bone names, notify/script strings) | FNV-1a 64, Treyarch offset | **60-bit** (top 4 bits cleared) |
 | `fnv1a_xanims_v2.csv` | MWIII, BO6, BO7, WZ Mobile | FNV-1a 64, **IW offset** | 63-bit |
 | `fnv1a_ximages_v2.csv` | MWII, MWIII, BO6, BO7, WZM | FNV-1a 64, IW offset | 63-bit |
