@@ -1,0 +1,6 @@
+62f3d59a2368e97,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_03.rn75.pc.en.snd
+109f77b82dfe92fa,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_02.rn75.pc.en.snd
+2c91541e17b7c855,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_01.rn75.pc.en.snd
+32b4ea2f5ff92b30,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_00.rn75.pc.en.snd
+4918d34a8b07fd4c,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_04.rn75.pc.en.snd
+74b36fa584493bf1,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_05.rn75.pc.en.snd
