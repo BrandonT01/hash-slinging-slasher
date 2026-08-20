@@ -1,0 +1,60 @@
+# Builds the Linux executables and commits them to `bin/linux/`, so somebody on Linux can grind
+# without installing Rust first.
+#
+# The Windows binaries are committed by hand from a Windows machine. Linux has no such machine
+# behind it, so CI is the only thing that can keep `bin/linux/` current -- and a stale committed
+# binary is worse than none, because `start` would check a source tree the executable does not
+# match.
+name: linux binaries
+
+on:
+  push:
+    branches: [main]
+    # Not on a binaries-only commit, or this workflow triggers itself for ever.
+    paths:
+      - 'src/**'
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: linux-binaries
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      # Tests first. A binary that fails its own tests must never reach `bin/`, because every
+      # contributor pulling it would inherit the fault.
+      - run: cargo test --release
+
+      - run: cargo build --release
+
+      - name: collect the binaries
+        run: |
+          mkdir -p bin/linux
+          for path in target/release/*; do
+            name=$(basename "$path")
+            case "$name" in *.d|*.rlib|deps|build|examples|incremental|.fingerprint) continue;; esac
+            [ -f "$path" ] && [ -x "$path" ] && cp -f "$path" "bin/linux/$name"
+          done
+          ls -la bin/linux
+
+      - name: commit them
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f bin/linux
+          git diff --cached --quiet && echo "binaries unchanged" && exit 0
+          git commit -m "Build Linux binaries from ${GITHUB_SHA::7}"
+          git push
