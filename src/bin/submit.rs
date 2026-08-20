@@ -19,7 +19,8 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Stdio;
+use std::process::{Command, Stdio};
+use std::sync::OnceLock;
 
 use slasher::{
     config, expected_by_chance, github, hash64, low_value_reason, paths, recon, stamp, strip_stamp,
@@ -447,6 +448,67 @@ fn same_text(left: &[u8], right: &[u8]) -> bool {
 /// Best effort: the library is only as current as the clone, and `start` refreshes that. Missing
 /// a match costs one redundant file, which is why this is allowed to give up quietly. Claiming a
 /// match that is not one would overwrite somebody's version, so the comparison is exact bytes.
+/// The scripts git actually tracks, as repository-relative paths with forward slashes.
+///
+/// `None` when git cannot answer -- outside a checkout, or without git on the path -- and every
+/// caller then falls back to trusting the disk, which is what this did before.
+///
+/// This exists because "the library" and "what is sitting in `scripts/`" are not the same set,
+/// and treating them as one lost a generator. A file an agent writes straight into `scripts/`
+/// during a run is on the disk and absent from git, so it matched *itself* and was skipped as
+/// already present while nothing upstream held it: `materials_from_images.py` was named by pull
+/// requests #204 and #205 on 2026-08-20 and carried by neither. Asking git instead of the
+/// filesystem makes the check mean what it always said it meant.
+fn tracked_scripts() -> Option<&'static HashSet<String>> {
+    static TRACKED: OnceLock<Option<HashSet<String>>> = OnceLock::new();
+
+    TRACKED
+        .get_or_init(|| {
+            let output = Command::new("git")
+                .args(["ls-files", "--", "scripts"])
+                .current_dir(paths::root())
+                .stderr(Stdio::null())
+                .output()
+                .ok()?;
+
+            if !output.status.success() {
+                return None;
+            }
+
+            let listing = String::from_utf8_lossy(&output.stdout);
+            let paths: HashSet<String> = listing
+                .lines()
+                .map(|line| line.trim().replace('\\', "/"))
+                .filter(|line| !line.is_empty())
+                .collect();
+
+            // An empty answer is a real one only if git succeeded and the repository genuinely
+            // holds no scripts. Treating it as "nothing is tracked" would skip every match and
+            // re-send the whole library, so it is refused rather than trusted.
+            if paths.is_empty() {
+                None
+            } else {
+                Some(paths)
+            }
+        })
+        .as_ref()
+}
+
+/// Whether git tracks this file, given the listing. Unknown listing means yes: the fallback is
+/// the old disk-only behaviour, which is wrong only in the narrow case above and must not start
+/// refusing to recognise a library that is genuinely there.
+fn is_tracked(path: &Path, tracked: Option<&HashSet<String>>) -> bool {
+    let Some(tracked) = tracked else {
+        return true;
+    };
+
+    let Ok(relative) = path.strip_prefix(paths::root()) else {
+        return true;
+    };
+
+    tracked.contains(&relative.to_string_lossy().replace('\\', "/"))
+}
+
 fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<String> {
     // Both halves of the library. A generator that earned its place is moved into `scripts/`
     // proper and listed in `scripts/README.md`; `scripts/contributed/` is where a submission
@@ -455,8 +517,10 @@ fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<Strin
     // would have left a folder full of dated copies of a file already sitting one level up.
     let root = paths::root().join("scripts");
 
+    let tracked = tracked_scripts();
+
     for folder in [root.join("contributed"), root] {
-        if let Some(found) = matching_in(&folder, base, extension, bytes) {
+        if let Some(found) = matching_in(&folder, base, extension, bytes, tracked) {
             return Some(found);
         }
     }
@@ -465,9 +529,20 @@ fn already_in_library(base: &str, extension: &str, bytes: &[u8]) -> Option<Strin
 }
 
 /// The one file in this folder that is this script, byte for byte bar line endings.
-fn matching_in(folder: &Path, base: &str, extension: &str, bytes: &[u8]) -> Option<String> {
+fn matching_in(
+    folder: &Path,
+    base: &str,
+    extension: &str,
+    bytes: &[u8],
+    tracked: Option<&HashSet<String>>,
+) -> Option<String> {
     for entry in fs::read_dir(folder).ok()?.flatten() {
         let path = entry.path();
+
+        // On the disk but not in git is not in the library -- see `tracked_scripts`.
+        if !is_tracked(&path, tracked) {
+            continue;
+        }
 
         let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
             continue;
@@ -1371,6 +1446,53 @@ mod tests {
         // Extensionless, and non-python, both survive.
         assert_eq!(library_name("gen", when, b"x"), "gen_20260820-013000.py");
         assert_eq!(library_name("gen.sh", when, b"x"), "gen_20260820-013000.sh");
+    }
+
+    /// A file on the disk but absent from git is not the library.
+    ///
+    /// The case this pins cost a generator. `already_in_library` read `scripts/` off the
+    /// filesystem, so a script written straight into that folder during a run matched *itself*
+    /// and was skipped as already present -- while nothing upstream held it.
+    /// `materials_from_images.py` was named by pull requests #204 and #205 on 2026-08-20 and
+    /// carried by neither.
+    ///
+    /// Goes through the real folder for the same reason the test below does: the stamping had a
+    /// passing unit test over a fixture and still shipped a live bug.
+    ///
+    /// Skips rather than fails where git cannot answer, since `tracked_scripts` then falls back
+    /// to trusting the disk and there is no invariant left to assert.
+    #[test]
+    fn a_script_the_repository_does_not_track_is_not_the_library() {
+        if tracked_scripts().is_none() {
+            return;
+        }
+
+        let folder = paths::root().join("scripts");
+        if !folder.is_dir() {
+            return;
+        }
+
+        // Distinctive enough that it cannot collide with a real generator, and removed either
+        // way below.
+        let name = "zz_untracked_library_probe.py";
+        let path = folder.join(name);
+        let body = b"# written by a test, never committed\n";
+
+        if path.exists() {
+            return;
+        }
+        if fs::write(&path, body).is_err() {
+            return;
+        }
+
+        let picked = library_name(name, "20260820-013000", body);
+        let _ = fs::remove_file(&path);
+
+        assert_eq!(
+            picked, "zz_untracked_library_probe_20260820-013000.py",
+            "an untracked file in scripts/ was treated as the library, so a new generator would \
+             be silently dropped from the pull request"
+        );
     }
 
     /// A script already in the library is recognised, against the library that actually exists.
