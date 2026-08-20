@@ -748,6 +748,13 @@ pub struct RunNote {
     method: String,
     what: String,
     took: std::time::Duration,
+
+    /// Which engine actually did the confirming: `CPU`, or a GPU backend once one exists.
+    ///
+    /// Recorded per run and carried into the submission, so that if a GPU backend is ever found to
+    /// have a fault, the batches it produced can be identified and re-checked without guessing.
+    /// Provenance is cheap to write now and impossible to reconstruct later.
+    compute: String,
     fingerprint: Option<String>,
     measurements: Vec<(String, String)>,
     next: Option<String>,
@@ -759,10 +766,17 @@ impl RunNote {
             method: method.into(),
             what: what.into(),
             took,
+            compute: "CPU".to_owned(),
             fingerprint: None,
             measurements: Vec::new(),
             next: None,
         }
+    }
+
+    /// Which engine confirmed these names. Defaults to `CPU`; a GPU backend sets it explicitly.
+    pub fn computed_on(mut self, backend: impl Into<String>) -> Self {
+        self.compute = backend.into();
+        self
     }
 
     /// The digest of everything that decided what this pass would find. See `fingerprint`.

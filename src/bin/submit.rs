@@ -280,6 +280,11 @@ fn send(
     // by the run into its own folder; a folder without one is from an older or interrupted run.
     let accounts = run_accounts(pending);
 
+    // How many of each asset type, so a reviewer can see the shape of a batch without opening
+    // five files and counting lines. A submission of 2,000 images and one model is a different
+    // thing from an even spread across the five types, and only the breakdown says which it is.
+    let breakdown = per_type(&batch);
+
     let notes = folder.join(format!("about_{when}.md"));
     let _ = fs::write(
         &notes,
@@ -292,6 +297,8 @@ fn send(
              - dropped as already claimed by a merged or open submission: {claimed_elsewhere}\n\
              - runs included: {}\n\
              - searched: {}\n\
+             - confirmed on: {}\n\
+{breakdown}\
              - expected coincidental matches: {estimate:.6}\n\
              - checked against: the community tables, every merged submission, and the {} pull \
              request(s) open at the moment of sending\n\n\
@@ -301,6 +308,7 @@ fn send(
             batch.len(),
             pending.len(),
             config::targets().describe(),
+            backends_used(pending),
             landscape.open.len(),
         ),
     );
@@ -319,7 +327,7 @@ fn send(
 
     match open_pull_request(
         repo, game, &folder, &scripts, &when, who, batch.len(), dropped, claimed_elsewhere,
-        &accounts,
+        &accounts, &breakdown,
     ) {
         Ok(url) => Some(url),
         Err(why) => {
@@ -472,6 +480,70 @@ fn matching_in(folder: &Path, base: &str, extension: &str, bytes: &[u8]) -> Opti
     }
 
     None
+}
+
+/// How many names of each asset type, as markdown list items.
+///
+/// A batch's total says how big it is and nothing about what it is. 2,000 images and one model is
+/// a different submission from an even spread across the five types, and only this says which --
+/// otherwise a reviewer has to open every file in the folder and count its lines, which is what
+/// this replaces.
+///
+/// Ordered by count, largest first, because the question being asked is almost always "what is
+/// this batch mostly?".
+fn per_type(batch: &[(String, u64, String)]) -> String {
+    let mut counts: Vec<(String, usize)> = {
+        let mut seen: std::collections::HashMap<&str, usize> = std::collections::HashMap::new();
+        for (kind, _, _) in batch {
+            *seen.entry(kind.as_str()).or_insert(0) += 1;
+        }
+        seen.into_iter().map(|(kind, count)| (kind.to_owned(), count)).collect()
+    };
+
+    // Largest first, then alphabetically so two types of equal size do not swap places between
+    // runs -- a diff that changes for no reason is a diff nobody reads.
+    counts.sort_by(|left, right| right.1.cmp(&left.1).then(left.0.cmp(&right.0)));
+
+    counts
+        .iter()
+        .map(|(kind, count)| format!("- {kind}: {count}\n"))
+        .collect()
+}
+
+/// Which engine confirmed the runs in this batch, read back from each run's own notes.
+///
+/// Written per run rather than assumed here, because a batch can mix them: a night that starts on
+/// the GPU and falls back to the CPU when a driver complains is a normal outcome, not an error,
+/// and the submission should say so rather than pick one.
+///
+/// The point is traceability. If a GPU backend is ever found to have a fault, the batches it
+/// produced can be identified and re-checked rather than guessed at — and provenance is cheap to
+/// write now and impossible to reconstruct afterwards.
+fn backends_used(runs: &[PathBuf]) -> String {
+    let mut seen: Vec<String> = Vec::new();
+
+    for run in runs {
+        let Ok(notes) = fs::read_to_string(run.join("notes.md")) else {
+            continue;
+        };
+
+        for line in notes.lines() {
+            if let Some(value) = line.strip_prefix("- confirmed on: ") {
+                let value = value.trim().to_owned();
+                if !value.is_empty() && !seen.contains(&value) {
+                    seen.push(value);
+                }
+            }
+        }
+    }
+
+    // A run folder written before this field existed says nothing, and answering "CPU" for it
+    // would be a guess dressed as a fact.
+    if seen.is_empty() {
+        return "not recorded (run predates this field)".to_owned();
+    }
+
+    seen.join(", ")
 }
 
 /// Files in `scripts/` that git does not know about yet: somebody's new generator.
@@ -716,6 +788,7 @@ fn open_pull_request(
     dropped: usize,
     claimed: usize,
     accounts: &str,
+    breakdown: &str,
 ) -> Result<String, String> {
     let branch = format!("findings/{who}-{game}-{when}");
     let base = default_branch(repo)?;
@@ -812,6 +885,7 @@ fn open_pull_request(
 
     let body = format!(
         "**{game}** — {names} asset names, confirmed against that game's own loaded assets.\n\n\
+{breakdown}\n\
          **Checked against, at the moment of sending:** the community hash tables (refreshed \
          first), every merged submission in this repository, and every pull request open right \
          now. A name any of those already holds was dropped rather than sent.\n\n\
@@ -1073,6 +1147,34 @@ mod tests {
     fn base64_carries_bytes_that_are_not_text() {
         assert_eq!(base64(&[0xff, 0xfe, 0xfd]), "//79");
         assert_eq!(base64(&[0x00]), "AA==");
+    }
+
+    /// The per-type breakdown: what it says, and that its order is stable.
+    ///
+    /// Stability matters more than it looks. These lines go into a file that is committed, so an
+    /// order that varied between runs would produce a diff that changed for no reason -- and a
+    /// diff that changes for no reason is one nobody reads.
+    #[test]
+    fn the_breakdown_counts_each_type_largest_first() {
+        let row = |kind: &str, name: &str| (kind.to_owned(), 0u64, name.to_owned());
+
+        let batch = vec![
+            row("image", "a"),
+            row("xmodel", "b"),
+            row("image", "c"),
+            row("image", "d"),
+            row("sound_alias", "e"),
+            row("xmodel", "f"),
+        ];
+
+        assert_eq!(per_type(&batch), "- image: 3\n- xmodel: 2\n- sound_alias: 1\n");
+
+        // Equal counts fall back to alphabetical, so two types of the same size cannot swap
+        // places between runs.
+        let tie = vec![row("xmodel", "a"), row("image", "b")];
+        assert_eq!(per_type(&tie), "- image: 1\n- xmodel: 1\n");
+
+        assert_eq!(per_type(&[]), "");
     }
 
     /// A contributed script is stamped, and re-stamping never compounds.
