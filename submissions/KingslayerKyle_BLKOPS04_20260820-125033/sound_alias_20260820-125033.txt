@@ -1,0 +1,4 @@
+1b18c3135d047a28,evt_missile_ignition_main_sweet
+25030a082c50ad25,evt_missile_ignition_main_lfe
+27751b52b12155ea,veh_heli_swat_close_turbine
+65016b48d805c39f,fly_emote_roman_candle_oneshot_swt
