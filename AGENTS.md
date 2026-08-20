@@ -92,28 +92,39 @@ Never read a results file to count it — count the lines. Never paste found nam
 reasoning to "check" them; the tools already verified them against the game, which is what
 confirmation *is*.
 
-## Never think with idle cores
+## Do not reason at length while a *worthwhile* pass could be running
 
-That is the whole budget rule, and it decides everything else. A pass runs for hours on every
-core and costs no usage at all, so **start one before you start thinking.** Inventing the next
-method while a pass grinds is close to free; inventing it while the machine sits idle burns a
-limit and produces nothing in the meantime. If you are about to reason about anything, check that
-something is running first.
+A pass costs no usage at all and saturates every core for hours, so thinking while one grinds is
+close to free and thinking with the machine idle is not. **If there is a pass worth running, start
+it before you start thinking.**
+
+The word doing the work there is *worthwhile*. Cores busy with a spent method are not better than
+cores idle -- it is the same night lost, and worse, it looks like progress. **Never start a pass
+merely to have something running.** That is exactly the mistake §2 removed a fixed rotation for.
+
+So thinking with nothing running is the right call when:
+
+- **Everything that reaches this ground is spent or fingerprint-blocked.** Then inventing *is* the
+  work. There is nothing to run, and a spent pass would return somebody else's names.
+- **A short measurement decides which pass to run.** Minutes that stop three hours going at the
+  wrong pool or the wrong game are the best trade available -- take them before starting anything.
+- **The only thing you could run is known low-yield.** A method measured at a handful of names is
+  not worth three hours of machine you could give to a better one an hour from now.
 
 **One idea gets one cheap measurement.** The point of measuring first is to kill an idea in
 minutes rather than lose a night to it — so if the measurement itself needs a third script and a
 fourth round, the idea has already failed its own test. Write down the number you have, record it
-in `METHODS.md` as a measured negative, and go and run something that already exists.
+in `METHODS.md` as a measured negative, and move on.
 
 **Signs you are on a wild goose chase**, all of which happened here on 2026-08-20:
 
 - the measurement keeps being *nearly* good enough, so you refine it again
 - you are counting hits without excluding what is already named -- a hit is not a find, and this
   turned "the best method in the project, 1 per 810" into 0 new names
-- you are still reading and no pass has been started
+- an hour has gone and the machine has been idle for all of it, with something worth running
 
-None of this says think less. It says think *while the machine works*, and stop an idea at the
-first number rather than the fourth.
+None of this says think less. Thinking is the job. It says do it *while the machine works* when
+there is real work for the machine, and stop an idea at the first number rather than the fourth.
 
 ---
 
