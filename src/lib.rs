@@ -1020,12 +1020,33 @@ impl Results {
     /// Nothing is written at all when a run found nothing, because an empty folder per barren
     /// pass buries the ones that were not.
     pub fn write_run(&self, directory: impl AsRef<Path>, label: &str) -> std::io::Result<Option<PathBuf>> {
+        self.write_run_as(directory, label, &stamp())
+    }
+
+    /// The same, into a folder named for a stamp the caller keeps, so it can be written *during*
+    /// a run rather than only at the end.
+    ///
+    /// This is what makes an interrupted run recoverable, and the gap it closes was silent and
+    /// expensive. A pass checkpoints its names to the aggregate files every sixty seconds, but the
+    /// run folder was written once, at the end -- and `submit` only ever sends run folders. So an
+    /// agent killed mid-pass (a usage limit, a closed laptop) left its findings on disk in a shape
+    /// nothing would ever send. Worse, silently: the next session's `submit` reports "nothing new
+    /// to submit" and looks like success.
+    ///
+    /// Called repeatedly with the same stamp it rewrites the same folder, and since `added` only
+    /// grows, the folder only grows with it.
+    pub fn write_run_as(
+        &self,
+        directory: impl AsRef<Path>,
+        label: &str,
+        when: &str,
+    ) -> std::io::Result<Option<PathBuf>> {
         let directory = directory.as_ref();
         if self.added.is_empty() {
             return Ok(None);
         }
 
-        let folder = PathBuf::from(directory).join(format!("run_{}_{}", stamp(), label));
+        let folder = PathBuf::from(directory).join(format!("run_{when}_{label}"));
         fs::create_dir_all(&folder)?;
 
         let mut kinds: Vec<&String> = self.added.keys().collect();

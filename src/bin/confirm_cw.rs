@@ -196,6 +196,11 @@ fn main() {
     let every_table = arguments.iter().any(|value| value == "all-tables");
     let no_fold = arguments.iter().any(|value| value == "--no-fold");
     let sounds = arguments.iter().any(|value| value == "--sounds");
+
+    // Both fixed here, before any searching, because the checkpoint below and the final write must
+    // agree on one folder. If they disagreed a completed run would leave two.
+    let label = run_label(sounds, sources);
+    let when = slasher::stamp();
     if sounds {
         println!("hunting the sound pools, with the vocabulary measured from the sound tables");
     }
@@ -417,6 +422,15 @@ fn main() {
                 Ok(()) => println!("  checkpoint: {} names safe on disk", results.len()),
                 Err(error) => eprintln!("  a checkpoint could not be written: {error}"),
             }
+
+            // And the run folder, which is the part `submit` actually sends. Writing it only at
+            // the end meant a pass killed by a usage limit left its names on disk in a shape
+            // nothing would ever submit -- silently, because the next `submit` then reports
+            // "nothing new to submit" and looks like success. Same stamp every time, so this
+            // rewrites one folder rather than littering.
+            if let Err(error) = results.write_run_as(paths::findings(), label, &when) {
+                eprintln!("  the run folder could not be checkpointed: {error}");
+            }
         }
     });
 
@@ -435,7 +449,7 @@ fn main() {
 
     results.write(paths::findings()).expect("the results");
 
-    match results.write_run(paths::findings(), run_label(sounds, sources)) {
+    match results.write_run_as(paths::findings(), label, &when) {
         Ok(Some(folder)) => {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(

@@ -60,7 +60,11 @@ fn main() {
     };
     println!("submitting as {who}");
 
-    // 2. What has not been sent yet.
+    // 2. Anything a killed pass left behind, gathered up first so it can be sent like any other
+    //    run. See `recover_stranded` -- this used to be lost silently.
+    recover_stranded(&findings, &outbox);
+
+    // 3. What has not been sent yet.
     let sent = already_sent(&outbox);
     let pending: Vec<PathBuf> = run_folders(&findings)
         .into_iter()
@@ -77,7 +81,7 @@ fn main() {
 
     println!("{} run(s) not yet submitted", pending.len());
 
-    // 3. Refresh the tables *now*, so the batch is judged against what the community has this
+    // 4. Refresh the tables *now*, so the batch is judged against what the community has this
     //    minute rather than whenever the session started.
     println!("\nrefreshing the tables before sending, in case anything was published meanwhile");
     let table_folder = match tables::ensure(&paths::tables(), true) {
@@ -100,7 +104,7 @@ fn main() {
     }
     println!("{} hashes already published", known.len());
 
-    // 3b. What everybody else has claimed, asked of GitHub *now*.
+    // 4b. What everybody else has claimed, asked of GitHub *now*.
     //
     //     The tables only know what has been merged and published upstream, which lags by days.
     //     The thing that actually causes duplicates is faster than that: somebody grinding on the
@@ -128,7 +132,7 @@ fn main() {
         );
     }
 
-    // 4. One batch per game, and one pull request per game.
+    // 5. One batch per game, and one pull request per game.
     //
     //    A name means nothing without the game it came from: the two number their asset types
     //    differently, so `xmodel` is pool 6 in Cold War and 4 in Black Ops 4. A batch mixing the
@@ -621,6 +625,89 @@ fn scripts_in(folders: &[PathBuf]) -> Vec<PathBuf> {
 }
 
 /// Every `run_*` folder in a findings tree, at any depth.
+/// Findings that exist on disk but belong to no run folder, gathered into one so they can be sent.
+///
+/// **This recovers work that was silently unsubmittable.** A pass checkpoints its names into the
+/// aggregate `findings/<game>/<type>.txt` every sixty seconds, but wrote its *run folder* only on
+/// finishing -- and `submit` sends run folders. So a pass killed part way through (a usage limit,
+/// a closed laptop, a crash) left every name it had found on disk in a shape nothing would ever
+/// send, and said nothing: the next `submit` reported "nothing new to submit" and looked like
+/// success. Contributors running on constrained assistants hit this hardest, which is exactly the
+/// group least able to notice it.
+///
+/// `write_run_as` stops it happening again. This picks up what is already stranded.
+///
+/// Being over-eager here is safe. Anything already published, merged or claimed is dropped before
+/// sending, so the worst case of counting a name stranded when it is not is a batch that comes to
+/// nothing -- against a best case of recovering somebody's whole session.
+fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
+    let mut accounted: HashSet<String> = HashSet::new();
+    for folder in run_folders(findings) {
+        for (_, _, name) in names_in(&folder) {
+            accounted.insert(name.to_lowercase());
+        }
+    }
+    for folder in fs::read_dir(outbox).into_iter().flatten().flatten() {
+        for (_, _, name) in names_in(&folder.path()) {
+            accounted.insert(name.to_lowercase());
+        }
+    }
+
+    let mut recovered = Vec::new();
+
+    for game in fs::read_dir(findings).into_iter().flatten().flatten() {
+        let folder = game.path();
+        if !folder.is_dir() {
+            continue;
+        }
+
+        // The aggregate files sit directly in the game folder; run folders are below it.
+        let mut stranded: Vec<(String, u64, String)> = Vec::new();
+        for (kind, id, name) in names_in(&folder) {
+            if !accounted.contains(&name.to_lowercase()) {
+                stranded.push((kind, id, name));
+            }
+        }
+
+        if stranded.is_empty() {
+            continue;
+        }
+
+        let into = folder.join(format!("run_{}_recovered", stamp()));
+        if fs::create_dir_all(&into).is_err() {
+            continue;
+        }
+
+        let mut by_kind: std::collections::BTreeMap<String, Vec<(u64, String)>> = Default::default();
+        for (kind, id, name) in stranded {
+            by_kind.entry(kind).or_default().push((id, name));
+        }
+
+        let mut wrote = 0;
+        for (kind, mut rows) in by_kind {
+            rows.sort_by(|a, b| a.1.to_lowercase().cmp(&b.1.to_lowercase()));
+            let text: String =
+                rows.iter().map(|(id, name)| format!("{id:x},{name}
+")).collect();
+            if fs::write(into.join(format!("{kind}.txt")), text).is_ok() {
+                wrote += rows.len();
+            }
+        }
+
+        if wrote == 0 {
+            let _ = fs::remove_dir_all(&into);
+            continue;
+        }
+
+        println!(
+            "  recovered {wrote} name(s) that belonged to no run folder -- from a pass that was              interrupted before it could write one"
+        );
+        recovered.push(into);
+    }
+
+    recovered
+}
+
 fn run_folders(findings: &Path) -> Vec<PathBuf> {
     let mut found = Vec::new();
     let Ok(entries) = fs::read_dir(findings) else {
@@ -1123,6 +1210,55 @@ fn base64(bytes: &[u8]) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// A pass killed before it wrote its run folder is recovered, and one that was not is left be.
+    ///
+    /// This is the failure it guards: names checkpointed into the aggregate file every sixty
+    /// seconds, no run folder because the pass never finished, and `submit` sending only run
+    /// folders -- so the work existed on disk and could never be sent, silently.
+    #[test]
+    fn a_killed_run_is_recovered_from_the_aggregate_files() {
+        let root = std::env::temp_dir().join(format!("stranded_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+
+        let findings = root.join("findings");
+        let game = findings.join("blkops04");
+        let outbox = root.join("submissions");
+        fs::create_dir_all(game.join("run_20260820-010101_all")).unwrap();
+        fs::create_dir_all(&outbox).unwrap();
+
+        // Two names in the aggregate. One belongs to a run folder; the other is stranded.
+        fs::write(
+            game.join("xmodel.txt"),
+            "1111111111111111,already_in_a_run
+2222222222222222,stranded_by_a_kill
+",
+        )
+        .unwrap();
+        fs::write(
+            game.join("run_20260820-010101_all").join("xmodel.txt"),
+            "1111111111111111,already_in_a_run
+",
+        )
+        .unwrap();
+
+        let recovered = recover_stranded(&findings, &outbox);
+        assert_eq!(recovered.len(), 1, "the stranded name was not recovered");
+
+        let rows = names_in(&recovered[0]);
+        assert_eq!(rows.len(), 1, "recovered the wrong number of names");
+        assert_eq!(rows[0].0, "xmodel", "recovered under the wrong asset type");
+        assert_eq!(rows[0].2, "stranded_by_a_kill");
+
+        // And it must not recover the same thing twice: the folder it just wrote now accounts
+        // for the name, so a second call finds nothing.
+        assert!(
+            recover_stranded(&findings, &outbox).is_empty(),
+            "recovering twice would submit the same names again"
+        );
+
+        let _ = fs::remove_dir_all(&root);
+    }
 
     /// The rfc's own examples, plus the two lengths that need padding. A wrong encoder here would
     /// upload a corrupted file that still looked like a successful submission.

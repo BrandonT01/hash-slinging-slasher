@@ -56,6 +56,10 @@ fn main() {
     readiness::require();
 
     let began = Instant::now();
+
+    // Fixed before searching, so the checkpoint and the final write agree on one
+    // folder rather than leaving two. See `Results::write_run_as`.
+    let when = slasher::stamp();
     let arguments: Vec<String> = std::env::args().skip(1).collect();
 
     let label = argument(&arguments, "--label").unwrap_or_else(|| "an unnamed method".to_owned());
@@ -210,6 +214,13 @@ fn main() {
                     Ok(()) => println!("  checkpoint: {} names safe on disk", results.len()),
                     Err(error) => eprintln!("  a checkpoint could not be written: {error}"),
                 }
+
+                // And the run folder, which is what `submit` sends. See `write_run_as`: written
+                // only at the end, an interrupted run leaves its names unsubmittable and says
+                // nothing about it.
+                if let Err(error) = results.write_run_as(paths::findings(), "list", &when) {
+                    eprintln!("  the run folder could not be checkpointed: {error}");
+                }
             }
         }
 
@@ -252,7 +263,7 @@ fn main() {
     println!("fingerprint: {fingerprint}");
     recon::note_if_swept(&fingerprint);
 
-    match results.write_run(paths::findings(), "list") {
+    match results.write_run_as(paths::findings(), "list", &when) {
         Ok(Some(folder)) => {
             println!("this run's own names: {}", folder.display());
 
