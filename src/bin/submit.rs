@@ -1108,10 +1108,23 @@ mod tests {
             let bare = format!("{}.py", strip_stamp(name.trim_end_matches(".py")));
             let unix: Vec<u8> = held.iter().copied().filter(|byte| *byte != b'\r').collect();
 
-            assert_eq!(
-                library_name(&bare, "20260820-013000", &unix),
-                name,
-                "{bare} should have been recognised as the library's {name}, not stamped afresh"
+            // The invariant is "reuse something already here", not "reuse this exact file".
+            // Asserting the latter looked equivalent and is not: the library really does hold two
+            // byte-identical copies of `soundxfer.py` under different stamps, left by two
+            // submissions made 48 seconds apart before this dedup worked. Only one of them can be
+            // the one returned, so the strict form made a true dedup fail -- and it failed in CI
+            // on Linux while passing here, purely because the duplicates arrived between the two
+            // runs. What matters is that no *new* stamp is minted.
+            let picked = library_name(&bare, "20260820-013000", &unix);
+            let reused = folder.join(&picked);
+
+            assert!(
+                reused.is_file(),
+                "{bare} was stamped afresh as {picked} instead of reusing a library copy"
+            );
+            assert!(
+                fs::read(&reused).is_ok_and(|held| same_text(&held, &unix)),
+                "{bare} was matched to {picked}, which holds different content"
             );
 
             checked += 1;
