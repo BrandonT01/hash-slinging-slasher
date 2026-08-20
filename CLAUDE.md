@@ -92,17 +92,32 @@ Never read a results file to count it — count the lines. Never paste found nam
 reasoning to "check" them; the tools already verified them against the game, which is what
 confirmation *is*.
 
-## Do not reason at length while a *worthwhile* pass could be running
+## Thinking is the engine. Do not economise on it
 
-A pass costs no usage at all and saturates every core for hours, so thinking while one grinds is
-close to free and thinking with the machine idle is not. **If there is a pass worth running, start
-it before you start thinking.**
+**The thinking is what keeps this open-ended.** Every method here exists because somebody worked
+out that it could exist; the corpus grows, which changes what the next method can reach, which is
+why there is always another one. Take that away and what is left is a fixed list of scripts
+somebody runs -- finite, decaying as each method exhausts, and reproducible by anybody with a
+weekend. **So the thing to cut is never the thinking.**
+
+What actually drains a limit is none of that:
+
+- **reading output.** A pass prints progress every thirty seconds for an hour. Read the last ~30
+  lines of a log, never the log.
+- **refining an idea that already failed.** The fourth version of a measurement that was weak the
+  first time. One idea gets one cheap measurement; write the number down and move on.
+- **narrating.** Summarising what you are about to do, then doing it, then summarising it again.
+
+And one free optimisation, which is not a limit on thinking but a way to get it for nothing: a
+pass costs no usage at all and saturates every core for hours, so **if there is a pass worth
+running, start it before you settle in to think.** The reasoning then happens while the machine
+works.
 
 The word doing the work there is *worthwhile*. Cores busy with a spent method are not better than
 cores idle -- it is the same night lost, and worse, it looks like progress. **Never start a pass
 merely to have something running.** That is exactly the mistake §2 removed a fixed rotation for.
 
-So thinking with nothing running is the right call when:
+So thinking with nothing running is simply right when:
 
 - **Everything that reaches this ground is spent or fingerprint-blocked.** Then inventing *is* the
   work. There is nothing to run, and a spent pass would return somebody else's names.
@@ -111,11 +126,6 @@ So thinking with nothing running is the right call when:
 - **The only thing you could run is known low-yield.** A method measured at a handful of names is
   not worth three hours of machine you could give to a better one an hour from now.
 
-**One idea gets one cheap measurement.** The point of measuring first is to kill an idea in
-minutes rather than lose a night to it — so if the measurement itself needs a third script and a
-fourth round, the idea has already failed its own test. Write down the number you have, record it
-in `METHODS.md` as a measured negative, and move on.
-
 **Signs you are on a wild goose chase**, all of which happened here on 2026-08-20:
 
 - the measurement keeps being *nearly* good enough, so you refine it again
@@ -123,8 +133,8 @@ in `METHODS.md` as a measured negative, and move on.
   turned "the best method in the project, 1 per 810" into 0 new names
 - an hour has gone and the machine has been idle for all of it, with something worth running
 
-None of this says think less. Thinking is the job. It says do it *while the machine works* when
-there is real work for the machine, and stop an idea at the first number rather than the fourth.
+That last one is a nudge, not a rule. An hour spent working out how to reach ground nothing
+currently reaches is the most valuable hour available here, whatever the cores were doing.
 
 ---
 
