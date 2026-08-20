@@ -1,0 +1,12 @@
+192ed62bd28eb707,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_01.rn75.pc.en.snd
+1e0dc5e6c6d11768,vox/scripted/mpl/anbo/vox_anbo_dbl_atpsy_oprt_00.rn75.pc.en.snd
+247827da1d61b2ad,vox/scripted/mpl/ahva/vox_ahva_dbl_atpsy_oprt_01.rn75.pc.en.snd
+254b09cae9f9afa8,vox/scripted/mpl/ahva/vox_ahva_dbl_atpsy_oprt_00.rn75.pc.en.snd
+28c8423c73574107,vox/scripted/mpl/adgi/vox_adgi_dbl_atpsy_oprt_01.rn75.pc.en.snd
+315970caf7afe2c7,vox/scripted/mpl/ami6/vox_ami6_dbl_atpsy_oprt_01.rn75.pc.en.snd
+3c2bbf93a085cf6d,vox/scripted/mpl/anbo/vox_anbo_dbl_atpsy_oprt_01.rn75.pc.en.snd
+47370e49aa78862a,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_00.rn75.pc.en.snd
+4bd13d515a022fea,vox/scripted/mpl/ami6/vox_ami6_dbl_atpsy_oprt_00.rn75.pc.en.snd
+56d07a5a4b41102a,vox/scripted/mpl/adgi/vox_adgi_dbl_atpsy_oprt_00.rn75.pc.en.snd
+73099cf81b720c2f,vox/scripted/mpl/anme/vox_anme_dbl_atpsy_oprt_01.rn75.pc.en.snd
+7d5472f4fc6778b2,vox/scripted/mpl/anme/vox_anme_dbl_atpsy_oprt_00.rn75.pc.en.snd
