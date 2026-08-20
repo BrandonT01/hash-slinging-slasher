@@ -53,7 +53,16 @@ import os
 import re
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Find `scripts/` wherever this file has been filed. A contributed script is written in
+# `contrib/` or `scripts/`, and `submit` files it under `scripts/contributed/` -- so a path
+# built from a fixed number of parent directories is right in one of those and wrong in the
+# others. Every script in the library was broken this way at once. Walk up instead.
+_root = os.path.dirname(os.path.abspath(__file__))
+while _root != os.path.dirname(_root) and not os.path.isfile(
+    os.path.join(_root, "scripts", "snapshot.py")
+):
+    _root = os.path.dirname(_root)
+sys.path.insert(0, os.path.join(_root, "scripts"))
 
 import snapshot
 

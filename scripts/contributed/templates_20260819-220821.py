@@ -66,6 +66,17 @@ import collections
 import os
 import sys
 
+# Find `scripts/` wherever this file has been filed. A contributed script is written in
+# `contrib/` or `scripts/`, and `submit` files it under `scripts/contributed/` -- so a path built
+# from a fixed number of parent directories is right in one of those and wrong in the others. This
+# has to run *before* `import snapshot`, which is why it is here and not under `__main__`.
+_root = os.path.dirname(os.path.abspath(__file__))
+while _root != os.path.dirname(_root) and not os.path.isfile(
+    os.path.join(_root, "scripts", "snapshot.py")
+):
+    _root = os.path.dirname(_root)
+sys.path.insert(0, os.path.join(_root, "scripts"))
+
 import snapshot
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -204,5 +215,4 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
     main(sys.argv[1:])

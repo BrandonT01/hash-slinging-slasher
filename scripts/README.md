@@ -64,6 +64,35 @@ The names you found go into a table and are finished; the thing that found them 
 contributor faster, and that compounding is the only reason this project can outrun the size of
 the problem.
 
+### Your script gets moved, so do not count parent directories
+
+This is the one thing that has broken every contributed script at once. You write a generator in
+`contrib/` or in `scripts/`, and `submit` files it under `scripts/contributed/`. A path built from
+a fixed number of parents is then correct where you wrote it and wrong where it lands:
+`os.path.dirname(os.path.dirname(__file__)) + "/scripts"` resolves to the repository root from
+`contrib/`, and from `scripts/contributed/` it resolves to a *scripts/scripts* that has never
+existed. Relying on `import snapshot` working because `snapshot.py` happens to sit next to you has
+the same fault — it does, until the file moves.
+
+All four scripts in `scripts/contributed/` shipped broken this way and none of them could be run
+by anybody who pulled them. Find the root instead, and do it **before** importing `snapshot`
+rather than under `if __name__ == "__main__"`, which runs far too late:
+
+```python
+import os
+import sys
+
+_root = os.path.dirname(os.path.abspath(__file__))
+while _root != os.path.dirname(_root) and not os.path.isfile(
+    os.path.join(_root, "scripts", "snapshot.py")
+):
+    _root = os.path.dirname(_root)
+sys.path.insert(0, os.path.join(_root, "scripts"))
+
+import snapshot
+```
+
+
 **This is not hypothetical.** Seven scripts are named in the notes of submissions already merged
 here -- `attachments.py`, `crosspool.py`, `modelvariants.py`, `numbervariants.py`, `pathmine.py`,
 `soundtails.py`, `streamkeys.py` -- and **not one of them exists**. Between them they found tens of
