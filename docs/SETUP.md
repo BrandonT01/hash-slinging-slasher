@@ -35,7 +35,10 @@ That is it. It will:
 - read what other contributors have submitted and what they have in flight
 - tell you if anything is still in the way
 
-On Linux or macOS, install Rust first (`https://rustup.rs`), then
+On Linux, run `bin/linux/start` instead. Those binaries are committed and rebuilt by CI on every
+change to the source, so there is nothing to install and no Rust toolchain needed.
+
+On macOS, or if you would rather build it yourself, install Rust (`https://rustup.rs`) and run
 `cargo run --release --bin start`. The build takes about a minute and has no dependencies.
 
 ## 3. The one step nobody can do for you

@@ -1,2 +1,37 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Line endings, settled once, because getting them wrong here is not cosmetic.
+#
+# Contributors run Windows, Linux and macOS against the same files. Without this, git checks text
+# out with CRLF on Windows and LF elsewhere, so the *same* file has different bytes depending on
+# who cloned it. That produced three separate bugs in one day:
+#
+#   - `submit` compared a script against the library byte for byte to avoid sending a duplicate.
+#     The library copy was CRLF and the outgoing copy LF, so nothing ever matched and every run
+#     would have added another stamped copy of the same generator.
+#   - Having fixed that comparison, the blob was still uploaded, and a pull request rewrote every
+#     line of an unchanged file: 95 insertions and 95 deletions on a no-op.
+#   - A findings row is `hash,name`. A stray CR at the end of a line is part of the name as far as
+#     any hash is concerned, so a file that round-tripped through the wrong checkout could carry
+#     names that do not reproduce their own id.
+#
+# So the text this project actually reads and writes is LF everywhere, on every platform.
+
+* text=auto eol=lf
+
+# The things whose exact bytes matter, and which must never be touched.
+*.exe   binary
+*.ids   binary
+bin/**  binary
+
+# Findings and submissions are data, not prose: `hash,name` rows that get hashed, compared and
+# merged. LF, always, whatever the contributor's platform does with everything else.
+submissions/**  text eol=lf
+findings/**     text eol=lf
+
+# Generators are copied between `contrib/`, `scripts/` and `scripts/contributed/` and compared
+# byte for byte on the way, so they need one spelling.
+scripts/**      text eol=lf
+*.py            text eol=lf
+*.rs            text eol=lf
+*.md            text eol=lf
+*.toml          text eol=lf
+*.yml           text eol=lf

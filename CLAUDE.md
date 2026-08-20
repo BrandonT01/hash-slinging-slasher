@@ -12,7 +12,8 @@ Your job is to grind for hours and have findings on disk and submitted when they
 
 ```
 bin\windows\start.exe                          Windows
-cargo run --release --bin start                anywhere else
+bin/linux/start                                Linux
+cargo run --release --bin start                anywhere else (macOS, or to build it yourself)
 ```
 
 That one command **updates the clone, installs and checks git and the GitHub CLI, refreshes the

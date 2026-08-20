@@ -54,8 +54,9 @@ The only step it cannot do for you is `gh auth login`, because that opens a brow
 to approve it — and it prints the exact command for your machine, full path included.
 [`docs/SETUP.md`](docs/SETUP.md) walks through it for somebody who has never used a terminal.
 
-On Linux or macOS, install Rust and run `cargo run --release --bin start`. There are no
-dependencies, so the build takes about a minute once.
+On Linux, run `bin/linux/start` — those binaries are committed and CI rebuilds them on every
+change to the source, so nothing needs installing. On macOS, or to build it yourself, install Rust
+and run `cargo run --release --bin start`; there are no dependencies, so it takes about a minute.
 
 ## Getting started
 
