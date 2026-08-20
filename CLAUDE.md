@@ -92,6 +92,29 @@ Never read a results file to count it — count the lines. Never paste found nam
 reasoning to "check" them; the tools already verified them against the game, which is what
 confirmation *is*.
 
+## Never think with idle cores
+
+That is the whole budget rule, and it decides everything else. A pass runs for hours on every
+core and costs no usage at all, so **start one before you start thinking.** Inventing the next
+method while a pass grinds is close to free; inventing it while the machine sits idle burns a
+limit and produces nothing in the meantime. If you are about to reason about anything, check that
+something is running first.
+
+**One idea gets one cheap measurement.** The point of measuring first is to kill an idea in
+minutes rather than lose a night to it — so if the measurement itself needs a third script and a
+fourth round, the idea has already failed its own test. Write down the number you have, record it
+in `METHODS.md` as a measured negative, and go and run something that already exists.
+
+**Signs you are on a wild goose chase**, all of which happened here on 2026-08-20:
+
+- the measurement keeps being *nearly* good enough, so you refine it again
+- you are counting hits without excluding what is already named -- a hit is not a find, and this
+  turned "the best method in the project, 1 per 810" into 0 new names
+- you are still reading and no pass has been started
+
+None of this says think less. It says think *while the machine works*, and stop an idea at the
+first number rather than the fourth.
+
 ---
 
 # 3. Submit after every job. This is not optional and you do not ask.
