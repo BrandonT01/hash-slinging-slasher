@@ -1,0 +1,6 @@
+2aca279e6d37cf02,vox/scripted/mpl/anme/vox_anme_dbl_rnd_start_00.rn75.pc.en.snd
+3ccbb5057a89b780,vox/scripted/mpl/ahva/vox_ahva_dbl_rnd_start_00.rn75.pc.en.snd
+4f73f98cdb0c50ba,vox/scripted/mpl/abnd/vox_abnd_dbl_rnd_start_00.rn75.pc.en.snd
+6fd31a3ff669497a,vox/scripted/mpl/ami6/vox_ami6_dbl_rnd_start_00.rn75.pc.en.snd
+72f088e49a85cc40,vox/scripted/mpl/anbo/vox_anbo_dbl_rnd_start_00.rn75.pc.en.snd
+7b3b10296fb89eba,vox/scripted/mpl/adgi/vox_adgi_dbl_rnd_start_00.rn75.pc.en.snd
