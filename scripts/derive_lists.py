@@ -233,7 +233,7 @@ def measure(names):
 # every other pool's out of the ceiling -- the committed lists once carried 9 xanim-shaped
 # endings out of 4,800 against 47,859 published xanim names. Each table's own commonest
 # beginnings and endings are guaranteed a place first; global popularity fills the rest.
-def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes):
+def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_sound=True):
     """Measure one group of tables into its own pair of lists.
 
     **One budget per search, not one budget shared.** The ceilings exist because coincidental
@@ -282,10 +282,26 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes):
 
     # What the confirmed names show comes first, because it is what no published table holds and so
     # what the ceiling must never be the thing that drops.
+    # Held to a share, not given the whole budget.
+    #
+    # Confirmed names come first because they are what no published table holds. That was right
+    # when there were a few thousand of them. After a night's grinding there were 253,120, which
+    # produced 13,199 endings on their own -- nearly three times the entire 4,800 ceiling -- so
+    # every published ending was measured, ranked, and then dropped by the cap before it could be
+    # written. `_01.rn75.pc.en.snd` ends 30,786 published names and was not carried; sound-file
+    # ending reach measured 27.8% with the names sitting in the table being measured.
+    #
+    # So confirmed keeps its priority but not the whole ceiling. The published tables are the only
+    # source of vocabulary this project has not already found, and a list that cannot see them
+    # stops learning anything new.
+    confirmed_share = max(1, (MOST_ENDINGS * 3) // 5)
     print("endings", file=sys.stderr)
-    take(confirmed["one"], FOUND_ENDING_MIN, f"confirmed, one segment at >={FOUND_ENDING_MIN}")
-    take(confirmed["two"], FOUND_ENDING_MIN, f"confirmed, two segments at >={FOUND_ENDING_MIN}")
-    take(confirmed["three"], FOUND_ENDING_MIN, f"confirmed, three segments at >={FOUND_ENDING_MIN}")
+    take(confirmed["one"], FOUND_ENDING_MIN, f"confirmed, one segment at >={FOUND_ENDING_MIN}",
+         cap=confirmed_share // 3)
+    take(confirmed["two"], FOUND_ENDING_MIN, f"confirmed, two segments at >={FOUND_ENDING_MIN}",
+         cap=confirmed_share // 3)
+    take(confirmed["three"], FOUND_ENDING_MIN, f"confirmed, three segments at >={FOUND_ENDING_MIN}",
+         cap=confirmed_share // 3)
 
     # Each pool's own conventions next, held to a share each, so that what xanim names end in
     # cannot be crowded out of the ceiling by the long tail of a table five times its size.
@@ -299,7 +315,16 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes):
 
     for table in COLD_WAR:
         pool = table.replace("fnv1a_", "")
-        lean = table in SOUND_TABLES
+        # `lean` exists so that sound endings do not displace general ones -- a sound ending is
+        # `_01.rn75.pc.en.snd`, `_02.rn75.pc.en.snd`, on and on, so each slot buys little reach in
+        # a general pass.
+        #
+        # It must NOT apply when building the sound list itself. It did, and the sound list was
+        # starved by a rule written to protect the general list *from* it: `_01.rn75.pc.en.snd`
+        # alone ends 30,605 published names and was not carried, and only 9 of 4,800 sound endings
+        # were dotted at all. Measured effect: sound-file ending reach of 27.8% where the names
+        # were sitting right there in the table being measured.
+        lean = lean_sound and table in SOUND_TABLES
         take(per_table[table]["one"], ONE_MIN, f"{pool}, one segment", cap=60 if lean else 400)
         take(per_table[table]["two"], TWO_MIN, f"{pool}, two segments", cap=30 if lean else 200)
         take(per_table[table]["three"], THREE_MIN, f"{pool}, three segments", cap=15 if lean else 100)
@@ -475,7 +500,9 @@ UNNAMED = 270_727
 for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
     print("", file=sys.stderr)
     print(f"=== {title} ===", file=sys.stderr)
-    endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p)
+    # The sound group must not lean on itself -- see `lean` in `derive`.
+    endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p,
+                                 lean_sound=(title != "the sound lists"))
 
     per_stem = (beginnings + 1) * (endings + 1)
     print(f"a stem costs {beginnings + 1} forward hashes and reaches {per_stem} candidates",
