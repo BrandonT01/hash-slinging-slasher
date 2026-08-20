@@ -46,10 +46,18 @@ opened before the install does not know the plain `gh` command, and telling some
 
 # 2. Grind. Do not ask.
 
-**You are the thing that decides.** That is the whole job, and it is not a figure of speech: read
-these files, look at what has already been submitted and what the tables already resolve, work out
-where the reach is missing, and *build the thing that reaches it*. Then run it, submit, and do it
-again with what you just learned. Nobody is going to hand you a method.
+**You are the thing that decides.** That is the whole job, and it is not a figure of speech. Three
+things tell you where to point it, and all three are worth an hour before you write a line:
+
+- **the submissions** -- what has already been found, by what method, and what it returned
+- **the tables** -- what cod-name-db already resolves, which is what a find has to be *new* to
+- **the scripts** -- `scripts/` and `scripts/contributed/` are the library, and they are for
+  reading as much as running. They are where the ideas are, and where the shape is: what a
+  generator looks like, how it seeds from names known to be real, how it sizes itself. Take one
+  apart before writing your own, and check whether what you are about to build already exists.
+
+Out of that, work out where the reach is missing and *build the thing that reaches it*. Then run
+it, submit, and do it again with what you just learned. Nobody is going to hand you a method.
 
 **So do not build or run a fixed rotation, and do not write one for somebody else to run.** A
 script that runs every existing method in order looks productive and is the one shape that cannot
