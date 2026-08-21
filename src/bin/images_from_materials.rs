@@ -15,7 +15,7 @@
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::search::run_best;
 use slasher::fingerprint::Fingerprint;
-use slasher::{config, endings_of, paths, pool_label, readiness, recon, table_keys, table_names, tables_look_complete, Results, RunNote};
+use slasher::{config, endings_of, paths, pool_label, readiness, recon, stamp, table_keys, table_names, tables_look_complete, Results, RunNote};
 
 /// The tables the stems and the endings come from.
 const MATERIALS: &str = "fnv1a_xmaterials";
@@ -80,6 +80,13 @@ fn stems_of(name: &str) -> Vec<String> {
     found
 }
 
+/// How many slices the stems are cut into, and so how often the run folder is written.
+///
+/// Sixteen puts a checkpoint roughly every eight minutes on the one measured full run (8,096
+/// seconds). Fewer would leave more on the floor when a pass is killed; many more would print a
+/// planning line per slice for no gain, since the cost is linear either way.
+const SLICES: usize = 16;
+
 fn main() {
     readiness::require();
 
@@ -136,14 +143,48 @@ fn main() {
     println!("fingerprint: {fingerprint}");
     recon::warn_if_swept(&fingerprint);
 
-    for (id, name) in run_best(&openings, &endings, &stems, &wanted, false) {
-        results.add(&pool_label(wanted[&id]), id, name);
+    // Run in slices, so a kill does not cost the whole pass.
+    //
+    // This was the one confirming binary that wrote its run folder once, at the end. It is also
+    // the longest: 8,096 seconds when it was first run to completion on 2026-08-21. A kill at two
+    // hours left every name it had found on disk in a shape `submit` would never send -- the
+    // silent loss the checkpointing in `confirm_cw` and `confirm_list` exists to prevent.
+    //
+    // Slicing rather than checkpointing inside the engine, because `Search` -- the forward
+    // direction, and the one this takes -- hands each thread a chunk and joins at the end, so
+    // there is no batch boundary to report from without restructuring its hot loop.
+    //
+    // Slicing is free *here* and would not be everywhere: the forward cost is
+    // `stems x openings x (endings + 1)`, linear in stems, so N slices cost what one pass costs.
+    // The peeling direction is not linear -- its `endings x wanted x PEEL_COST` term is paid per
+    // call -- so slicing that would multiply the work. `run_best` prints which direction it chose;
+    // this measured 4,347.6B forwards against 10,939.6B peeling, and the slices keep that ratio
+    // because the peel term is fixed while the forward term shrinks with the slice.
+    let when = stamp();
+    let slices = SLICES.min(stems.len().max(1));
+    let size = stems.len().div_ceil(slices).max(1);
+
+    for (index, slice) in stems.chunks(size).enumerate() {
+        println!("\nslice {}/{} -- {} stems", index + 1, stems.len().div_ceil(size), slice.len());
+
+        for (id, name) in run_best(&openings, &endings, slice, &wanted, false) {
+            results.add(&pool_label(wanted[&id]), id, name);
+        }
+
+        if let Err(error) = results.write(paths::findings()) {
+            eprintln!("  a checkpoint could not be written: {error}");
+            continue;
+        }
+        match results.write_run_as(paths::findings(), "images", &when) {
+            Ok(_) => println!("  checkpoint: {} names safe on disk", results.len()),
+            Err(error) => eprintln!("  the run folder could not be checkpointed: {error}"),
+        }
     }
 
     println!("this run added {}", results.added());
     results.write(paths::findings()).expect("the results");
 
-    match results.write_run(paths::findings(), "images") {
+    match results.write_run_as(paths::findings(), "images", &when) {
         Ok(Some(folder)) => {
             println!("this run's own names: {}", folder.display());
             let _ = Results::note_run(
@@ -157,6 +198,13 @@ fn main() {
                 .measured("game", config::game())
                 .fingerprint(&fingerprint),
             );
+
+            // Written and noted, so it stops being a live run. Until this the folder carries
+            // `.incomplete` and `submit` leaves it alone -- and if this pass is killed, it stays
+            // marked and `recover_stranded` picks the names up instead.
+            if let Err(error) = Results::seal_run(&folder) {
+                eprintln!("the run folder could not be marked finished: {error}");
+            }
         }
         Ok(None) => println!("this run found nothing new"),
         Err(error) => eprintln!("the run folder could not be written: {error}"),
