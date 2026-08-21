@@ -203,7 +203,24 @@ def main(argv):
     joins = len(SEPARATORS.get(kind, ["_"]))
 
     def per_stem_at(size):
-        return sum(cost(step, alphabet) for step in range(1, size + 1)) * joins
+        """Candidates one stem really produces, which is not `cost` times `joins`.
+
+        Only an affix with a *head* has a separator to vary: the loop below emits head+tail and
+        head-only once per separator, and the trailing-only case exactly once, because there is no
+        leading separator to put anywhere. Multiplying the whole cost by `joins` counted that last
+        case twice for `material`, `image` and `sound_asset` -- the three types with two
+        separators -- so every plan for them was over-sized.
+
+        That is not free. The refusal below rejects a plan over budget, and the auto-sizing picks
+        the longest affix that still fits, so an inflated count made both decisions early: shorter
+        affixes and fewer stems than the hour actually buys.
+        """
+        total = 0
+        for step in range(1, size + 1):
+            every = cost(step, alphabet)
+            trailing_only = len(alphabet) ** step
+            total += (every - trailing_only) * joins + trailing_only
+        return total
 
     if wanted is None:
         # Spend the budget on the longest affix that still leaves a useful number of stems.
