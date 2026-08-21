@@ -215,11 +215,20 @@ def main(argv):
         the longest affix that still fits, so an inflated count made both decisions early: shorter
         affixes and fewer stems than the hour actually buys.
         """
+        # The trailing-only affixes are emitted once *if* `_` is among the separators, because
+        # that is the branch the emitter guards with `elif join == "_"`. Reading the same rule off
+        # `heads` rather than assuming it keeps the two in step: a type swept under `/` alone
+        # emits no trailing-only affix at all, and counting one would re-introduce the over-sizing
+        # this replaced.
+        emits_trailing = "_" in SEPARATORS.get(kind, ["_"])
+
         total = 0
         for step in range(1, size + 1):
             every = cost(step, alphabet)
             trailing_only = len(alphabet) ** step
-            total += (every - trailing_only) * joins + trailing_only
+            total += (every - trailing_only) * joins
+            if emits_trailing:
+                total += trailing_only
         return total
 
     if wanted is None:

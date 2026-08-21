@@ -31,6 +31,12 @@ import collections, os, re, sys, glob
 # search wrongly for as long as the file survives. Kept as a name, declined as a lesson.
 SOUND_TAILS = (".rn75.", ".ln75.")
 
+# The pools whose names teach nothing, in both games' spellings. Mirrors `LOW_VALUE_POOLS` in
+# src/lib.rs; `scripts/check_docs.py` fails if that list gains an entry this one does not have.
+LOW_VALUE = frozenset(
+    {"localizeentry", "localize_entry", "streamkey", "xmodelmesh", "xmodelmesh_v2"}
+)
+
 
 def teaches_the_wrong_shape(kind, name):
     return not kind.startswith("sound") and any(tail in name for tail in SOUND_TAILS)
@@ -179,16 +185,48 @@ def table_names(table):
                 yield line.split(",", 1)[1].lower().replace(chr(92), "/")
 
 
-def found_names():
+# Which confirmed pools belong to which group's lists. A sound ending tried against a model id
+# can only ever be a coincidence, so measuring one group's names into the other's list spends a
+# capped ceiling on vocabulary that cannot match -- exactly what `derive`'s docstring describes
+# and what widening to `submissions/` would otherwise have made much worse, since it carries 77
+# `sound_alias` and 19 `sound_asset` files.
+GENERAL_POOLS = frozenset({"xanim", "xmodel", "material", "image"})
+SOUND_POOLS = frozenset({"sound_alias", "sound_asset"})
+
+
+def found_names(pools=None):
+    # Deduplicated, because `CONFIRMED` and `FROM_MATERIALS` are the same directory and the
+    # pair walked it twice -- counting this machine's own names at double weight against everybody
+    # else's at single. The takes below are popularity rankings against a fixed ceiling, so that
+    # doubling directly displaced other contributors' vocabulary, which is the opposite of what
+    # reading `submissions/` is for.
+    seen_folders = []
     for folder in (CONFIRMED, FROM_MATERIALS, SUBMISSIONS):
+        if folder not in seen_folders:
+            seen_folders.append(folder)
+
+    for folder in seen_folders:
         # Recursive, because findings are kept per game now -- findings/<game>/ and its run_*
         # folders. A flat glob of the root would quietly measure nothing at all.
         for path in glob.glob(os.path.join(folder, "**", "*.txt"), recursive=True):
             kind = STAMPED.sub("", os.path.basename(path).split(".")[0])
 
-            # localizeentry is never measured: those names are CATEGORY/KEY pairs whose plain
-            # text already ships in the build, and their conventions belong to no hunted pool.
-            if kind.startswith("localizeentry"):
+            # The low-value pools are never measured, and there are more of them than one.
+            #
+            # A localize entry is a CATEGORY/KEY pair whose plain text already ships in the build;
+            # a mesh name ends in 26 base32 characters hashed from the mesh itself; a streamkey is
+            # a sequential `d3dbsp` terrain string. None of their conventions belong to a hunted
+            # pool, and an ending measured off one aims every later pass slightly wrongly.
+            #
+            # This used to test `startswith("localizeentry")`, which is one spelling of one of
+            # them -- and `submissions/` carries `localize_entry_*.txt`, the Black Ops 4 spelling
+            # that `LOW_VALUE_POOLS` in src/lib.rs names explicitly. Reading everybody's
+            # submissions made that gap live.
+            if kind in LOW_VALUE or kind.startswith("pool_"):
+                continue
+
+            # Only the pools this group's lists will be used against.
+            if pools is not None and kind not in pools:
                 continue
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line in handle:
@@ -251,7 +289,8 @@ def measure(names):
 # every other pool's out of the ceiling -- the committed lists once carried 9 xanim-shaped
 # endings out of 4,800 against 47,859 published xanim names. Each table's own commonest
 # beginnings and endings are guaranteed a place first; global popularity fills the rest.
-def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_sound=True):
+def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_sound=True,
+           pools=None):
     """Measure one group of tables into its own pair of lists.
 
     **One budget per search, not one budget shared.** The ceilings exist because coincidental
@@ -275,7 +314,7 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
         for key in published:
             published[key].update(measured[key])
 
-    confirmed = measure(found_names())
+    confirmed = measure(found_names(pools))
 
     print(f"measured {sum(published['one'].values())} published names and "
           f"{sum(confirmed['one'].values())} confirmed ones", file=sys.stderr)
@@ -519,8 +558,10 @@ for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
     print("", file=sys.stderr)
     print(f"=== {title} ===", file=sys.stderr)
     # The sound group must not lean on itself -- see `lean` in `derive`.
+    sound = title == "the sound lists"
     endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p,
-                                 lean_sound=(title != "the sound lists"))
+                                 lean_sound=not sound,
+                                 pools=SOUND_POOLS if sound else GENERAL_POOLS)
 
     per_stem = (beginnings + 1) * (endings + 1)
     print(f"a stem costs {beginnings + 1} forward hashes and reaches {per_stem} candidates",

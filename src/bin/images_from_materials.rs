@@ -121,11 +121,13 @@ fn main() {
     let mut materials = table_names(MATERIALS);
     println!("materials from the table: {}", materials.len());
 
-    materials.extend(results.names("material"));
-    let general = Results::load(paths::findings());
-    let found = general.names("material");
-    println!("materials the general search has confirmed: {}", found.len());
-    materials.extend(found);
+    // One load, one extend. This used to load `paths::findings()` a second time under another
+    // name and append the identical list again, so every confirmed material was cut into stems
+    // twice: the printed stem count, the sizing, and `Fingerprint::with_count("stems", ..)` all
+    // described an input twice the size of the real one, and the search did the duplicate work.
+    let confirmed = results.names("material");
+    println!("materials this machine has confirmed: {}", confirmed.len());
+    materials.extend(confirmed);
 
     let stems: Vec<String> = materials.iter().flat_map(|name| stems_of(name)).collect();
     println!("stems those materials offer: {}", stems.len());
@@ -171,13 +173,22 @@ fn main() {
             results.add(&pool_label(wanted[&id]), id, name);
         }
 
-        if let Err(error) = results.write(paths::findings()) {
-            eprintln!("  a checkpoint could not be written: {error}");
-            continue;
-        }
+        // The run folder first: it is the artefact `submit` sends, and the aggregate is the
+        // one `recover_stranded` falls back to. Writing the aggregate first and skipping the
+        // folder when it failed meant the less important write could cost the whole pass -- a
+        // locked file or a full disk for the length of an 8,000-second run left nothing
+        // sendable at all. Neither write gates the other now.
         match results.write_run_as(paths::findings(), "images", &when) {
-            Ok(_) => println!("  checkpoint: {} names safe on disk", results.len()),
+            // `results.added()`, not `results.len()`: `Results::load` has already put every name
+            // on disk into this, so `len()` prints a near-constant six-figure number that says
+            // nothing about whether the slice saved anything.
+            Ok(Some(_)) => println!("  checkpoint: {} name(s) from this run are safe", results.added()),
+            Ok(None) => println!("  nothing found yet, so there is no run folder to write"),
             Err(error) => eprintln!("  the run folder could not be checkpointed: {error}"),
+        }
+
+        if let Err(error) = results.write(paths::findings()) {
+            eprintln!("  the aggregate files could not be written: {error}");
         }
     }
 
