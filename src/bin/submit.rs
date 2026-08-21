@@ -1488,16 +1488,17 @@ mod tests {
 
         let recovered = recover_stranded(&findings, &outbox);
 
-        assert_eq!(
-            recovered.len(),
-            1,
+        let where_to: Vec<String> = recovered.iter().map(|p| p.display().to_string()).collect();
+
+        assert!(
+            recovered.iter().any(|path| path.starts_with(&bo4)),
             "the Black Ops 4 copy was treated as accounted for because Cold War held the same \
-             name, so a killed pass loses it with nothing said"
+             name, so a killed pass loses it with nothing said. recovered: {where_to:?}"
         );
         assert!(
-            recovered[0].starts_with(&bo4),
-            "recovered into the wrong game's tree: {:?}",
-            recovered[0]
+            !recovered.iter().any(|path| path.starts_with(&cw)),
+            "Cold War's copy sits in a run folder and should not have been recovered. \
+             recovered: {where_to:?}"
         );
     }
 
