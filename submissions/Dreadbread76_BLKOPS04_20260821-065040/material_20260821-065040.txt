@@ -1,0 +1,2 @@
+218e6088eaa14da4,mc/mtl_p8_wz_moving_truck_semi_trailer_damaged_floor_01_metal_aluminum
+409449629c2d70eb,mc/mtl_p8_wz_moving_truck_semi_trailer_damaged_floor_02_metal_aluminum
