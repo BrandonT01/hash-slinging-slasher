@@ -22,7 +22,7 @@ Writes data/prefixes.txt and data/suffixes.txt, one item per line, and refuses t
 a pass has to be able to be a superset of the pass before it.
 """
 import settings
-import collections, os, re, sys, glob
+import collections, os, sys, glob
 
 # A sound name's encoding tail. One confirmed xmodel genuinely carries one -- somebody at Treyarch
 # pasted a sound path onto a model, verified in Saluki -- and it is kept and submitted as the fact
@@ -30,17 +30,6 @@ import collections, os, re, sys, glob
 # pass builds candidates from, so learning an ending off one developer's slip would aim the whole
 # search wrongly for as long as the file survives. Kept as a name, declined as a lesson.
 SOUND_TAILS = (".rn75.", ".ln75.")
-
-# The pools whose names teach nothing, in both games' spellings, mirroring `LOW_VALUE_POOLS` in
-# src/lib.rs.
-#
-# Nothing checks that the two agree. An earlier version of this comment claimed `check_docs.py`
-# does; it does not -- it compares `LOW_VALUE_POOLS` against the SKIP set in `snapshot.py` and has
-# never read this file. Said plainly because a false guarantee is worse than none: it is exactly
-# how `localize_entry` stayed unfiltered here while being named in src/lib.rs all along.
-LOW_VALUE = frozenset(
-    {"localizeentry", "localize_entry", "streamkey", "xmodelmesh", "xmodelmesh_v2"}
-)
 
 
 def teaches_the_wrong_shape(kind, name):
@@ -50,25 +39,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TABLES = settings.tables_csv()
 CONFIRMED = settings.path("findings", "findings")
 FROM_MATERIALS = settings.path("findings", "findings")
-
-# Everybody's merged work, which is the vocabulary that actually widens these lists.
-#
-# This was measured on 2026-08-21 and it is the reason this path exists at all. Folding in 1,218
-# names merged from another contributor took the general search from 55 names to 294. Folding in
-# ~2,000 names found by *these same passes* took the next one to 51 -- worse than before the fold,
-# on a corpus two and a half times larger. A search that re-measures its own output learns the
-# beginnings and endings it has just finished using; it is somebody else's names that describe
-# ground this machine has never been near.
-#
-# And until that day, `submissions/` was never read here at all: 103,320 names from every
-# contributor, sitting committed in the repository, feeding nothing. They reach the published
-# tables eventually, but "eventually" is upstream's merge schedule, not tonight's pass.
-SUBMISSIONS = settings.path("submissions", "submissions")
-
 DATA = os.path.join(HERE, "data")
-
-# `submissions/` names a file `<kind>_<yyyymmdd-hhmmss>.txt`; `findings/` names it `<kind>.txt`.
-STAMPED = re.compile(r"_\d{8}-\d{6}$")
 
 # The tables that are Cold War rather than a newer game, by their marker density.
 # **Order matters.** Each table gets a capped share below, but the shares are taken in this order
@@ -190,82 +161,24 @@ def table_names(table):
                 yield line.split(",", 1)[1].lower().replace(chr(92), "/")
 
 
-# Sound names and everything else are two vocabularies, and each group's list must hold only
-# its own. A sound ending tried against a model id can only ever be a coincidence, so measuring
-# one into the other spends a capped ceiling on candidates that cannot match -- what `derive`'s
-# docstring describes, and what reading `submissions/` would have made much worse, since it
-# carries 77 `sound_alias` and 19 `sound_asset` files.
-#
-# Expressed as "not the other one" rather than as a list of four. A whitelist of
-# {xanim, xmodel, material, image} also threw away confirmed names under `weapon`,
-# `attachment`, `dynmodel`, `scriptbundle` and thirty more real, path-shaped, non-sound types
-# that had been feeding the general lists all along. Nothing argues those teach nothing about
-# model naming, and §7 says candidates come from names known to be real.
-SOUND_POOLS = frozenset({"sound_alias", "sound_asset"})
-
-
-def found_names(pools=None):
-    # One vote per name, which is the thing the counters weight.
-    #
-    # Deduplicating the *folder list* was not enough and the first attempt at this did only that.
-    # A name this machine found appears in `findings/<game>/<kind>.txt`, again in its `run_*/`
-    # folder, again in any `superseded/` copy, again in each `run_*_recovered/` folder, and once
-    # more per `submissions/<who>_*` folder that carried it; another contributor's name appears
-    # once. Measured over the general pools: 135,674 occurrences for 48,847 distinct names, an
-    # average of 2.78, with some counted thirteen times.
-    #
-    # `measure()` is a frequency Counter and the takes below are popularity rankings against hard
-    # ceilings, so that repetition directly displaced everybody else's vocabulary -- the opposite
-    # of the reason for reading `submissions/` at all.
-    seen_names = set()
-
-    for folder in dict.fromkeys((CONFIRMED, FROM_MATERIALS, SUBMISSIONS)):
+def found_names():
+    for folder in (CONFIRMED, FROM_MATERIALS):
         # Recursive, because findings are kept per game now -- findings/<game>/ and its run_*
         # folders. A flat glob of the root would quietly measure nothing at all.
         for path in glob.glob(os.path.join(folder, "**", "*.txt"), recursive=True):
-            kind = STAMPED.sub("", os.path.basename(path).split(".")[0])
+            kind = os.path.basename(path).split(".")[0]
 
-            # The low-value pools are never measured, and there are more of them than one.
-            #
-            # A localize entry is a CATEGORY/KEY pair whose plain text already ships in the build;
-            # a mesh name ends in 26 base32 characters hashed from the mesh itself; a streamkey is
-            # a sequential `d3dbsp` terrain string. None of their conventions belong to a hunted
-            # pool, and an ending measured off one aims every later pass slightly wrongly.
-            #
-            # This used to test `startswith("localizeentry")`, which is one spelling of one of
-            # them -- and `submissions/` carries `localize_entry_*.txt`, the Black Ops 4 spelling
-            # that `LOW_VALUE_POOLS` in src/lib.rs names explicitly. Reading everybody's
-            # submissions made that gap live.
-            if kind in LOW_VALUE or kind.startswith("pool_"):
-                continue
-
-            # Only this group's vocabulary: sound names for the sound lists, everything else
-            # for the general ones.
-            if pools == "sound" and kind not in SOUND_POOLS:
-                continue
-            if pools == "general" and kind in SOUND_POOLS:
+            # localizeentry is never measured: those names are CATEGORY/KEY pairs whose plain
+            # text already ships in the build, and their conventions belong to no hunted pool.
+            if kind.startswith("localizeentry"):
                 continue
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line in handle:
                     if teaches_the_wrong_shape(kind, line):
                         continue
                     line = line.strip()
-                    if "," not in line:
-                        continue
-
-                    # Folded, as `table_names` folds. Black Ops 4 SAB sound names keep their
-                    # backslashes, and `measure()` splits a directory off with `rpartition("/")`
-                    # -- so an unfolded name is measured as one long base with no directory at
-                    # all, and its short high-value beginnings (`zmb/`, `zmb/ai/`) are never seen.
-                    # Two full-path backslash beginnings had already reached the committed
-                    # `data/sound.prefixes.txt` this way, where `confirm_cw` says they cannot
-                    # match, burning two of the seven hundred slots.
-                    name = line.split(",", 1)[1].lower().replace(chr(92), "/")
-                    if name in seen_names:
-                        continue
-                    seen_names.add(name)
-
-                    yield name
+                    if "," in line:
+                        yield line.split(",", 1)[1].lower()
 
 
 def measure(names):
@@ -320,8 +233,7 @@ def measure(names):
 # every other pool's out of the ceiling -- the committed lists once carried 9 xanim-shaped
 # endings out of 4,800 against 47,859 published xanim names. Each table's own commonest
 # beginnings and endings are guaranteed a place first; global popularity fills the rest.
-def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_sound=True,
-           pools=None):
+def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_sound=True):
     """Measure one group of tables into its own pair of lists.
 
     **One budget per search, not one budget shared.** The ceilings exist because coincidental
@@ -345,7 +257,7 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
         for key in published:
             published[key].update(measured[key])
 
-    confirmed = measure(found_names(pools))
+    confirmed = measure(found_names())
 
     print(f"measured {sum(published['one'].values())} published names and "
           f"{sum(confirmed['one'].values())} confirmed ones", file=sys.stderr)
@@ -570,7 +482,6 @@ GROUPS = [
         "prefixes.txt",
         MUST_KEEP_ENDINGS,
         MUST_KEEP_PREFIXES,
-        False,
     ),
     (
         "the sound lists",
@@ -579,7 +490,6 @@ GROUPS = [
         "sound.prefixes.txt",
         {},
         {},
-        True,
     ),
 ]
 
@@ -587,14 +497,12 @@ GROUPS = [
 PIECES = 25_000_000
 UNNAMED = 270_727
 
-for title, tables, suffix_file, prefix_file, keep_e, keep_p, sound in GROUPS:
+for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
     print("", file=sys.stderr)
     print(f"=== {title} ===", file=sys.stderr)
-    # Which group this is comes from the tuple, not from matching the display title. Keying two
-    # consequential decisions on a string meant renaming a heading would silently measure general
-    # vocabulary into the sound lists and let the sound group lean on itself.
+    # The sound group must not lean on itself -- see `lean` in `derive`.
     endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p,
-                                 lean_sound=not sound, pools=("sound" if sound else "general"))
+                                 lean_sound=(title != "the sound lists"))
 
     per_stem = (beginnings + 1) * (endings + 1)
     print(f"a stem costs {beginnings + 1} forward hashes and reaches {per_stem} candidates",
