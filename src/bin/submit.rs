@@ -467,7 +467,8 @@ fn same_text(left: &[u8], right: &[u8]) -> bool {
     bare(left) == bare(right)
 }
 
-/// The scripts git actually tracks, as repository-relative paths with forward slashes.
+/// The scripts the library upstream actually holds, as repository-relative paths with forward
+/// slashes.
 ///
 /// `None` when git cannot answer -- outside a checkout, or without git on the path -- and every
 /// caller then falls back to trusting the disk, which is what this did before.
@@ -483,12 +484,34 @@ fn tracked_scripts() -> Option<&'static HashSet<String>> {
 
     TRACKED
         .get_or_init(|| {
-            let output = Command::new("git")
-                .args(["ls-files", "--", "scripts"])
+            // What the *upstream branch* holds, not what this clone has staged.
+            //
+            // `ls-files` reads the local index, which is a different question and the wrong one
+            // twice over. A script committed here but not pushed counts as library and is then
+            // skipped, so the pull request names a generator it does not carry. And a contributor
+            // grinding continuously never pulls between submissions, so their index cannot show
+            // the copy merged five minutes ago -- which is how eighteen submissions in one night
+            // re-carried the same five generators and left 125 duplicate copies to sweep up.
+            //
+            // `origin/HEAD` is a local ref, so this is still no network call; `start` refreshes
+            // it. Falling back to `ls-files` when there is no such ref keeps a fresh clone, a
+            // detached checkout or an odd remote working exactly as before.
+            let upstream = Command::new("git")
+                .args(["ls-tree", "-r", "--name-only", "origin/HEAD", "--", "scripts"])
                 .current_dir(paths::root())
                 .stderr(Stdio::null())
                 .output()
-                .ok()?;
+                .ok();
+
+            let output = match upstream {
+                Some(done) if done.status.success() && !done.stdout.is_empty() => done,
+                _ => Command::new("git")
+                    .args(["ls-files", "--", "scripts"])
+                    .current_dir(paths::root())
+                    .stderr(Stdio::null())
+                    .output()
+                    .ok()?,
+            };
 
             if !output.status.success() {
                 return None;
