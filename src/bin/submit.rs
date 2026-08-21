@@ -805,7 +805,7 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
     // a name filed under `image` shadowing the identical string stranded under `material`.
     let mut accounted: HashSet<(String, String, String)> = HashSet::new();
 
-    let mut remember = |game: &str, kind: &str, name: &str, set: &mut HashSet<_>| {
+    let remember = |game: &str, kind: &str, name: &str, set: &mut HashSet<_>| {
         set.insert((game.to_owned(), kind.to_lowercase(), name.to_lowercase()));
     };
 
