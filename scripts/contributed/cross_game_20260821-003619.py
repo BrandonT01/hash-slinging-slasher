@@ -65,7 +65,15 @@ import glob
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Find `scripts/` wherever this file has been filed -- see scripts/README.md. `submit` files a
+# contributed script into `scripts/contributed/`, one level below `snapshot.py`, so adding only
+# this file's own directory finds nothing once the script has been merged.
+_root = os.path.dirname(os.path.abspath(__file__))
+while _root != os.path.dirname(_root) and not os.path.isfile(
+    os.path.join(_root, "scripts", "snapshot.py")
+):
+    _root = os.path.dirname(_root)
+sys.path.insert(0, os.path.join(_root, "scripts"))
 
 import settings
 import snapshot
