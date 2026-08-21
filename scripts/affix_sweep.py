@@ -153,8 +153,14 @@ def affixes(length, alphabet):
                 yield "".join(head), "".join(tail)
 
 
-def stems_for(kind, limit):
+def stems_for(kind, limit, contains=None):
     """Stems worth sweeping: what this machine has confirmed first, then the published table.
+
+    `contains` narrows them to one family -- `--contains zombie` sweeps every short affix around
+    the zombies cores and nothing else. The sweep is exhaustive in the affix and seeded in the
+    stem, so narrowing the stem is the only way to aim it: an hour spread over every model core in
+    the game reaches each of them shallowly, and the same hour over one family reaches that family
+    with a longer affix than the whole-corpus run could afford.
 
     Confirmed names come first deliberately. A name this project has just recovered is the one
     most likely to have siblings nobody has looked for, and the published table has already been
@@ -175,6 +181,8 @@ def stems_for(kind, limit):
                 continue
 
             core = "_".join(parts[1:-1])
+            if contains and contains not in core:
+                continue
             if core and core not in seen:
                 seen.add(core)
                 out.append(core)
@@ -196,6 +204,7 @@ def main(argv):
     # How long an affix can we afford, and over how many stems? Length first: a longer affix
     # reaches shapes that no number of stems can, and the whole point of this method is the shapes.
     wanted = int(argv[argv.index("--stems") + 1]) if "--stems" in argv else None
+    contains = argv[argv.index("--contains") + 1].lower() if "--contains" in argv else None
 
     # The separator count multiplies everything, so it has to be in the sizing rather than
     # discovered afterwards -- an earlier version sized the run without it, then refused its own
@@ -237,9 +246,9 @@ def main(argv):
             if budget // max(per_stem_at(candidate), 1) < 50:
                 break
             length, stem_budget = candidate, budget // per_stem_at(candidate)
-        stems = stems_for(kind, stem_budget)
+        stems = stems_for(kind, stem_budget, contains)
     else:
-        stems = stems_for(kind, wanted)
+        stems = stems_for(kind, wanted, contains)
         length = 1
         for candidate in range(1, 6):
             if per_stem_at(candidate) * max(len(stems), 1) > budget:
