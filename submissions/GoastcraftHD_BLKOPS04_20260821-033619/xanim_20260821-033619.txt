@@ -1,0 +1,8 @@
+2b86486c2f2d29d,ai_nomad_dog_turn_r_180
+2d6df86c30ca12d,ai_nomad_dog_turn_r_135
+3a17aae1b507bd0f,ai_nomad_dog_turn_r_90
+3a21b9e1b5102b11,ai_nomad_dog_turn_r_45
+4d4b0805bf01dbdb,ai_nomad_dog_turn_l_135
+4d700d05bf210097,ai_nomad_dog_turn_l_180
+7c5d3e6fd436719d,ai_nomad_dog_turn_l_90
+7c67356fd43eb6d7,ai_nomad_dog_turn_l_45
