@@ -298,20 +298,22 @@ image's seven commonest trailing tokens by a distance), and also try it with no 
 **Spent when** the confirmed material set has not grown. Purely derivative — it yields exactly
 nothing on unchanged input, so run it *after* a general pass, never before.
 
-> **UNFINISHED, 2026-08-20 — this method has not been run to completion and is not exhausted.**
-> A pass on that day was stopped at **2.9%** of 4.35 trillion candidates, having found nothing
-> yet, and there is no submission from it. Read no conclusion into the zero: it had not reached
-> the part of the space where matches live.
+> **RUN TO COMPLETION, 2026-08-21. The measurement the note below asked for now exists.**
+> The whole 4.35 trillion candidates, 8,096 seconds on an idle machine against Cold War:
+> **43 names** -- 37 material, 5 image, 1 xmodel, 260 raw matches. That is **1 name per 101
+> billion candidates**, and it is the most expensive slot in the rotation by a wide margin.
 >
-> The reason it was stopped is worth knowing before starting it again: it reported **~2.5 hours
-> remaining** at 2.9%, which makes it by far the most expensive slot in the rotation. Whether it
-> earns that is an open question and the measurement does not exist yet. Anyone picking this up
-> should run it to completion once, on an idle machine, and record what it actually returns — and
-> if it is small, move it after the list re-measure or drop it from the rotation.
+> For scale, the general search on the same machine the same night returned 56 names in 2,306
+> seconds. Per hour of machine, `images_from_materials` is roughly a fortieth as productive.
 >
-> It is also the one confirming binary with **no checkpointed run folder**, so a pass killed part
-> way through leaves nothing submittable at all. `confirm_cw` and `confirm_list` write theirs
-> every sixty seconds; this does not, and should before it is trusted with a long run.
+> **So it earns its place only when nothing better is idle.** It is genuinely not exhausted --
+> it is derivative, so every general pass that adds materials reopens it -- but it should run
+> last, after the list re-measure, and never in front of a general pass or `swaps`.
+>
+> Still true and still worth fixing: it is the one confirming binary with **no checkpointed run
+> folder**, so a pass killed part way through leaves nothing submittable. Over two and a quarter
+> hours that is a real exposure. `confirm_cw` and `confirm_list` write theirs every sixty seconds
+> and now mark them `.incomplete` until the run ends; this does neither.
 
 Material names are paths, and there are **twelve** directories: `mc/ wc/ clt/ splm/ vd/ mcs/ ei/
 cltp/ vdd/ el/ mcp/ ec/`. Verified against the tables — `mc/` heads 496,666 names and `ec/` heads
@@ -795,8 +797,8 @@ destination table, since a name with nowhere to land is worth less than one that
 
 - **`images_from_materials` has no checkpointed run folder.** `confirm_cw` and `confirm_list` write
   theirs every sixty seconds so a killed pass stays submittable; this one does not. It is also the
-  most expensive slot in the rotation (~2.5 h) and has never run to completion — see the UNFINISHED
-  note under method 3.
+  most expensive slot in the rotation, now measured at 2h15m for 43 names — see the note under
+  method 3. The checkpointing is the part still missing.
 - **`--shard i/n` on `confirm_cw`.** Needed before anyone runs several machines. The search is
   deterministic, so N machines running one method produce identical output.
 - **Feed the in-flight survey into `suggest`.** `start` surveys every open pull request and then
