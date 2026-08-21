@@ -200,7 +200,13 @@ def main(argv):
     # The separator count multiplies everything, so it has to be in the sizing rather than
     # discovered afterwards -- an earlier version sized the run without it, then refused its own
     # plan as over budget, which is a confusing way to be right.
-    joins = len(SEPARATORS.get(kind, ["_"]))
+    heads = SEPARATORS.get(kind, ["_"])
+    joins = len(heads)
+
+    # Whether the emitter's trailing-only branch fires at all. It is guarded by `join == "_"`, so
+    # a type swept under `/` alone emits no trailing-only affix and the sizing must not count one.
+    # Read from the same list the emitter loops over, so the two cannot drift.
+    emits_trailing = "_" in heads
 
     def per_stem_at(size):
         """Candidates one stem really produces, which is not `cost` times `joins`.
@@ -219,7 +225,9 @@ def main(argv):
         for step in range(1, size + 1):
             every = cost(step, alphabet)
             trailing_only = len(alphabet) ** step
-            total += (every - trailing_only) * joins + trailing_only
+            total += (every - trailing_only) * joins
+            if emits_trailing:
+                total += trailing_only
         return total
 
     if wanted is None:
@@ -240,13 +248,12 @@ def main(argv):
 
     # A leading affix can be closed by any separator its type uses; a trailing one is always `_`,
     # because no measured trailing affix is introduced by a slash.
-    heads = SEPARATORS.get(kind, ["_"])
     per_stem = per_stem_at(length)
     total = per_stem * len(stems)
 
     sys.stderr.write(
         "affix sweep: %s, alphabet of %d, affixes up to %d character(s) combined\n"
-        "  %d stems x %d affix pairs = %s candidates\n"
+        "  %d stems x %d candidates each = %s candidates\n"
         "  at %s/s that is about %.1f minute(s)\n"
         % (kind, len(alphabet), length, len(stems), per_stem,
            format(total, ","), format(RATE, ","), total / RATE / 60.0)

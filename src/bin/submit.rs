@@ -40,6 +40,44 @@ const CONTRIBUTED: &str = "contrib";
 /// The ledger of run folders already sent, so nothing is submitted twice.
 const LEDGER: &str = ".submitted";
 
+/// Where a `_yyyymmdd-hhmmss` stamp starts in a submission's filename, if it has one.
+///
+/// Deliberately not `strip_stamp`, which is right for a script name and wrong for a pool name:
+/// it cannot tell the `_184` of `pool_184` from a stamp and eats both.
+struct StampSuffix;
+
+impl StampSuffix {
+    fn find(&self, text: &str) -> Option<usize> {
+        // Bytes throughout, and no `&str` slicing until the shape has been checked.
+        //
+        // Slicing `text[at..]` first panics on any filename where that byte offset falls inside a
+        // multibyte character -- and this runs over every `.txt` in `submissions/`, which is other
+        // people's filenames. It would abort `submit` in `recover_stranded`, before anything was
+        // sent, which is the worst moment for this binary to die. The shape is pure ASCII, so it
+        // can be recognised without ever building a string.
+        let bytes = text.as_bytes();
+        // `_` + 8 digits + `-` + 6 digits
+        let width = 1 + 8 + 1 + 6;
+        if bytes.len() < width {
+            return None;
+        }
+
+        let at = bytes.len() - width;
+        let stamp = &bytes[at..];
+
+        let shaped = stamp[0] == b'_'
+            && stamp[1..9].iter().all(u8::is_ascii_digit)
+            && stamp[9] == b'-'
+            && stamp[10..].iter().all(u8::is_ascii_digit);
+
+        // `at` is a char boundary whenever the shape matched, because every byte from `at` on is
+        // ASCII -- so a caller slicing there is safe.
+        shaped.then_some(at)
+    }
+}
+
+const STAMP_SUFFIX: StampSuffix = StampSuffix;
+
 fn main() {
     // Every game's findings, not just the configured one. A session may have ground both, and a
     // run left unsent because the config moved on afterwards is a run lost.
@@ -183,6 +221,13 @@ fn send(
     let mut batch: Vec<(String, u64, String)> = Vec::new(); // (type, id as found, name)
     let mut dropped = 0_usize;
     let mut claimed_elsewhere = 0_usize;
+
+    // The same names, counted once each. `claimed_elsewhere` tallies every occurrence across
+    // every run folder, which is the right number to *report* -- it says how much of this
+    // batch's work was already taken -- but the wrong one to compare against a deduplicated
+    // `batch`, since a name reachable from three runs counts three times on one side and once
+    // on the other.
+    let mut claimed_names: HashSet<String> = HashSet::new();
     let mut worthless: std::collections::BTreeMap<String, usize> = Default::default();
 
     for folder in pending {
@@ -210,6 +255,7 @@ fn send(
 
             if landscape.holds(&name) || seen(cached) {
                 claimed_elsewhere += 1;
+                claimed_names.insert(name.to_lowercase());
                 continue;
             }
 
@@ -245,9 +291,22 @@ fn send(
     // Fingerprints stop you re-running a search somebody has *finished*. They cannot stop two
     // people running the same method at the same time, and this is what that looks like from
     // the inside.
-    let offered = batch.len() + claimed_elsewhere;
-    if claimed_elsewhere > 0 && offered >= 20 {
-        let share = claimed_elsewhere as f64 * 100.0 / offered as f64;
+    // Distinct names, and only the contested ones.
+    //
+    // Two mistakes, one after the other. First `claimed_elsewhere` was compared against a
+    // deduplicated `batch` while itself counting every occurrence, so a rotation whose runs
+    // overlap inflated the share. Then `dropped` was folded into the denominator to fix that,
+    // which is worse: a name already published in the tables is old ground for everybody and says
+    // nothing about whether somebody is grinding this method *now*. Published names dominate
+    // exactly the batches that need the warning -- one submission here dropped 1,098 of them --
+    // so the signal went quiet on the runs it was built for.
+    //
+    // The contested set is what this run found and could have sent: what is going, plus what
+    // somebody else already claimed. Both counted as distinct names.
+    let claimed_distinct = claimed_names.len();
+    let offered = batch.len() + claimed_distinct;
+    if claimed_distinct > 0 && offered >= 20 {
+        let share = claimed_distinct as f64 * 100.0 / offered as f64;
         if share >= 50.0 {
             println!(
                 "\n  [!] {share:.0}% of what this run found was already claimed by somebody else.\n  \
@@ -467,8 +526,7 @@ fn same_text(left: &[u8], right: &[u8]) -> bool {
     bare(left) == bare(right)
 }
 
-/// The scripts the library upstream actually holds, as repository-relative paths with forward
-/// slashes.
+/// The scripts git tracks in this clone, as repository-relative paths with forward slashes.
 ///
 /// `None` when git cannot answer -- outside a checkout, or without git on the path -- and every
 /// caller then falls back to trusting the disk, which is what this did before.
@@ -484,34 +542,29 @@ fn tracked_scripts() -> Option<&'static HashSet<String>> {
 
     TRACKED
         .get_or_init(|| {
-            // What the *upstream branch* holds, not what this clone has staged.
+            // The local index, deliberately, and it does not solve the duplicate carrying.
             //
-            // `ls-files` reads the local index, which is a different question and the wrong one
-            // twice over. A script committed here but not pushed counts as library and is then
-            // skipped, so the pull request names a generator it does not carry. And a contributor
-            // grinding continuously never pulls between submissions, so their index cannot show
-            // the copy merged five minutes ago -- which is how eighteen submissions in one night
-            // re-carried the same five generators and left 125 duplicate copies to sweep up.
+            // This asked `git ls-tree origin/HEAD` for a while, on the theory that comparing
+            // against the upstream branch would stop a stale clone re-sending a script merged
+            // five minutes earlier. It cannot, and the reason is worth leaving here so nobody
+            // tries it again: `matching_in` walks `scripts/` on **disk** and this listing only
+            // filters what it finds there. A script merged upstream but absent from the clone is
+            // invisible whichever listing is used, so narrowing the set can only reject more disk
+            // files -- that is, re-send more.
             //
-            // `origin/HEAD` is a local ref, so this is still no network call; `start` refreshes
-            // it. Falling back to `ls-files` when there is no such ref keeps a fresh clone, a
-            // detached checkout or an odd remote working exactly as before.
-            let upstream = Command::new("git")
-                .args(["ls-tree", "-r", "--name-only", "origin/HEAD", "--", "scripts"])
+            // `origin` is also the contributor's *fork* in the flow `submit` itself creates, so
+            // `origin/HEAD` is a branch that lags upstream by however long since the last sync.
+            //
+            // Fixing the re-carrying for real means comparing content that is not on disk:
+            // fetching the upstream file list *and* its bytes, or reading the open pull requests
+            // `submit` already downloads for the in-flight name check. Both are real work and
+            // neither belongs in a one-line change.
+            let output = Command::new("git")
+                .args(["ls-files", "--", "scripts"])
                 .current_dir(paths::root())
                 .stderr(Stdio::null())
                 .output()
-                .ok();
-
-            let output = match upstream {
-                Some(done) if done.status.success() && !done.stdout.is_empty() => done,
-                _ => Command::new("git")
-                    .args(["ls-files", "--", "scripts"])
-                    .current_dir(paths::root())
-                    .stderr(Stdio::null())
-                    .output()
-                    .ok()?,
-            };
+                .ok()?;
 
             if !output.status.success() {
                 return None;
@@ -796,63 +849,93 @@ fn scripts_in(folders: &[PathBuf]) -> Vec<PathBuf> {
 /// sending, so the worst case of counting a name stranded when it is not is a batch that comes to
 /// nothing -- against a best case of recovering somebody's whole session.
 fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
-    // Keyed on game, type and name, not on the name alone.
+    // Keyed on game, type and name, never on the name alone.
     //
-    // A bare name set collapses both titles into one. Measured on this clone: 1,653 names appear
-    // in both games' findings, so a name sitting in a Cold War run folder marked the identical
-    // Black Ops 4 name as accounted for -- and a Black Ops 4 pass that was killed then had that
-    // name skipped by the recovery written to save it. The same collapse happened across types,
-    // a name filed under `image` shadowing the identical string stranded under `material`.
+    // A bare name set collapses the two titles into one. Measured on this clone: 1,653 names
+    // appear in both games' findings, so a name sitting in a Cold War run folder marked the
+    // identical Black Ops 4 name as accounted for -- and a killed Black Ops 4 pass then had that
+    // name skipped by the recovery written to save it, with no route left to send it. The same
+    // collapse applied across types, a name filed under `image` shadowing the identical string
+    // stranded under `material`.
+    //
+    // The game is taken from the directory being walked, never derived by stripping a prefix off
+    // a path. An earlier version of this did the latter and passed on Windows while failing two
+    // different ways on Linux -- once recovering the wrong game, once recovering nothing -- both
+    // explained by `strip_prefix` coming back empty, which silently keys everything as `("", ..)`
+    // and makes every name account for every other. The loop already knows which game it is in;
+    // asking the filesystem a second time was the whole mistake.
     let mut accounted: HashSet<(String, String, String)> = HashSet::new();
 
-    let remember = |game: &str, kind: &str, name: &str, set: &mut HashSet<_>| {
-        set.insert((game.to_owned(), kind.to_lowercase(), name.to_lowercase()));
-    };
-
-    // Every run folder, *including* superseded ones. `run_folders` skips those deliberately --
-    // they are organised-away results and must not be sent again -- but skipping them here left
-    // their names looking stranded, so every `submit` rebuilt a recovery folder holding them and
-    // re-offered names that had already gone. They died at the exclusion step, so it was churn
-    // rather than loss: dozens of pointless folders across an overnight rotation.
-    for folder in every_run_folder(findings) {
-        let game = game_under(findings, &folder);
-        for (kind, _, name) in names_in(&folder) {
-            remember(&game, &kind, &name, &mut accounted);
+    // Everything already sent. `submissions/<who>_<GAME>_<stamp>/`, so the game is in the name.
+    for entry in fs::read_dir(outbox).into_iter().flatten().flatten() {
+        let folder = entry.path();
+        // `<who>_<GAME>_<stamp>`, except for the folders that predate the per-game split and
+        // are `<who>_<stamp>`. Those cannot be attributed to a game from their name at all.
+        //
+        // An earlier version guessed Cold War for them. That is wrong and measurably so: the
+        // largest of them, `GoastcraftHD_20260819-045229`, is the 13,858-name Black Ops 4 grind
+        // CLAUDE.md §4 describes -- 2,968 of its 3,026 xmodel ids are in `findings/blkops04`.
+        // Guessing made those names account for Cold War, where a genuinely stranded Cold War
+        // name matching one of the 13,858 strings would then never be recovered. Silent loss, in
+        // the function written to prevent it, and reachable through the 1,653 names both games
+        // share.
+        //
+        // So an unattributable folder accounts for *nothing*. That costs churn -- its names look
+        // stranded and are re-offered -- and churn is dropped at the exclusion step, where loss
+        // is not recoverable at all. Under-accounting is the safe direction and this picks it
+        // deliberately.
+        let folder_name = entry.file_name().to_string_lossy().to_string();
+        let tag = folder_name.split('_').nth(1).unwrap_or_default().to_uppercase();
+        if !config::GAMES.contains(&tag.as_str()) {
+            continue;
         }
-    }
-
-    for folder in fs::read_dir(outbox).into_iter().flatten().flatten() {
-        let folder = folder.path();
-        // `submissions/<who>_<GAME>_<stamp>/`, which is where the game is.
-        let game = folder
-            .file_name()
-            .and_then(|name| name.to_str())
-            .and_then(|name| name.split('_').nth(1))
-            .unwrap_or_default()
-            .to_uppercase();
+        let game = tag;
 
         for (kind, _, name) in names_in(&folder) {
-            // A submission names its files `<kind>_<stamp>.txt`.
-            let kind = strip_stamp(&kind).to_owned();
-            remember(&game, &kind, &name, &mut accounted);
+            // A submission names its files `<kind>_<stamp>.txt`, and the stamp comes off -- but
+            // `strip_stamp` reduces `pool_184_20260819-174052` to `pool`, because a trailing
+            // `_184` and a trailing stamp look the same to it (see validate.rs). That would key
+            // an unidentified-pool name as `pool` here and `pool_184` on the findings side, so
+            // the two never meet and every such name is re-recovered on every submit. Only the
+            // `<stamp>` suffix is removed, and only when it looks like one.
+            let kind = STAMP_SUFFIX
+                .find(&kind)
+                .map(|at| kind[..at].to_owned())
+                .unwrap_or(kind);
+
+            accounted.insert((game.clone(), kind.to_lowercase(), name.to_lowercase()));
         }
     }
 
     let mut recovered = Vec::new();
 
-    for game in fs::read_dir(findings).into_iter().flatten().flatten() {
-        let folder = game.path();
-        if !folder.is_dir() {
+    for entry in fs::read_dir(findings).into_iter().flatten().flatten() {
+        let game_folder = entry.path();
+        if !game_folder.is_dir() {
             continue;
         }
 
-        // The aggregate files sit directly in the game folder; run folders are below it.
-        let game = game_under(findings, &folder);
+        let game = entry.file_name().to_string_lossy().to_uppercase();
 
+        // Every run folder under this game, superseded ones included. `run_folders` leaves those
+        // out on purpose -- they were organised away and must not be sent again -- but this is
+        // the other question, has the name been written down anywhere, and there a superseded run
+        // counts. Skipping them made every `submit` rebuild a recovery folder holding names that
+        // had already gone.
+        // This game's run folders only. `accounted` already carries the game in its key, so
+        // there is nothing to gain by copying its hundred thousand triples once per game.
+        let mut here: HashSet<(String, String, String)> = HashSet::new();
+        for folder in every_run_folder(&game_folder) {
+            for (kind, _, name) in names_in(&folder) {
+                here.insert((game.clone(), kind.to_lowercase(), name.to_lowercase()));
+            }
+        }
+
+        // The aggregate files sit directly in the game folder; run folders are below it.
         let mut stranded: Vec<(String, u64, String)> = Vec::new();
-        for (kind, id, name) in names_in(&folder) {
+        for (kind, id, name) in names_in(&game_folder) {
             let key = (game.clone(), kind.to_lowercase(), name.to_lowercase());
-            if !accounted.contains(&key) {
+            if !here.contains(&key) && !accounted.contains(&key) {
                 stranded.push((kind, id, name));
             }
         }
@@ -861,7 +944,7 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
             continue;
         }
 
-        let into = folder.join(format!("run_{}_recovered", stamp()));
+        let into = game_folder.join(format!("run_{}_recovered", stamp()));
         if fs::create_dir_all(&into).is_err() {
             continue;
         }
@@ -874,9 +957,12 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
         let mut wrote = 0;
         for (kind, mut rows) in by_kind {
             rows.sort_by(|a, b| a.1.to_lowercase().cmp(&b.1.to_lowercase()));
-            let text: String =
-                rows.iter().map(|(id, name)| format!("{id:x},{name}
-")).collect();
+
+            let mut text = String::new();
+            for (id, name) in &rows {
+                text.push_str(&format!("{id:x},{name}\n"));
+            }
+
             if fs::write(into.join(format!("{kind}.txt")), text).is_ok() {
                 wrote += rows.len();
             }
@@ -887,28 +973,13 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
             continue;
         }
 
-        println!(
-            "  recovered {wrote} name(s) that belonged to no run folder -- from a pass that was              interrupted before it could write one"
-        );
+        println!("recovered {wrote} name(s) a killed run left behind, into {}", into.display());
         recovered.push(into);
     }
 
     recovered
 }
 
-/// Which game a path under a findings tree belongs to: the first component below the root.
-///
-/// Taken relative to the tree being walked rather than through `paths::game_of`, which strips
-/// the *installed* findings root. That is the same answer in a real run and the wrong one
-/// anywhere else -- including under test, where every folder would come back with no game at all
-/// and the two titles would collapse into one set again, which is the bug this is here to stop.
-fn game_under(findings: &Path, path: &Path) -> String {
-    path.strip_prefix(findings)
-        .ok()
-        .and_then(|rest| rest.components().next())
-        .map(|first| first.as_os_str().to_string_lossy().to_uppercase())
-        .unwrap_or_default()
-}
 
 /// Every `run_*` folder, superseded ones included, for deciding what is *accounted for*.
 ///
@@ -928,6 +999,20 @@ fn every_run_folder(findings: &Path) -> Vec<PathBuf> {
         }
 
         if entry.file_name().to_string_lossy().starts_with("run_") {
+            // A run still being written is left out of this too, and that is the whole point.
+            //
+            // `run_folders` refuses to *send* an unfinished folder, so if this counted its names
+            // as accounted for, a killed pass would be in neither list: not sendable, and not
+            // strandable either. That is precisely the silent loss both the checkpointing and
+            // this recovery exist to prevent, rebuilt out of the two fixes for it.
+            //
+            // Left out here, a killed run's names fall through to the aggregate files, come back
+            // as stranded, and are recovered -- which is what `run_folders` already promises in
+            // its own comment.
+            if slasher::Results::run_unfinished(&path) {
+                continue;
+            }
+
             found.push(path);
         } else {
             found.extend(every_run_folder(&path));
@@ -1450,12 +1535,51 @@ fn base64(bytes: &[u8]) -> String {
 mod tests {
     use super::*;
 
-    /// A pass killed before it wrote its run folder is recovered, and one that was not is left be.
+    /// A run killed mid-flight is sent by nobody and recovered by somebody.
     ///
-    /// This is the failure it guards: names checkpointed into the aggregate file every sixty
-    /// seconds, no run folder because the pass never finished, and `submit` sending only run
-    /// folders -- so the work existed on disk and could never be sent, silently.
+    /// This is the interaction, and it is where two separately correct fixes cancelled out.
+    /// `run_folders` refuses to send a folder still marked `.incomplete`, which is right: a
+    /// partial batch must not be submitted and its folder name written into the ledger. The
+    /// recovery has to be the other half of that -- if it *also* treats the folder as accounted
+    /// for, the names are in neither list and nothing will ever send them, which is the exact
+    /// silent loss the checkpointing was added to prevent, rebuilt out of its own cure.
+    ///
+    /// Both halves are asserted here, because either one alone passes while the pair is broken.
     #[test]
+    fn a_killed_run_is_neither_sent_nor_forgotten() {
+        let root = std::env::temp_dir().join(format!("killed_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+
+        let findings = root.join("findings");
+        let game = findings.join("blkops04");
+        let run = game.join("run_20260821-090000_images");
+        let outbox = root.join("submissions");
+        fs::create_dir_all(&run).unwrap();
+        fs::create_dir_all(&outbox).unwrap();
+
+        // A checkpointing pass: names in the aggregate, the same names in a run folder that is
+        // still marked unfinished because the pass was killed before it sealed them.
+        fs::write(game.join("xmodel.txt"), "4444444444444444,found_before_the_kill\n").unwrap();
+        fs::write(run.join("xmodel.txt"), "4444444444444444,found_before_the_kill\n").unwrap();
+        fs::write(run.join(slasher::INCOMPLETE), "still running\n").unwrap();
+
+        assert!(
+            run_folders(&findings).is_empty(),
+            "an unfinished run must not be offered for sending"
+        );
+
+        let recovered = recover_stranded(&findings, &outbox);
+        let where_to: Vec<String> = recovered.iter().map(|p| p.display().to_string()).collect();
+
+        assert!(
+            recovered.iter().any(|path| path.starts_with(&game)),
+            "a killed run is refused by `run_folders` and must therefore be recovered, or its \
+             names can never be sent by any route. recovered: {where_to:?}"
+        );
+
+        let _ = fs::remove_dir_all(&root);
+    }
+
     /// The same name in both games is two names, and one being safe does not save the other.
     ///
     /// `accounted` used to be a set of bare lowercase names, so a name sitting in a Cold War run
@@ -1488,17 +1612,20 @@ mod tests {
 
         let recovered = recover_stranded(&findings, &outbox);
 
-        assert_eq!(
-            recovered.len(),
-            1,
+        let where_to: Vec<String> = recovered.iter().map(|p| p.display().to_string()).collect();
+
+        assert!(
+            recovered.iter().any(|path| path.starts_with(&bo4)),
             "the Black Ops 4 copy was treated as accounted for because Cold War held the same \
-             name, so a killed pass loses it with nothing said"
+             name, so a killed pass loses it with nothing said. recovered: {where_to:?}"
         );
         assert!(
-            recovered[0].starts_with(&bo4),
-            "recovered into the wrong game's tree: {:?}",
-            recovered[0]
+            !recovered.iter().any(|path| path.starts_with(&cw)),
+            "Cold War's copy sits in a run folder and should not have been recovered. \
+             recovered: {where_to:?}"
         );
+
+        let _ = fs::remove_dir_all(&root);
     }
 
     /// A superseded run still accounts for its names, so they are not recovered again and again.
@@ -1534,8 +1661,16 @@ mod tests {
             recovered.is_empty(),
             "a name held by a superseded run was recovered again, which every submit would repeat"
         );
+
+        let _ = fs::remove_dir_all(&root);
     }
 
+    /// A pass killed before it wrote its run folder is recovered, and one that was not is left be.
+    ///
+    /// This is the failure it guards: names checkpointed into the aggregate file every sixty
+    /// seconds, no run folder because the pass never finished, and `submit` sending only run
+    /// folders -- so the work existed on disk and could never be sent, silently.
+    #[test]
     fn a_killed_run_is_recovered_from_the_aggregate_files() {
         let root = std::env::temp_dir().join(format!("stranded_{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);

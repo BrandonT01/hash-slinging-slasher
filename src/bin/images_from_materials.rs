@@ -121,13 +121,25 @@ fn main() {
     let mut materials = table_names(MATERIALS);
     println!("materials from the table: {}", materials.len());
 
-    materials.extend(results.names("material"));
-    let general = Results::load(paths::findings());
-    let found = general.names("material");
-    println!("materials the general search has confirmed: {}", found.len());
-    materials.extend(found);
+    // One load, one extend. This used to load `paths::findings()` a second time under another
+    // name and append the identical list again, so every confirmed material was cut into stems
+    // twice: the printed stem count, the sizing, and `Fingerprint::with_count("stems", ..)` all
+    // described an input twice the size of the real one, and the search did the duplicate work.
+    let confirmed = results.names("material");
+    println!("materials this machine has confirmed: {}", confirmed.len());
+    materials.extend(confirmed);
 
-    let stems: Vec<String> = materials.iter().flat_map(|name| stems_of(name)).collect();
+    // Deduplicated across the whole corpus, not merely within one name.
+    //
+    // `stems_of` dedupes what a single name yields, but `mc/mtl_wpn_x` and `wc/mtl_wpn_x` both
+    // give `mtl_wpn_x` and `wpn_x`. Measured over the material table: 1,586,979 stems for
+    // 811,822 distinct ones, so 48.8% of them were repeats -- and the forward cost is
+    // `stems x openings x (endings + 1)`, so roughly half of the 8,096-second measured run was
+    // re-testing candidates it had already tested. It also made
+    // `Fingerprint::with_count("stems", ..)` describe an input twice the real size.
+    let mut stems: Vec<String> = materials.iter().flat_map(|name| stems_of(name)).collect();
+    stems.sort_unstable();
+    stems.dedup();
     println!("stems those materials offer: {}", stems.len());
     drop(materials);
 
@@ -171,18 +183,39 @@ fn main() {
             results.add(&pool_label(wanted[&id]), id, name);
         }
 
+        // The aggregate first, and this ordering matters more than it looks.
+        //
+        // A checkpointed run folder carries `.incomplete` until the pass seals it, and both
+        // walks skip such a folder on purpose -- `run_folders` will not send a partial batch,
+        // `every_run_folder` will not let one account for its own names. So mid-run the folder
+        // is readable by no route at all, and the aggregate is the *only* copy `recover_stranded`
+        // can find. Writing the folder first and the aggregate second leaves a window where a
+        // kill loses the slice entirely: not sendable, not accounted, not strandable.
+        //
+        // Neither write gates the other, which was the real fault in the first version -- a
+        // locked file or a full disk skipped the other write for the whole 8,000-second run.
         if let Err(error) = results.write(paths::findings()) {
-            eprintln!("  a checkpoint could not be written: {error}");
-            continue;
+            eprintln!("  the aggregate files could not be written: {error}");
         }
+
         match results.write_run_as(paths::findings(), "images", &when) {
-            Ok(_) => println!("  checkpoint: {} names safe on disk", results.len()),
+            // `results.added()`, not `results.len()`: `Results::load` has already put every name
+            // on disk into this, so `len()` prints a near-constant six-figure number that says
+            // nothing about whether the slice saved anything.
+            Ok(Some(_)) => println!("  checkpoint: {} name(s) from this run are safe", results.added()),
+            Ok(None) => println!("  nothing found yet, so there is no run folder to write"),
             Err(error) => eprintln!("  the run folder could not be checkpointed: {error}"),
         }
     }
 
     println!("this run added {}", results.added());
-    results.write(paths::findings()).expect("the results");
+    // Not `expect`. The loop above tolerates this write failing, and then the identical call
+    // here panicked on it -- skipping `write_run_as`, `note_run` and `seal_run`, so the folder
+    // kept its `.incomplete` marker for ever and the names came back later as an anonymous
+    // recovered batch with no run note, if at all.
+    if let Err(error) = results.write(paths::findings()) {
+        eprintln!("the aggregate files could not be written: {error}");
+    }
 
     match results.write_run_as(paths::findings(), "images", &when) {
         Ok(Some(folder)) => {
