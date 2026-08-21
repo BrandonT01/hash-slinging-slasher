@@ -31,8 +31,13 @@ import collections, os, re, sys, glob
 # search wrongly for as long as the file survives. Kept as a name, declined as a lesson.
 SOUND_TAILS = (".rn75.", ".ln75.")
 
-# The pools whose names teach nothing, in both games' spellings. Mirrors `LOW_VALUE_POOLS` in
-# src/lib.rs; `scripts/check_docs.py` fails if that list gains an entry this one does not have.
+# The pools whose names teach nothing, in both games' spellings, mirroring `LOW_VALUE_POOLS` in
+# src/lib.rs.
+#
+# Nothing checks that the two agree. An earlier version of this comment claimed `check_docs.py`
+# does; it does not -- it compares `LOW_VALUE_POOLS` against the SKIP set in `snapshot.py` and has
+# never read this file. Said plainly because a false guarantee is worse than none: it is exactly
+# how `localize_entry` stayed unfiltered here while being named in src/lib.rs all along.
 LOW_VALUE = frozenset(
     {"localizeentry", "localize_entry", "streamkey", "xmodelmesh", "xmodelmesh_v2"}
 )
@@ -58,7 +63,7 @@ FROM_MATERIALS = settings.path("findings", "findings")
 # And until that day, `submissions/` was never read here at all: 103,320 names from every
 # contributor, sitting committed in the repository, feeding nothing. They reach the published
 # tables eventually, but "eventually" is upstream's merge schedule, not tonight's pass.
-SUBMISSIONS = os.path.join(HERE, "submissions")
+SUBMISSIONS = settings.path("submissions", "submissions")
 
 DATA = os.path.join(HERE, "data")
 
@@ -185,27 +190,36 @@ def table_names(table):
                 yield line.split(",", 1)[1].lower().replace(chr(92), "/")
 
 
-# Which confirmed pools belong to which group's lists. A sound ending tried against a model id
-# can only ever be a coincidence, so measuring one group's names into the other's list spends a
-# capped ceiling on vocabulary that cannot match -- exactly what `derive`'s docstring describes
-# and what widening to `submissions/` would otherwise have made much worse, since it carries 77
-# `sound_alias` and 19 `sound_asset` files.
-GENERAL_POOLS = frozenset({"xanim", "xmodel", "material", "image"})
+# Sound names and everything else are two vocabularies, and each group's list must hold only
+# its own. A sound ending tried against a model id can only ever be a coincidence, so measuring
+# one into the other spends a capped ceiling on candidates that cannot match -- what `derive`'s
+# docstring describes, and what reading `submissions/` would have made much worse, since it
+# carries 77 `sound_alias` and 19 `sound_asset` files.
+#
+# Expressed as "not the other one" rather than as a list of four. A whitelist of
+# {xanim, xmodel, material, image} also threw away confirmed names under `weapon`,
+# `attachment`, `dynmodel`, `scriptbundle` and thirty more real, path-shaped, non-sound types
+# that had been feeding the general lists all along. Nothing argues those teach nothing about
+# model naming, and §7 says candidates come from names known to be real.
 SOUND_POOLS = frozenset({"sound_alias", "sound_asset"})
 
 
 def found_names(pools=None):
-    # Deduplicated, because `CONFIRMED` and `FROM_MATERIALS` are the same directory and the
-    # pair walked it twice -- counting this machine's own names at double weight against everybody
-    # else's at single. The takes below are popularity rankings against a fixed ceiling, so that
-    # doubling directly displaced other contributors' vocabulary, which is the opposite of what
-    # reading `submissions/` is for.
-    seen_folders = []
-    for folder in (CONFIRMED, FROM_MATERIALS, SUBMISSIONS):
-        if folder not in seen_folders:
-            seen_folders.append(folder)
+    # One vote per name, which is the thing the counters weight.
+    #
+    # Deduplicating the *folder list* was not enough and the first attempt at this did only that.
+    # A name this machine found appears in `findings/<game>/<kind>.txt`, again in its `run_*/`
+    # folder, again in any `superseded/` copy, again in each `run_*_recovered/` folder, and once
+    # more per `submissions/<who>_*` folder that carried it; another contributor's name appears
+    # once. Measured over the general pools: 135,674 occurrences for 48,847 distinct names, an
+    # average of 2.78, with some counted thirteen times.
+    #
+    # `measure()` is a frequency Counter and the takes below are popularity rankings against hard
+    # ceilings, so that repetition directly displaced everybody else's vocabulary -- the opposite
+    # of the reason for reading `submissions/` at all.
+    seen_names = set()
 
-    for folder in seen_folders:
+    for folder in dict.fromkeys((CONFIRMED, FROM_MATERIALS, SUBMISSIONS)):
         # Recursive, because findings are kept per game now -- findings/<game>/ and its run_*
         # folders. A flat glob of the root would quietly measure nothing at all.
         for path in glob.glob(os.path.join(folder, "**", "*.txt"), recursive=True):
@@ -225,16 +239,33 @@ def found_names(pools=None):
             if kind in LOW_VALUE or kind.startswith("pool_"):
                 continue
 
-            # Only the pools this group's lists will be used against.
-            if pools is not None and kind not in pools:
+            # Only this group's vocabulary: sound names for the sound lists, everything else
+            # for the general ones.
+            if pools == "sound" and kind not in SOUND_POOLS:
+                continue
+            if pools == "general" and kind in SOUND_POOLS:
                 continue
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line in handle:
                     if teaches_the_wrong_shape(kind, line):
                         continue
                     line = line.strip()
-                    if "," in line:
-                        yield line.split(",", 1)[1].lower()
+                    if "," not in line:
+                        continue
+
+                    # Folded, as `table_names` folds. Black Ops 4 SAB sound names keep their
+                    # backslashes, and `measure()` splits a directory off with `rpartition("/")`
+                    # -- so an unfolded name is measured as one long base with no directory at
+                    # all, and its short high-value beginnings (`zmb/`, `zmb/ai/`) are never seen.
+                    # Two full-path backslash beginnings had already reached the committed
+                    # `data/sound.prefixes.txt` this way, where `confirm_cw` says they cannot
+                    # match, burning two of the seven hundred slots.
+                    name = line.split(",", 1)[1].lower().replace(chr(92), "/")
+                    if name in seen_names:
+                        continue
+                    seen_names.add(name)
+
+                    yield name
 
 
 def measure(names):
@@ -539,6 +570,7 @@ GROUPS = [
         "prefixes.txt",
         MUST_KEEP_ENDINGS,
         MUST_KEEP_PREFIXES,
+        False,
     ),
     (
         "the sound lists",
@@ -547,6 +579,7 @@ GROUPS = [
         "sound.prefixes.txt",
         {},
         {},
+        True,
     ),
 ]
 
@@ -554,14 +587,14 @@ GROUPS = [
 PIECES = 25_000_000
 UNNAMED = 270_727
 
-for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
+for title, tables, suffix_file, prefix_file, keep_e, keep_p, sound in GROUPS:
     print("", file=sys.stderr)
     print(f"=== {title} ===", file=sys.stderr)
-    # The sound group must not lean on itself -- see `lean` in `derive`.
-    sound = title == "the sound lists"
+    # Which group this is comes from the tuple, not from matching the display title. Keying two
+    # consequential decisions on a string meant renaming a heading would silently measure general
+    # vocabulary into the sound lists and let the sound group lean on itself.
     endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p,
-                                 lean_sound=not sound,
-                                 pools=SOUND_POOLS if sound else GENERAL_POOLS)
+                                 lean_sound=not sound, pools=("sound" if sound else "general"))
 
     per_stem = (beginnings + 1) * (endings + 1)
     print(f"a stem costs {beginnings + 1} forward hashes and reaches {per_stem} candidates",

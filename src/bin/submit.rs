@@ -48,6 +48,13 @@ struct StampSuffix;
 
 impl StampSuffix {
     fn find(&self, text: &str) -> Option<usize> {
+        // Bytes throughout, and no `&str` slicing until the shape has been checked.
+        //
+        // Slicing `text[at..]` first panics on any filename where that byte offset falls inside a
+        // multibyte character -- and this runs over every `.txt` in `submissions/`, which is other
+        // people's filenames. It would abort `submit` in `recover_stranded`, before anything was
+        // sent, which is the worst moment for this binary to die. The shape is pure ASCII, so it
+        // can be recognised without ever building a string.
         let bytes = text.as_bytes();
         // `_` + 8 digits + `-` + 6 digits
         let width = 1 + 8 + 1 + 6;
@@ -56,12 +63,15 @@ impl StampSuffix {
         }
 
         let at = bytes.len() - width;
-        let stamp = &text[at..];
-        let shaped = stamp.starts_with('_')
-            && stamp[1..9].bytes().all(|b| b.is_ascii_digit())
-            && stamp.as_bytes()[9] == b'-'
-            && stamp[10..].bytes().all(|b| b.is_ascii_digit());
+        let stamp = &bytes[at..];
 
+        let shaped = stamp[0] == b'_'
+            && stamp[1..9].iter().all(u8::is_ascii_digit)
+            && stamp[9] == b'-'
+            && stamp[10..].iter().all(u8::is_ascii_digit);
+
+        // `at` is a char boundary whenever the shape matched, because every byte from `at` on is
+        // ASCII -- so a caller slicing there is safe.
         shaped.then_some(at)
     }
 }
@@ -211,6 +221,13 @@ fn send(
     let mut batch: Vec<(String, u64, String)> = Vec::new(); // (type, id as found, name)
     let mut dropped = 0_usize;
     let mut claimed_elsewhere = 0_usize;
+
+    // The same names, counted once each. `claimed_elsewhere` tallies every occurrence across
+    // every run folder, which is the right number to *report* -- it says how much of this
+    // batch's work was already taken -- but the wrong one to compare against a deduplicated
+    // `batch`, since a name reachable from three runs counts three times on one side and once
+    // on the other.
+    let mut claimed_names: HashSet<String> = HashSet::new();
     let mut worthless: std::collections::BTreeMap<String, usize> = Default::default();
 
     for folder in pending {
@@ -238,6 +255,7 @@ fn send(
 
             if landscape.holds(&name) || seen(cached) {
                 claimed_elsewhere += 1;
+                claimed_names.insert(name.to_lowercase());
                 continue;
             }
 
@@ -273,18 +291,22 @@ fn send(
     // Fingerprints stop you re-running a search somebody has *finished*. They cannot stop two
     // people running the same method at the same time, and this is what that looks like from
     // the inside.
-    // Against everything this batch considered, not against what survived it.
+    // Distinct names, and only the contested ones.
     //
-    // Two ways the first version of this was wrong. `batch` is deduplicated a few lines above --
-    // a name reachable by several runs is sent once -- while `claimed_elsewhere` counts every
-    // occurrence, so a rotation with several run folders holding overlapping names inflated the
-    // share against a shrinking base. And leaving `dropped` out of the denominator meant a run
-    // that found 100 names, 90 of them already published, 6 claimed and 4 new, reported "60%
-    // claimed by somebody else" when the honest figure is 6% -- and then told the contributor to
-    // abandon a method that was working.
-    let offered = batch.len() + claimed_elsewhere + dropped;
-    if claimed_elsewhere > 0 && offered >= 20 {
-        let share = claimed_elsewhere as f64 * 100.0 / offered as f64;
+    // Two mistakes, one after the other. First `claimed_elsewhere` was compared against a
+    // deduplicated `batch` while itself counting every occurrence, so a rotation whose runs
+    // overlap inflated the share. Then `dropped` was folded into the denominator to fix that,
+    // which is worse: a name already published in the tables is old ground for everybody and says
+    // nothing about whether somebody is grinding this method *now*. Published names dominate
+    // exactly the batches that need the warning -- one submission here dropped 1,098 of them --
+    // so the signal went quiet on the runs it was built for.
+    //
+    // The contested set is what this run found and could have sent: what is going, plus what
+    // somebody else already claimed. Both counted as distinct names.
+    let claimed_distinct = claimed_names.len();
+    let offered = batch.len() + claimed_distinct;
+    if claimed_distinct > 0 && offered >= 20 {
+        let share = claimed_distinct as f64 * 100.0 / offered as f64;
         if share >= 50.0 {
             println!(
                 "\n  [!] {share:.0}% of what this run found was already claimed by somebody else.\n  \
@@ -847,18 +869,27 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
     // Everything already sent. `submissions/<who>_<GAME>_<stamp>/`, so the game is in the name.
     for entry in fs::read_dir(outbox).into_iter().flatten().flatten() {
         let folder = entry.path();
-        // `<who>_<GAME>_<stamp>`, but 23 of the folders here predate the per-game split and
-        // are `<who>_<stamp>`, where the second field is the timestamp. Keying those by a
-        // timestamp matches no findings key ever, so their names stop accounting for anything
-        // and every `submit` re-recovers them. A game tag is what `config::GAMES` holds; anything
-        // else means the folder is from before the split, and those were all Cold War.
-        let name = entry.file_name().to_string_lossy().to_string();
-        let second = name.split('_').nth(1).unwrap_or_default().to_uppercase();
-        let game = if config::GAMES.contains(&second.as_str()) {
-            second
-        } else {
-            "BLKOPSCW".to_owned()
-        };
+        // `<who>_<GAME>_<stamp>`, except for the folders that predate the per-game split and
+        // are `<who>_<stamp>`. Those cannot be attributed to a game from their name at all.
+        //
+        // An earlier version guessed Cold War for them. That is wrong and measurably so: the
+        // largest of them, `GoastcraftHD_20260819-045229`, is the 13,858-name Black Ops 4 grind
+        // CLAUDE.md §4 describes -- 2,968 of its 3,026 xmodel ids are in `findings/blkops04`.
+        // Guessing made those names account for Cold War, where a genuinely stranded Cold War
+        // name matching one of the 13,858 strings would then never be recovered. Silent loss, in
+        // the function written to prevent it, and reachable through the 1,653 names both games
+        // share.
+        //
+        // So an unattributable folder accounts for *nothing*. That costs churn -- its names look
+        // stranded and are re-offered -- and churn is dropped at the exclusion step, where loss
+        // is not recoverable at all. Under-accounting is the safe direction and this picks it
+        // deliberately.
+        let folder_name = entry.file_name().to_string_lossy().to_string();
+        let tag = folder_name.split('_').nth(1).unwrap_or_default().to_uppercase();
+        if !config::GAMES.contains(&tag.as_str()) {
+            continue;
+        }
+        let game = tag;
 
         for (kind, _, name) in names_in(&folder) {
             // A submission names its files `<kind>_<stamp>.txt`, and the stamp comes off -- but
@@ -891,7 +922,9 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
         // the other question, has the name been written down anywhere, and there a superseded run
         // counts. Skipping them made every `submit` rebuild a recovery folder holding names that
         // had already gone.
-        let mut here = accounted.clone();
+        // This game's run folders only. `accounted` already carries the game in its key, so
+        // there is nothing to gain by copying its hundred thousand triples once per game.
+        let mut here: HashSet<(String, String, String)> = HashSet::new();
         for folder in every_run_folder(&game_folder) {
             for (kind, _, name) in names_in(&folder) {
                 here.insert((game.clone(), kind.to_lowercase(), name.to_lowercase()));
@@ -902,7 +935,7 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
         let mut stranded: Vec<(String, u64, String)> = Vec::new();
         for (kind, id, name) in names_in(&game_folder) {
             let key = (game.clone(), kind.to_lowercase(), name.to_lowercase());
-            if !here.contains(&key) {
+            if !here.contains(&key) && !accounted.contains(&key) {
                 stranded.push((kind, id, name));
             }
         }
