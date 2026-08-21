@@ -1,0 +1,12 @@
+263a7d9fc44d342c,zmb\ai\nosferatu\vox_2.0\pain\pain_05.ln100.pc.snd
+34138787ef6589bf,zmb\ai\nosferatu\vox_2.0\pain\pain_02.ln100.pc.snd
+3f0f5b517812c3e5,zmb\ai\spartoi\vox\pain\pain_00.ln100.pc.snd
+4d853adec42a27b0,zmb\ai\spartoi\vox\pain\pain_01.ln100.pc.snd
+5239bd5fcde31c9f,zmb\ai\nosferatu\vox_2.0\scream_lfe.ln100.pc.snd
+5be564de7d9f1617,zmb\ai\spartoi\vox\pain\pain_02.ln100.pc.snd
+5e616ed842d834f8,zmb\ai\nosferatu\vox_2.0\pain\pain_01.ln100.pc.snd
+6629356478751e71,zmb\ai\nosferatu\vox_2.0\pain\pain_04.ln100.pc.snd
+72baaad6036afcc2,zmb\ai\nosferatu\vox_2.0\pain\pain_03.ln100.pc.snd
+73a9febf4350e8cd,zmb\ai\nosferatu\vox_2.0\pain\pain_00.ln100.pc.snd
+7c09bc94f81273c3,zmb\ai\nosferatu\vox_2.0\pain\pain_06.ln100.pc.snd
+7ece7a508ad4dd3a,zmb\ai\spartoi\vox\pain\pain_03.ln100.pc.snd
