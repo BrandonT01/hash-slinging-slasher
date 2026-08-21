@@ -886,6 +886,34 @@ the tables, or expect to be out by an order of magnitude.
 
 ---
 
+## The compounding loop, measured over one night
+
+`AGENTS.md` §7 says every confirmed name is a new beginning, a new ending and a new numbered
+family, so re-measuring the lists reopens a method that reported itself exhausted. That is true.
+This is how much, and how fast it decays -- measured 2026-08-20/21 on one machine, both games,
+the same binary each time.
+
+| pass | Black Ops 4 | Cold War | lists |
+|---|---|---|---|
+| 1 | **55** | **56** | as committed |
+| 2 | **294** | **303** | after folding in ~800 newly merged names |
+| 3 | **51** | -- | after folding in ~2,000 more |
+
+**The second pass is worth five times the first, and the third is worth less than the first.**
+
+The reason is not the *number* of names folded in but where they came from. Fold 1 took in 1,218
+names from another contributor's evening -- vocabulary this machine had never seen. Fold 2 took in
+~2,000 names, mostly found by *these same passes*, so the beginnings and endings it added were
+largely ones the search had just finished using. A corpus that grows by rediscovering its own
+neighbourhood does not widen what the lists can express.
+
+**So the loop is fed by other people's names, not by your own.** Re-measure after merging a batch
+from somebody else, and expect little from re-measuring after your own pass. `python
+scripts/reach.py` will not tell you this -- reach stayed at 94.3% / 92.8% on models across all
+three folds, because the ceiling was never what moved.
+
+---
+
 ## Dead ends
 
 Do not spend a night rediscovering these. Each cost real time.
