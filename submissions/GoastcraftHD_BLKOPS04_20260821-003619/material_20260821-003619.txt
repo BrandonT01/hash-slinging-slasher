@@ -1,0 +1,4 @@
+fa771e33a77c1d5,mc/mtl_p8_nt4_bunker_door_soviet_metal_red
+13e6b24c67571949,mc/mtl_p8_nt4_bunker_door_soviet_metal_black
+6dd660cec19d877e,mc/mtl_p8_nt4_bunker_door_soviet_glass_red
+7185a0b559b12460,mc/mtl_p8_lv8_east_window_wood_white
