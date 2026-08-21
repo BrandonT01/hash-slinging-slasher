@@ -234,6 +234,30 @@ fn send(
         batch.len()
     );
 
+    // What that second number means, said out loud.
+    //
+    // It is the only signal anywhere that somebody else is grinding the same ground right now,
+    // and it was sitting in this output being read as bookkeeping. Measured over one night with
+    // two agents running: the general search and `swaps` came back 70-99% claimed, while the
+    // Cold War sound pass -- ground the other was not touching -- came back 3 claimed of 115.
+    // Same machine, same hours. The difference was entirely which method the other one ran.
+    //
+    // Fingerprints stop you re-running a search somebody has *finished*. They cannot stop two
+    // people running the same method at the same time, and this is what that looks like from
+    // the inside.
+    let offered = batch.len() + claimed_elsewhere;
+    if claimed_elsewhere > 0 && offered >= 20 {
+        let share = claimed_elsewhere as f64 * 100.0 / offered as f64;
+        if share >= 50.0 {
+            println!(
+                "\n  [!] {share:.0}% of what this run found was already claimed by somebody else.\n  \
+                 [!] They are grinding the same ground with the same method, and running it again\n  \
+                 [!] will mostly rediscover their work. Pick a method they are not running --\n  \
+                 [!] METHODS.md says what each one reaches that nothing else does."
+            );
+        }
+    }
+
     if batch.is_empty() {
         println!(
             "\nnothing left to send for {game} -- every name found is already somebody's.\n\n\
