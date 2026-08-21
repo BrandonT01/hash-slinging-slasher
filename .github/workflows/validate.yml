@@ -76,13 +76,31 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "pull_request" ]; then
             base="origin/${{ github.base_ref }}"
-            git fetch --no-tags --depth=1 origin "${{ github.base_ref }}" || true
+            # Not `--depth=1`, and not `|| true`: see the `binaries` job below for what both
+            # cost. A truncated base ref can leave `A...HEAD` with no merge base, and a diff that
+            # then failed would set `any=false` here -- reporting "no submission files changed"
+            # and skipping the re-verification this workflow exists for, on a green check.
+            git fetch --no-tags origin "${{ github.base_ref }}"
           else
             base="${{ github.event.before }}"
+
+            # A new branch, or a force push, names a base this checkout does not hold. Fall back
+            # to the empty tree -- "everything here is new" -- rather than to a failed diff, which
+            # under the old `|| true` read as "nothing changed" and skipped the verification.
+            if ! git cat-file -e "${base}^{commit}" 2>/dev/null; then
+              base=$(git hash-object -t tree /dev/null)
+            fi
           fi
 
           # Added and modified only. A submission being deleted is a maintainer tidying up.
-          files=$(git diff --name-only --diff-filter=AM "$base"...HEAD -- 'submissions/**/*.txt' || true)
+          #
+          # No `|| true`. A diff that fails must stop the run, not report an empty list: an empty
+          # list is indistinguishable from "no submissions in this change", and that answer skips
+          # the re-verification of names this whole workflow exists to perform.
+          if ! files=$(git diff --name-only --diff-filter=AM "$base"...HEAD -- 'submissions/**/*.txt'); then
+            echo "could not diff against $base -- refusing to report 'nothing changed' on a failed diff"
+            exit 1
+          fi
 
           if [ -z "$files" ]; then
             echo "no submission files changed"
@@ -108,3 +126,68 @@ jobs:
       - name: re-verify
         if: steps.changed.outputs.any == 'true'
         run: xargs -a changed.txt ./target/release/validate
+
+  # A pull request that carries a rebuilt binary cannot be merged cleanly, and the contributor who
+  # sent it did not mean to.
+  #
+  # `bin/linux` and `bin/macos` are committed by this repository's own workflows, and a fork used
+  # to run those workflows too: `submit` syncs the fork's `main` before it branches, that sync is
+  # a push touching `src/**`, and the fork then built and committed its own copies. They ride into
+  # the next submission, git cannot merge a binary, and each one conflicts against whatever this
+  # repository built in the meantime -- which has already cost submissions, one taken by hand
+  # "without the binary".
+  #
+  # Two fixes are upstream of this one: the binary workflows refuse to run outside this repository,
+  # and `submit` branches from upstream's head rather than the fork's. This is the backstop that
+  # says so out loud when a pull request carries one anyway, because the alternative is a
+  # maintainer discovering it at merge time.
+  binaries:
+    name: a pull request carries no CI-built binaries
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: nothing CI builds may change
+        run: |
+          set -euo pipefail
+
+          # `fetch-depth: 0` above already fetched the whole history. Re-fetching the base at
+          # `--depth=1` would write `.git/shallow` and truncate that ref, and `A...HEAD` needs a
+          # merge base -- so on a branch whose base has moved (this one "moves constantly": both
+          # binary workflows and every merged submission push to it) the walk can end at the
+          # shallow boundary having found no common ancestor at all.
+          git fetch --no-tags origin "${{ github.base_ref }}"
+
+          # No `|| true`. A guard whose error path is "approve" is worse than no guard, because
+          # from then on a maintainer trusts a green check: a diff that failed for any reason --
+          # an unresolvable merge base, a bad ref -- would have reported "no binaries" and passed
+          # a pull request carrying exactly what this job exists to catch.
+          files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" \
+                    -- 'bin/linux/**' 'bin/macos/**')
+
+          if [ -z "$files" ]; then
+            echo "no CI-built binaries in this pull request"
+            exit 0
+          fi
+
+          echo "This pull request changes files CI builds and commits:"
+          echo "$files"
+          echo
+          echo "Those are built and committed by this repository's own workflows, so a submission"
+          echo "must not carry them -- a binary cannot be merged, and it will conflict against"
+          echo "whatever was built here in the meantime."
+          echo
+          echo "bin/windows is deliberately not checked: it has no workflow and is committed by"
+          echo "hand from a Windows machine, so a source change legitimately carries it."
+          echo
+          echo "To fix it, drop those paths from the branch:"
+          echo
+          echo "    git checkout origin/${{ github.base_ref }} -- bin/linux bin/macos"
+          echo "    git commit -m 'Drop the rebuilt binaries from this submission'"
+          echo
+          echo "If your fork built them itself, it was running the binary workflows; they are now"
+          echo "guarded to this repository, so it will not happen again once your fork is synced."
+          exit 1

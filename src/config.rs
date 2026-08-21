@@ -183,8 +183,14 @@ pub fn choose_game(game: &str) -> std::io::Result<()> {
 }
 
 /// Reads the settings, falling back to the defaults when there is no file or it says nothing.
+///
+/// Resolved against the repository root like every other read of this file, and not against the
+/// working directory. It used to be the one exception, which meant a pass launched from anywhere
+/// but the root silently fell back to `DEFAULT_POOLS` -- searching pools the contributor had not
+/// asked for, and then writing the wrong pool set into both the run notes and the fingerprint, so
+/// the record of what was searched disagreed with what was searched.
 pub fn targets() -> Targets {
-    read_targets(Path::new(CONFIG))
+    read_targets(&crate::paths::root().join(CONFIG))
 }
 
 fn read_targets(path: &Path) -> Targets {

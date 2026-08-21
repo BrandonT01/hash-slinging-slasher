@@ -26,6 +26,22 @@ concurrency:
 
 jobs:
   build:
+    # **Only in the repository this project lives in.** A contributor's fork runs these workflows
+    # too: `submit` syncs the fork's `main` from upstream before it branches, that sync is a push
+    # to `main` touching `src/**`, and the fork's own Actions then build binaries and commit them
+    # to the fork. The next submission branches from that head, so somebody else's rebuild of
+    # `bin/` rides along in a pull request that was meant to add two text files -- and a binary
+    # cannot be merged, so it conflicts against whatever this repository built in the meantime.
+    # That has cost several submissions, one of which had to be taken by hand "without the binary".
+    #
+    # `workflow_dispatch` is covered by the same condition on purpose. A fork has nothing to gain
+    # by running it: the binaries it would commit are the ones it is about to pull anyway.
+    #
+    # Written as "not a fork" rather than as this repository's name: a rename or a transfer would
+    # leave a hardcoded `owner/name` matching nothing, both jobs skipping with a green run, and
+    # `bin/` quietly going stale -- which the header above calls worse than having no committed
+    # binaries at all.
+    if: github.event.repository.fork == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

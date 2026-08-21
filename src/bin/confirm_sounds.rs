@@ -123,8 +123,11 @@ fn main() {
 
     // Every name any table holds, which is where the tails and most of the stems come from, and
     // everything scraped out of a build, which is where the rest come from.
+    // `paths::harvest()` once, not twice. It used to be listed under two labels, "the alpha" and
+    // "the retail build", but it is one path -- so every string in it was read and cut into tails
+    // and stems a second time for nothing.
     let mut vocabulary = all_table_names();
-    for folder in [paths::harvest().unwrap_or_default(), paths::harvest().unwrap_or_default(), paths::borrowed().unwrap_or_default()] {
+    for folder in [paths::harvest(), paths::borrowed()].into_iter().flatten() {
         vocabulary.extend(folder_names(folder));
     }
     vocabulary.extend(strings);
@@ -136,8 +139,6 @@ fn main() {
     let fingerprint = Fingerprint::of("confirm_sounds")
         .with("game", &config::game())
         .with_list("tails", &endings)
-        .with_count("stems", pieces.len())
-        .with_count("wanted", wanted.len())
         .finish();
     println!("fingerprint: {fingerprint}");
     recon::warn_if_swept(&fingerprint);

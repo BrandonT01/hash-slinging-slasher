@@ -119,7 +119,6 @@ fn main() {
     let fingerprint = Fingerprint::of("techset_probe")
         .with("game", &config::game())
         .with_list("bases", &bases)
-        .with_count("wanted", wanted.len())
         .finish();
     println!("fingerprint: {fingerprint}");
     recon::warn_if_swept(&fingerprint);

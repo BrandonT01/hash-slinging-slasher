@@ -25,6 +25,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import derive_lists
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # Paths named in prose that are created at runtime rather than committed, and things that are
@@ -163,10 +166,11 @@ def main():
     # still looks healthy afterwards, at its full 700 lines, with the entries that mattered gone.
     # `derive_lists.py` refuses to write such a list; this catches one that reached the repository
     # some other way.
-    heads = {
-        "p9_": 77248, "p8_": 66172, "p7_": 42516, "attach_": 27504, "mtl_": 343794,
-        "i_": 403889, "vm_": 18088, "ai_": 11226, "ui_": 31742,
-    }
+    #
+    # Read from `derive_lists.MUST_KEEP_PREFIXES` rather than copied out of it. The copy that used
+    # to be here held nine of the twenty four, so CI checked a third of the guarantee and stayed
+    # green through the run that dropped 344 beginnings.
+    heads = derive_lists.MUST_KEEP_PREFIXES
     lost = sorted(k for k in heads if k not in prefixes)
     if lost:
         problems.append(
@@ -187,7 +191,9 @@ def main():
     # who merges it. scripts/README.md has said to walk up for the whole life of the repository
     # and five of ten contributed scripts still did not, which is why this is a check rather than
     # a paragraph. Checked by reading, never by importing: this is other people's code.
-    for script in sorted(glob.glob("scripts/contributed/*.py")):
+    # Against ROOT, not the working directory. Run from anywhere but the repository root this
+    # globbed nothing, examined no files, and reported success.
+    for script in sorted(glob.glob(os.path.join(ROOT, "scripts", "contributed", "*.py"))):
         text = open(script, encoding="utf-8", errors="ignore").read()
         if not re.search(r"^import snapshot", text, re.M):
             continue
@@ -196,7 +202,8 @@ def main():
 
         warnings.append(
             "%s imports `snapshot` without walking up to find `scripts/`, so it cannot run from "
-            "where it has been filed -- see the pattern in scripts/README.md." % script
+            "where it has been filed -- see the pattern in scripts/README.md."
+            % os.path.relpath(script, ROOT)
         )
 
     if warnings:

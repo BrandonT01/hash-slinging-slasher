@@ -321,10 +321,13 @@ fn send(
         println!(
             "\nnothing left to send for {game} -- every name found is already somebody's.\n\n\
              That is not a failed night, it is an honest one, and a submission of zero is worth \
-             more\nthan a submission of duplicates. What it means is that this method is spent at \
-             these\ninputs. Widen the lists (`python scripts/derive_lists.py`), run a method that \
-             reaches\nsomewhere else, or invent one -- METHODS.md says what each one gets at that \
-             nothing else does."
+             more\nthan a submission of duplicates. What it means is that this method is spent -- \
+             and what\nspends a method is the ground, not the lists. Re-measuring them looks like \
+             the way out\nand is not: three consecutive folds returned 55 names, then 294, then \
+             51, the last on a\ncorpus two and a half times larger. Run a method that reaches \
+             somewhere else, or invent\none -- METHODS.md says what each one gets at that nothing \
+             else does, and `confirm_list`\ntakes candidates on standard input, so a method is a \
+             script that prints names."
         );
         return None;
     }
@@ -1204,6 +1207,11 @@ fn open_pull_request(
     let branch = format!("findings/{who}-{game}-{when}");
     let base = default_branch(repo)?;
 
+    // The game leads the title. It is the first thing a reviewer needs, and a list of pull
+    // requests cannot otherwise show which title a submission is for -- which matters now that
+    // both games are ground rather than only whichever one the config happened to default to.
+    let title = format!("[{game}] findings from {who}, {when} ({names} names)");
+
     // Push into a fork, unless this is the maintainer submitting to their own repository, where
     // there is nothing to fork and the branch simply goes straight in.
     let fork = if repo.starts_with(&format!("{who}/")) {
@@ -1218,9 +1226,6 @@ fn open_pull_request(
     if fork != repo {
         let _ = gh(&["repo", "sync", &fork, "--source", repo], None);
     }
-
-    let parent = head_sha(&fork, &base)?;
-    let base_tree = tree_of(&fork, &parent)?;
 
     // The files, as they will appear in the repository. One folder per submission, named for who
     // sent it and when, so two people submitting at once cannot collide.
@@ -1270,12 +1275,51 @@ fn open_pull_request(
         return Err("the batch folder held no files to send".to_owned());
     }
 
-    // The game leads the title. It is the first thing a reviewer needs, and a list of pull
-    // requests cannot otherwise show which title a submission is for -- which matters now that
-    // both games are ground rather than only whichever one the config happened to default to.
-    let title = format!("[{game}] findings from {who}, {when} ({names} names)");
-    let tree = make_tree(&fork, &base_tree, &entries)?;
-    let commit = make_commit(&fork, &title, &tree, &parent)?;
+    // **Branched from upstream's head, not the fork's.** A submission is "everything upstream has,
+    // plus these files", and saying so exactly is what keeps a pull request to the two text files
+    // it is about. A fork that has *diverged* -- rather than merely fallen behind -- drags its own
+    // extra commits into the diff, and the ones it has are binaries: a fork used to run this
+    // project's own binary workflows, so `submit`'s sync above pushed `src/**` to the fork's
+    // `main`, the fork's Actions rebuilt `bin/linux` and `bin/macos` there, and every later
+    // submission carried that rebuild. Git cannot merge a binary, so each one conflicted against
+    // whatever this repository had built since -- and one submission had to be taken by hand
+    // "without the binary". The workflows now refuse to run outside this repository, but every
+    // fork that already drifted stays drifted, so the fix has to hold here too.
+    //
+    // Upstream and its forks share one object store, so a commit created in the fork may name an
+    // upstream commit as its parent. A fork detached from that network -- upstream deleted, made
+    // private, or the fork turned standalone -- refuses it, and then the fork's own head still
+    // produces a correct pull request. So the whole build is attempted upstream-first and retried
+    // from the fork's head, rather than only the two reads being guarded: reading upstream's ref
+    // is a public GET that succeeds whenever `default_branch` did, so a fallback wrapped around
+    // *that* would never once have run, while the calls that actually get refused -- creating the
+    // tree and the commit in the fork against a cross-repo sha -- would still have aborted the
+    // submission. Which would be a regression: branching from the fork's head always worked.
+    let base_from = |source: &str| -> Result<(String, String), String> {
+        let parent = head_sha(source, &base)?;
+        let base_tree = tree_of(source, &parent)?;
+        Ok((parent, base_tree))
+    };
+
+    let build = |parent: &str, base_tree: &str| -> Result<String, String> {
+        let tree = make_tree(&fork, base_tree, &entries)?;
+        make_commit(&fork, &title, &tree, parent)
+    };
+
+    let commit = match base_from(repo).and_then(|(parent, tree)| build(&parent, &tree)) {
+        Ok(commit) => commit,
+        // Only for a refusal, never for a bad afternoon. A rate limit or a 5xx is an error too,
+        // and falling back on one would quietly hand the drifted fork exactly the pull request
+        // this went to the trouble of avoiding -- with nothing but a line of output to say so.
+        // A sha the fork cannot see is refused as 404 or 422; those are the two worth retrying.
+        Err(why) if fork != repo && refused_the_upstream_sha(&why) => {
+            println!("  upstream's head was refused, branching from the fork's own: {why}");
+            let (parent, base_tree) = base_from(&fork)?;
+            build(&parent, &base_tree)?
+        }
+        Err(why) => return Err(why),
+    };
+
     make_branch(&fork, &branch, &commit)?;
 
     let contributed = if landed.is_empty() {
@@ -1377,6 +1421,18 @@ fn ensure_fork(repo: &str, who: &str) -> Result<String, String> {
     }
 
     Err(format!("{fork} was asked for but has not appeared after thirty seconds"))
+}
+
+/// Whether GitHub refused a cross-repository sha, rather than merely having a bad moment.
+///
+/// A fork shares its parent's object store, so a commit created in the fork may name an upstream
+/// commit as its parent -- unless that fork has been detached from the network, when the sha is
+/// simply not there and the API says so with a 404 or a 422. Every other failure is transient and
+/// must not be treated as "use the fork's head instead", because the fork's head is what carries
+/// the drift this branching exists to leave behind.
+fn refused_the_upstream_sha(why: &str) -> bool {
+    let why = why.to_lowercase();
+    why.contains("404") || why.contains("422") || why.contains("not found")
 }
 
 fn head_sha(repo: &str, branch: &str) -> Result<String, String> {

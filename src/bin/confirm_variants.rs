@@ -223,14 +223,18 @@ fn main() {
     // Every name known to exist, from the tables that are this game and from what has been
     // confirmed. A confirmed name is the better seed of the two: it is a family member nobody
     // had, so its siblings are the ones nobody has either.
+    // One load, one extend. This used to load `paths::findings()` a second time under the name
+    // `from_materials` and append the identical list again, so "names to vary" counted every
+    // confirmed name twice and was only right by accident of the dedupe below. The same mistake
+    // has now been found and fixed in five places: here, `images_from_materials`, `confirm_cw`,
+    // `confirm_sounds` and `confirm_localize` -- and in `derive_lists.py`, where it doubled the
+    // measured corpus and halved every threshold that holds the confirmed takes in check.
     let mut results = Results::load(paths::findings());
-    let from_materials = Results::load(paths::findings());
 
     let mut seeds: Vec<String> = slasher::all_table_names();
     // `seed_names`, not `all_names`: a confirmed-but-unrepresentative name is kept and
     // submitted, but must not teach this pass what a name looks like. See `odd_for_pool`.
     seeds.extend(results.seed_names());
-    seeds.extend(from_materials.seed_names());
     seeds.extend(strings);
 
     let mut seen: HashSet<u64> = HashSet::new();
@@ -259,9 +263,17 @@ fn main() {
 
     let fingerprint = Fingerprint::of(if swapping { "confirm_variants/swaps" } else { "confirm_variants/numbers" })
         .with("game", &config::game())
-        .with_count("tokens", tokens.len())
+        // `most` rather than `tokens.len()`, and it has to be one of the two: it is the only
+        // trace the command line leaves here, so without it `confirm_variants swaps` and
+        // `confirm_variants swaps 4000` fingerprint identically and the wider of the two searches
+        // is reported as already swept. A number typed at the command line is not a measurement
+        // of this machine's disk -- everybody who types it gets the same one.
+        // Zero when the run is not swapping, because `most` is read only in that mode: fed
+        // unconditionally, `confirm_variants` and `confirm_variants 500` would run byte-identical
+        // number searches under two fingerprints, and the second would not be recognised as the
+        // repeat it is.
+        .with_count("tokens", if swapping { most } else { 0 })
         .with_list("seeds", &seeds)
-        .with_count("wanted", wanted.len())
         .finish();
     println!("fingerprint: {fingerprint}");
     recon::warn_if_swept(&fingerprint);

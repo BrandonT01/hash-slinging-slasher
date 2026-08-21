@@ -17,7 +17,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 
 | # | method | reaches | run it with | status |
 |---|---|---|---|---|
-| 1 | general search | anything as *beginning + stem + ending* | `confirm_cw` | **exhausted at the committed lists.** Re-measure first — see below |
+| 1 | general search | anything as *beginning + stem + ending* | `confirm_cw` | **exhausted at the committed lists, and re-measuring them does not reopen it** — see below |
 | 2 | per-prefix continuations | families the global lists cannot express | `scripts/continuations.py` → `confirm_list` | reaches 496 the general search misses, but only **5** were new to the community |
 | 3 | materials → images | `image`, through the strongest measured cross-type seam | `images_from_materials` | productive after any material gain |
 | 4 | numbers in place | family members whose number sits mid-name | `confirm_variants` | productive; widen with `swaps` |
@@ -233,10 +233,16 @@ contributors have submitted it, **byte for byte identical in every file**, becau
 deterministic and a fresh clone gives everyone identical inputs. Two more submitted the same 372
 from method 3 the same way. The fingerprint now stops the sixth.
 
-"Spent" here is temporary, and reopening it is one command: **`python scripts/derive_lists.py`**
-folds every name confirmed since into the beginnings and endings. New lists are a new fingerprint
-and a genuinely different search. That is the compounding loop — **run a pass, re-measure, run
-again** — and it is why a single pass judged alone means nothing.
+**"Spent" here is not temporary, and re-measuring the lists does not undo it.** This paragraph
+used to say the opposite — one command, new lists, new fingerprint, a genuinely different search —
+and it was measured false: three consecutive folds returned 55 names, then 294, then 51, the last
+on a corpus two and a half times larger. A new fingerprint is a new *name* for the search, not new
+ground for it, and the guard that reads the fingerprint cannot tell the difference. Between them,
+that advice and a fingerprint nobody could collide with (it mixed in machine-local counts, so one
+method grew 48 of them) took this project from 165 names a pass to 2 in an evening.
+
+Re-measure when the lists have lost vocabulary and `derive_lists.py` says so. To find names, take
+a method that reaches somewhere the general search cannot.
 
 **The sound vocabulary was missing and is now not.** `COLD_WAR_TABLES` named only the legacy
 `fnv1a_xsounds.csv` (57,593 names). The twelve per-language files Saluki actually loads hold
@@ -940,6 +946,7 @@ Do not spend a night rediscovering these. Each cost real time.
 | Widening `pools` to ~40 asset types by guesswork | One submission did. Nothing useful came of it, and the real findings were buried among the rest. |
 | Searching four pools because they had "sound" in the name | `sound`, `sound_asset`, `sound_bank`, `sound_duck`. Only `sound_asset` is worth anything, and only in Cold War. |
 | Cross-type generation involving `xanim` and a non-model type | Measured: 13 to 22 shared cores out of tens of thousands. There is no seam. |
+| Re-measuring the lists to reopen a spent method | `derive_lists.py` folds the confirmed names in, the fingerprint changes, and the tool stops saying the search is swept — so it looks like the method reopened. Three consecutive folds: **55 names, then 294, then 51**, the last on a corpus two and a half times larger. The lists are capped, so a fold displaces as much vocabulary as it adds; what reopens a method is different ground. This was `next_step`'s standing advice for a month and is most of how a 165-name pass became a 2-name one. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
 
 ---

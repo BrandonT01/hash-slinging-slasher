@@ -241,7 +241,9 @@ def main():
 
     ordered = sorted(names)
     written = os.path.join(OUT, "retail.txt")
-    with open(written, "w", encoding="utf-8") as handle:
+    # LF on every platform: these rows get hashed and compared, and a stray CR is part of the
+    # name as far as any hash is concerned. See .gitattributes.
+    with open(written, "w", encoding="utf-8", newline="") as handle:
         handle.write("\n".join(ordered))
 
     print(f"wrote {len(ordered)} names to {written}", flush=True)

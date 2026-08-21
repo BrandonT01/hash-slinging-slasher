@@ -18,7 +18,7 @@ use std::collections::{BTreeMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::process::Stdio;
 
-use crate::{github, hash64, ID_MASK};
+use crate::{github, hash64, hash64_raw, ID_MASK};
 
 /// One open submission somebody else has in flight.
 pub struct OpenSubmission {
@@ -49,8 +49,7 @@ pub struct Landscape {
 impl Landscape {
     /// Whether a name has already been claimed by anybody.
     pub fn holds(&self, name: &str) -> bool {
-        let hash = hash64(name);
-        self.claimed.contains(&hash) || self.claimed.contains(&(hash & ID_MASK))
+        spellings_of(name).iter().any(|hash| self.claimed.contains(hash))
     }
 
     /// Whether this exact search has already been run and submitted by somebody.
@@ -196,13 +195,13 @@ fn say_if_swept(fingerprint: &str) -> bool {
 
     eprintln!(
         "\nthis exact search has already been run to exhaustion and submitted by {who}.\n\n\
-         Every input that decides what it finds is identical -- the same lists, the same seeds, \
-         the\nsame ids hunted -- so it will return their names and nothing else. Four \
-         contributors have\nalready submitted the same 430 names this way.\n\n\
-         Do something that reaches new ground instead:\n\n  \
-         - widen the lists first:  python scripts/derive_lists.py\n    \
-         (every name confirmed since their run becomes a new beginning and a new ending, which\n    \
-         changes this fingerprint and genuinely reopens the method)\n\n  \
+         Every input that decides what it finds is identical -- the same method, the same \
+         game, the\nsame pools, the same beginnings and the same endings -- so it will return \
+         their names and\nnothing else. Four contributors have already submitted the same 430 \
+         names this way.\n\n\
+         Re-measuring the lists is not the way out, though it does change this fingerprint: \
+         three\nconsecutive folds returned 55 names, then 294, then 51, the last on a corpus \
+         two and a half\ntimes larger. Do something that reaches new ground instead:\n\n  \
          - run a method that reaches elsewhere:  see METHODS.md, which says what each one gets at\n    \
          that nothing else does\n\n  \
          - invent one. That is the highest-value thing anybody does here, and the reason this\n    \
@@ -213,11 +212,31 @@ fn say_if_swept(fingerprint: &str) -> bool {
     true
 }
 
-/// Both spellings, because an id has had bit 63 cleared and the name's own hash may not have.
+/// Every id a submitted name could be filed under, so a claim is recognised however it was
+/// hashed.
+///
+/// Two normalisations, two maskings, four ids. The masking is because an asset id has had bit 63
+/// cleared and the name's own hash may not have.
+///
+/// **The folding is the one that cost a pool.** Black Ops 4's SAB sound names keep their
+/// backslashes and their ids are the hash of exactly that string -- 8,385 of the 8,385 known ones
+/// reproduce unfolded and 0 fold (`AGENTS.md` §6). This function recorded only the folded
+/// spelling, so every BO4 sound name anybody submitted was filed under an id no game holds:
+/// `holds` answered false for all of them, `wanted_for_search` never dropped those ids, and two
+/// contributors grinding the 70,878-id `sound_asset` pool -- the largest unnamed ground in the
+/// project -- would each find and each submit the same names with nothing able to notice. Cheap
+/// insurance in both directions: a name with no backslash hashes identically either way, so the
+/// extra spelling costs nothing at all for every other pool.
+fn spellings_of(name: &str) -> [u64; 4] {
+    let folded = hash64(name);
+    let raw = hash64_raw(name);
+
+    [folded, folded & ID_MASK, raw, raw & ID_MASK]
+}
+
+/// Records a name under every spelling it could be claimed as. See [`spellings_of`].
 fn claim(into: &mut HashSet<u64>, name: &str) {
-    let hash = hash64(name);
-    into.insert(hash);
-    into.insert(hash & ID_MASK);
+    into.extend(spellings_of(name));
 }
 
 /// Every open pull request against the repository, with the names each one adds.
@@ -413,5 +432,38 @@ diff --git a/submissions/x/material_1.txt b/submissions/x/material_1.txt
 
         assert!(landscape.holds("mc/mtl_test_thing"));
         assert!(!landscape.holds("mc/mtl_test_other"));
+    }
+
+    /// A Black Ops 4 SAB name is claimed under the id the game actually holds -- the hash of the
+    /// unfolded string. Filing only the folded spelling is what let two contributors grind the
+    /// largest sound pool in the project and submit each other's names undetected.
+    #[test]
+    fn a_backslash_name_is_claimed_under_the_id_the_game_holds() {
+        let name = r"vox\scripted\mpl\vox_thing";
+
+        let mut landscape = Landscape::default();
+        claim(&mut landscape.claimed, name);
+
+        // The id a `--no-fold` search hunts, and the id it would have been filed under before.
+        assert!(landscape.claimed.contains(&(hash64_raw(name) & ID_MASK)));
+        assert!(landscape.claimed.contains(&(hash64(name) & ID_MASK)));
+        assert!(landscape.holds(name));
+    }
+
+    /// And the extra spelling costs nothing for the names that have no backslash: they hash the
+    /// same either way, so the set holds exactly what it held before.
+    ///
+    /// Asserted as the ids themselves rather than as a count. `2` is only right when bit 63 of
+    /// this particular name's hash happens to be set -- rename the fixture and a correct
+    /// implementation would fail the test.
+    #[test]
+    fn a_name_without_a_backslash_is_unchanged_by_it() {
+        let name = "mc/mtl_plain_name";
+
+        let mut landscape = Landscape::default();
+        claim(&mut landscape.claimed, name);
+
+        let folded = hash64(name);
+        assert_eq!(landscape.claimed, HashSet::from([folded, folded & ID_MASK]));
     }
 }

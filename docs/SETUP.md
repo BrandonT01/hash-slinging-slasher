@@ -110,8 +110,11 @@ up until the pull request is a duplicate.
 
 **A search says the fingerprint has already been run by somebody.** That is the tool telling you
 this exact search will return their names and nothing else. Do not pass `--anyway`. Read
-`METHODS.md` and run something else, or run `python scripts/derive_lists.py` first — that folds
-every newly confirmed name into the search's lists and genuinely reopens it.
+`METHODS.md` and run something else, or invent one. Do not reach for
+`python scripts/derive_lists.py`: it folds every newly confirmed name into the lists and so
+changes the fingerprint, which is why it reads like a remedy, but it was measured -- three
+consecutive folds returned 55 names, then 294, then 51, the last on a corpus two and a half
+times larger. A new fingerprint is a new name for the search, not new ground for it.
 
 **`submit` says there is nothing left to send.** That is a good outcome, not a failure. It means
 everything found is already somebody's, which is what an exhausted method looks like. A submission

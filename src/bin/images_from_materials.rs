@@ -145,12 +145,16 @@ fn main() {
 
     let openings: Vec<String> = OPENINGS.iter().map(|text| (*text).to_owned()).collect();
 
+    // The stems go in by *content*. This method reopens whenever the material corpus grows --
+    // METHODS.md calls it "productive after any material gain" -- so a fingerprint blind to the
+    // materials would stop the run that a night of new materials had just made worth doing. What
+    // it must not carry is a *count* of them, which says nothing about which materials they were
+    // and differs on every machine; see the note at the top of `fingerprint.rs`.
     let fingerprint = Fingerprint::of("images_from_materials")
         .with("game", &config::game())
         .with_list("openings", &openings)
         .with_list("endings", &endings)
-        .with_count("stems", stems.len())
-        .with_count("wanted", wanted.len())
+        .with_list("stems", &stems)
         .finish();
     println!("fingerprint: {fingerprint}");
     recon::warn_if_swept(&fingerprint);

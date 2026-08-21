@@ -258,19 +258,20 @@ Run a method from METHODS.md instead. If you genuinely need this              po
     );
     drop(known);
 
+    // Method and game, and nothing else -- so every contributor computes the same one and the
+    // first submission retires the pass for everybody. That is the intended outcome here and
+    // nowhere else: this pool is worthless (`AGENTS.md` §5 -- the entry holds a pointer to its own
+    // unhashed string, so 8,667 confirmed names in one pass were all of them useless), the binary
+    // is off by default, and a pass nobody should run is a pass worth stopping on sight.
     let fingerprint = Fingerprint::of("confirm_localize")
         .with("game", &config::game())
-        .with_count("wanted", wanted.len())
         .finish();
     recon::warn_if_swept(&fingerprint);
 
     // Everything ever harvested, which is where both the keys and the categories come from.
+    // One harvest folder, read once: it was listed twice, under two labels for the same path.
     let mut vocabulary: Vec<String> = Vec::new();
-    for folder in [
-        paths::harvest().unwrap_or_default(),
-        paths::harvest().unwrap_or_default(),
-        paths::borrowed().unwrap_or_default(),
-    ] {
+    for folder in [paths::harvest(), paths::borrowed()].into_iter().flatten() {
         vocabulary.extend(folder_names(folder));
     }
     vocabulary.extend(all_table_names());

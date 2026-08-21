@@ -58,6 +58,13 @@ On Linux run `bin/linux/start`, and on macOS `bin/macos/start` — a universal b
 both Apple Silicon and Intel. Both are committed and rebuilt by CI on every change to the source,
 after that platform's own tests pass, so nothing needs installing.
 
+**Those builds happen here and not in your fork**, and that is deliberate. The workflows are
+guarded to this repository, because a fork that ran them committed its own copies of `bin/linux`
+and `bin/macos` — and since `submit` syncs your fork's `main` before it branches, that rebuild
+rode along in the next submission. A binary cannot be merged, so each one conflicted against
+whatever was built here in the meantime. Submissions carry findings and generators; nothing under
+`bin/` should ever appear in one, and CI now says so if it does.
+
 To build it yourself instead, install Rust and run `cargo run --release --bin start`. There are no
 dependencies, so it takes about a minute.
 
