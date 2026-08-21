@@ -48,7 +48,7 @@ a program that prints names; anything that can print names is a method.
 
 | script | |
 |---|---|
-| `derive_lists.py` | regenerates `data/prefixes.txt` and `data/suffixes.txt` from the tables **and** the confirmed names, and reports what its ceilings cut. Run it to repair vocabulary, **not** to reopen a spent method: three consecutive folds returned 55, 294 and 51 names, the last on a corpus two and a half times larger. The lists are capped, so every fold displaces as much as it adds. |
+| `derive_lists.py` | regenerates `data/prefixes.txt` and `data/suffixes.txt` from the tables **and** the confirmed names. Run it after a productive pass: it folds every new name into the lists, which changes the general search's fingerprint and genuinely reopens the method. |
 | `harvest_retail.py` | scrapes strings out of an unpacked game build. Only useful to somebody who owns one. |
 | `settings.py` | reads `config.toml`. A library, not a command. |
 

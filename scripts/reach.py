@@ -9,15 +9,6 @@ however long it runs -- and nothing in a run says so. A pass that reaches a tent
 exactly like a pass that reaches all of it, only with fewer results, which is indistinguishable
 from the game simply being nearly finished.
 
-Two beginning columns, and the second is the one that notices damage. `reached` asks whether
-*any* cut of a name is carried, which is the honest ceiling -- a candidate is `beginning + stem +
-ending` and a long stem reaches a deep name from a short beginning. But `mc/` is a must-keep, so
-every `mc/...` name stays "reached" after `mc/p9_`, `mc/ui_`, `mc/veh_` and fourteen more have
-been evicted from the file. Both re-measures of the collapse were validated on that column and it
-could not have shown the regression. `named` asks the stricter question -- whether the beginning
-the measurement would have written for this name is actually carried -- and it falls the moment a
-capped list starts displacing vocabulary.
-
 So this measures the ceiling rather than the yield. It takes names cod-name-db already publishes,
 which are real names of the kind we are hunting, and asks what share of them the lists could
 reconstruct. The unnamed ones are the same shape as the named ones, so the share is a fair estimate
@@ -97,29 +88,6 @@ def endings_of(name):
     return out
 
 
-def canonical_beginnings_of(name):
-    """The beginnings `derive_lists.measure` would write for this name, carrying a token.
-
-    The strict half of the pair. A name whose own measured beginning is not carried is one the
-    lists no longer describe, however reachable it remains through a shorter beginning and a
-    longer stem.
-
-    **The bare directory is deliberately not one of them**, though the measurement does count it.
-    `mc/` is a must-keep and can never be evicted, so including it scored every `mc/...` name as
-    named however many of `mc/p9_`, `mc/ui_` and `mc/veh_` had gone -- and this column measured
-    byte-identical to `reached` across all four general tables, which is exactly the blindness it
-    was added to cure.
-    """
-    head, separator, base = name.rpartition("/")
-    directory = head + separator
-    parts = base.split("_")
-
-    if len(parts) < 2:
-        return []
-
-    return [directory + parts[0] + "_", directory + "_".join(parts[:2]) + "_"]
-
-
 def beginnings_of(name):
     """Every beginning the search could actually build this name with.
 
@@ -145,20 +113,17 @@ def main(argv):
         endings = set(load(suffix_file))
 
         print("\n=== %s lists: %d beginnings, %d endings ===" % (title, len(prefixes), len(endings)))
-        print("%-28s %9s %9s %9s %9s %9s"
-              % ("table", "names", "reached", "named", "ending", "skipped"))
+        print("%-28s %9s %9s %9s %9s" % ("table", "names", "beginning", "ending", "skipped"))
 
         want_begin = collections.Counter()
-        want_named = collections.Counter()
         want_end = collections.Counter()
-        totals = [0, 0, 0, 0]
 
         for table in tables:
             names = snapshot.table_names(table)
             if not names:
                 continue
 
-            have_begin = have_named = have_end = 0
+            have_begin = have_end = 0
             counted = skipped = 0
             for name in names:
                 name = name.strip().lower().replace("\\", "/")
@@ -180,51 +145,23 @@ def main(argv):
                 elif bs:
                     want_begin[bs[-1]] += 1
 
-                cs = canonical_beginnings_of(name)
-                if any(c in prefixes for c in cs):
-                    have_named += 1
-                elif cs:
-                    want_named[cs[0]] += 1
-
                 if any(e in endings for e in es):
                     have_end += 1
                 elif es:
                     want_end[es[0]] += 1
 
             total = max(counted, 1)
-            print("%-28s %9d %8.1f%% %8.1f%% %8.1f%% %9d"
+            print("%-28s %9d %8.1f%% %8.1f%% %9d"
                   % (table.replace("fnv1a_", ""), counted,
-                     100.0 * have_begin / total, 100.0 * have_named / total,
-                     100.0 * have_end / total, skipped))
-
-            totals[0] += counted
-            totals[1] += have_begin
-            totals[2] += have_named
-            totals[3] += have_end
-
-        if totals[0]:
-            print("%-28s %9d %8.1f%% %8.1f%% %8.1f%%"
-                  % ("all four" if title == "general" else "all three", totals[0],
-                     100.0 * totals[1] / totals[0], 100.0 * totals[2] / totals[0],
-                     100.0 * totals[3] / totals[0]))
+                     100.0 * have_begin / total, 100.0 * have_end / total, skipped))
 
         if show_missing:
-            print("\n  commonest beginnings no cut of which is carried:")
+            print("\n  commonest beginnings not carried:")
             for key, count in want_begin.most_common(8):
-                print("    %-42s %d names" % (key, count))
-            print("  commonest names whose own measured beginning is not carried:")
-            for key, count in want_named.most_common(8):
                 print("    %-42s %d names" % (key, count))
             print("  commonest endings not carried:")
             for key, count in want_end.most_common(8):
                 print("    %-42s %d names" % (key, count))
-
-    print("\n`reached` is the ceiling: some cut of the name is carried, so a pass could build it.")
-    print("`named` is the stricter one: the beginning the measurement itself would write for that")
-    print("name is in the file. `reached` stays flat while a capped list displaces vocabulary --")
-    print("`mc/` is a must-keep, so it covers every `mc/...` name after `mc/p9_` has been evicted.")
-    print("A `named` share that has fallen since the last measurement is list damage, and")
-    print("`derive_lists.py` now reports what its ceiling cut for the same reason.")
 
     print("\n`skipped` is names no list can ever express -- a mesh tail is 26 base32 characters")
     print("hashed from the mesh itself. They are left out of the shares rather than counted as")

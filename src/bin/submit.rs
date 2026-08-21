@@ -321,13 +321,10 @@ fn send(
         println!(
             "\nnothing left to send for {game} -- every name found is already somebody's.\n\n\
              That is not a failed night, it is an honest one, and a submission of zero is worth \
-             more\nthan a submission of duplicates. What it means is that this method is spent -- \
-             and what\nspends a method is the ground, not the lists. Re-measuring them looks like \
-             the way out\nand is not: three consecutive folds returned 55 names, then 294, then \
-             51, the last on a\ncorpus two and a half times larger. Run a method that reaches \
-             somewhere else, or invent\none -- METHODS.md says what each one gets at that nothing \
-             else does, and `confirm_list`\ntakes candidates on standard input, so a method is a \
-             script that prints names."
+             more\nthan a submission of duplicates. What it means is that this method is spent at \
+             these\ninputs. Widen the lists (`python scripts/derive_lists.py`), run a method that \
+             reaches\nsomewhere else, or invent one -- METHODS.md says what each one gets at that \
+             nothing else does."
         );
         return None;
     }

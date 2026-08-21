@@ -615,14 +615,11 @@ fn suggest(game: &str) {
     if offered == 0 {
         println!("  every method in METHODS.md has been run in this clone at least once.");
         println!();
-        println!("  Re-measuring the lists is not the way round again. It changes the general");
-        println!("      search's fingerprint without changing what it can reach: three consecutive");
-        println!("      folds returned 55 names, then 294, then 51, the last on a corpus two and a");
-        println!("      half times larger. `derive_lists.py` is for when the lists have lost");
-        println!("      vocabulary -- it reports what it dropped -- not for reopening a method the");
-        println!("      ground has already spent.");
+        println!("  Re-measure and go round again:  python scripts/derive_lists.py");
+        println!("      That folds every name confirmed since into the beginnings and endings,");
+        println!("      which changes the general search's fingerprint and genuinely reopens it.");
         println!();
-        println!("  So invent one. `confirm_list` takes candidate names on standard input, so");
+        println!("  Or invent a method. `confirm_list` takes candidate names on standard input, so");
         println!("  a method is a script that prints names -- no Rust required. That is the");
         println!("  highest-value thing anybody does here, and the reason this repository is");
         println!("  pointed at an assistant rather than run as a fixed program.");

@@ -136,6 +136,8 @@ fn main() {
     let fingerprint = Fingerprint::of("confirm_sounds")
         .with("game", &config::game())
         .with_list("tails", &endings)
+        .with_count("stems", pieces.len())
+        .with_count("wanted", wanted.len())
         .finish();
     println!("fingerprint: {fingerprint}");
     recon::warn_if_swept(&fingerprint);

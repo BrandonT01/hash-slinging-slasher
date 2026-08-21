@@ -383,15 +383,8 @@ an assistant rather than run as a fixed program.
 # 8. Do not run a search somebody has already run
 
 Every run now carries a **fingerprint**: a digest of everything that decides what it will find —
-the method, the game, the pools, the flags, the two lists. It goes into the submission, and
+the method, the game, the pools, the lists, the seed corpus. It goes into the submission, and
 `start` collects everybody's.
-
-**Nothing counted off your own disk goes in, and that is a fix rather than an omission.** It used
-to mix in `seed lines`, `pieces` and `wanted`. Every one of those is local: `seed lines` counts
-the gitignored `findings/` tree, so the same method on the same day fingerprinted 3,383,984 for
-one contributor, 5,957,759 for another and 3,257,412 for a third. One method grew **48 distinct
-fingerprints**, `state/swept.txt` reached 196 entries, and the guard below **never once fired**
-while everybody re-ground ground somebody had already cleared.
 
 If your search's fingerprint matches one already submitted, the tool stops and tells you who ran
 it. **It is not being cautious. It will return their names and nothing else.** That is precisely
@@ -400,17 +393,11 @@ fresh clone gives everyone identical inputs, so it gives everyone identical outp
 
 When that happens, do one of these — never `--anyway`:
 
-1. **Run a method that reaches somewhere else.** `METHODS.md` says what each one gets at that
+1. **Widen the lists first.** `python scripts/derive_lists.py` folds every name confirmed since
+   into the beginnings and endings. That changes the fingerprint and genuinely reopens the method.
+2. **Run a method that reaches somewhere else.** `METHODS.md` says what each one gets at that
    nothing else does.
-2. **Invent one.** See §7.
-
-**Re-measuring the lists is not on that list, and it used to be first on it.**
-`python scripts/derive_lists.py` does change the fingerprint, which is exactly why it looked like
-a remedy — but it changes what the search is *called* without changing what it can *reach*.
-Measured over three consecutive folds: 55 names, then 294, then 51, the last on a corpus two and
-a half times larger. The tool said this in every exhausted run's notes for a month, and following
-it is most of how the yield here collapsed from 165 names a pass to 2. Re-measure when the lists
-have lost vocabulary — `derive_lists.py` reports what its ceiling cut — not to reopen ground.
+3. **Invent one.** See §7.
 
 > **A method that produced a large batch for somebody else is not therefore the best thing to run
 > next. It is the most likely thing to be exhausted.**

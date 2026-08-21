@@ -16,24 +16,6 @@
 //! What goes in is only what changes the *answer*: the method, the game, the pools, the lists,
 //! and the corpus. Not the time, not the machine, not the thread count. Two runs with the same
 //! fingerprint would find the same names; two runs with different fingerprints might not.
-//!
-//! **A count of what this machine happens to hold may never go in.** That is not a style rule,
-//! it is the whole difference between a guard that works and the one this project shipped for a
-//! month. The general search used to mix in `seed lines`, `pieces` and `wanted`: the first counts
-//! the gitignored `findings/` tree, the second follows from it, and the third moves whenever
-//! anybody opens a pull request. Measured across three contributors running the *same* method on
-//! the same day, `seed lines` read 3,383,984, 5,957,759 and 3,257,412 -- so the same search
-//! fingerprinted differently on every machine, one method grew 48 distinct fingerprints,
-//! `state/swept.txt` reached 196 rows, and the guard never once fired while everybody re-ground
-//! the same ground.
-//!
-//! The distinction is between a *count* and a *content digest*, and it is the whole of the rule.
-//! `with_list` over the names a pass will actually draw on says which search this is, and two
-//! contributors holding the same material still agree; `with_count` over how many of them there
-//! were says only how much of somebody's disk was involved, which no two machines will ever
-//! answer the same way. So a corpus goes in through `with_list` or it does not go in at all --
-//! and the local findings tree does not, because everybody has one, no two are alike, and it
-//! grows every pass, which would hand every machine a private fingerprint all over again.
 
 use crate::{feed, hash64};
 
@@ -58,10 +40,6 @@ impl Fingerprint {
         self
     }
 
-    /// A count that decides the answer -- and only ever one every clone agrees on.
-    ///
-    /// The size of a candidate list arriving on a pipe qualifies. The size of anything read off
-    /// this machine's disk does not: see the note at the top of this file for what that cost.
     pub fn with_count(self, label: &str, count: usize) -> Self {
         self.with(label, &count.to_string())
     }
