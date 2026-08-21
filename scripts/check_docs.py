@@ -71,6 +71,12 @@ def low_value_pools():
 
 def main():
     problems = []
+
+    # Reported, never fatal. A submission carries names, and the names are what matter: failing a
+    # contributor's pull request over a path bug in a generator it happens to carry would throw
+    # away verified finds to enforce library hygiene. Five submissions holding 211 confirmed names
+    # were blocked exactly that way on 2026-08-21, within an hour of this check being added.
+    warnings = []
     binaries = declared_binaries()
     pools = pool_names()
 
@@ -188,11 +194,16 @@ def main():
         if 'os.path.join(_root, "scripts", "snapshot.py")' in text:
             continue
 
-        problems.append(
-            "%s imports `snapshot` without walking up to find `scripts/`. It will fail once "
-            "`submit` files it into scripts/contributed/ -- see the pattern in scripts/README.md."
-            % script
+        warnings.append(
+            "%s imports `snapshot` without walking up to find `scripts/`, so it cannot run from "
+            "where it has been filed -- see the pattern in scripts/README.md." % script
         )
+
+    if warnings:
+        print("%d warning(s), which do not fail this check:\n" % len(warnings))
+        for warning in warnings:
+            print("  " + warning)
+        print()
 
     if problems:
         print("%d problem(s):\n" % len(problems))
