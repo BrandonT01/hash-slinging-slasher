@@ -1,0 +1,8 @@
+4e65bede2fc533,wc/t8_snow_usa_chunky
+4cc0d075d921361,splm/t8_snow_usa_chunky
+3fb7293d660fc169,mc/t8_snow_usa_chunky
+4e7cdb8df6c3e8e9,mc/mtl_p8_wz_turbine_bridge_tower_cement
+6147cb7d65179742,mc/mtl_p8_zmu_tshirt_folded_diner
+70a5d1380aeb2579,mc/mtl_p7_zur_standing_table_trash_symbol
+77f46800885c97c2,mc/mtl_p8_usa_saddle_decal_stitches
+7c6f396fc28ed014,mc/mtl_p8_light_lamppost_ornate_01_dmg_decal_bump
