@@ -773,15 +773,45 @@ fn scripts_in(folders: &[PathBuf]) -> Vec<PathBuf> {
 /// sending, so the worst case of counting a name stranded when it is not is a batch that comes to
 /// nothing -- against a best case of recovering somebody's whole session.
 fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
-    let mut accounted: HashSet<String> = HashSet::new();
-    for folder in run_folders(findings) {
-        for (_, _, name) in names_in(&folder) {
-            accounted.insert(name.to_lowercase());
+    // Keyed on game, type and name, not on the name alone.
+    //
+    // A bare name set collapses both titles into one. Measured on this clone: 1,653 names appear
+    // in both games' findings, so a name sitting in a Cold War run folder marked the identical
+    // Black Ops 4 name as accounted for -- and a Black Ops 4 pass that was killed then had that
+    // name skipped by the recovery written to save it. The same collapse happened across types,
+    // a name filed under `image` shadowing the identical string stranded under `material`.
+    let mut accounted: HashSet<(String, String, String)> = HashSet::new();
+
+    let mut remember = |game: &str, kind: &str, name: &str, set: &mut HashSet<_>| {
+        set.insert((game.to_owned(), kind.to_lowercase(), name.to_lowercase()));
+    };
+
+    // Every run folder, *including* superseded ones. `run_folders` skips those deliberately --
+    // they are organised-away results and must not be sent again -- but skipping them here left
+    // their names looking stranded, so every `submit` rebuilt a recovery folder holding them and
+    // re-offered names that had already gone. They died at the exclusion step, so it was churn
+    // rather than loss: dozens of pointless folders across an overnight rotation.
+    for folder in every_run_folder(findings) {
+        let game = game_under(findings, &folder);
+        for (kind, _, name) in names_in(&folder) {
+            remember(&game, &kind, &name, &mut accounted);
         }
     }
+
     for folder in fs::read_dir(outbox).into_iter().flatten().flatten() {
-        for (_, _, name) in names_in(&folder.path()) {
-            accounted.insert(name.to_lowercase());
+        let folder = folder.path();
+        // `submissions/<who>_<GAME>_<stamp>/`, which is where the game is.
+        let game = folder
+            .file_name()
+            .and_then(|name| name.to_str())
+            .and_then(|name| name.split('_').nth(1))
+            .unwrap_or_default()
+            .to_uppercase();
+
+        for (kind, _, name) in names_in(&folder) {
+            // A submission names its files `<kind>_<stamp>.txt`.
+            let kind = strip_stamp(&kind).to_owned();
+            remember(&game, &kind, &name, &mut accounted);
         }
     }
 
@@ -794,9 +824,12 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
         }
 
         // The aggregate files sit directly in the game folder; run folders are below it.
+        let game = game_under(findings, &folder);
+
         let mut stranded: Vec<(String, u64, String)> = Vec::new();
         for (kind, id, name) in names_in(&folder) {
-            if !accounted.contains(&name.to_lowercase()) {
+            let key = (game.clone(), kind.to_lowercase(), name.to_lowercase());
+            if !accounted.contains(&key) {
                 stranded.push((kind, id, name));
             }
         }
@@ -838,6 +871,47 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
     }
 
     recovered
+}
+
+/// Which game a path under a findings tree belongs to: the first component below the root.
+///
+/// Taken relative to the tree being walked rather than through `paths::game_of`, which strips
+/// the *installed* findings root. That is the same answer in a real run and the wrong one
+/// anywhere else -- including under test, where every folder would come back with no game at all
+/// and the two titles would collapse into one set again, which is the bug this is here to stop.
+fn game_under(findings: &Path, path: &Path) -> String {
+    path.strip_prefix(findings)
+        .ok()
+        .and_then(|rest| rest.components().next())
+        .map(|first| first.as_os_str().to_string_lossy().to_uppercase())
+        .unwrap_or_default()
+}
+
+/// Every `run_*` folder, superseded ones included, for deciding what is *accounted for*.
+///
+/// `run_folders` is the list of runs to consider sending and rightly leaves `superseded/` out.
+/// This is the other question -- has this name already been written down anywhere -- and there
+/// the answer for a superseded run is yes.
+fn every_run_folder(findings: &Path) -> Vec<PathBuf> {
+    let mut found = Vec::new();
+    let Ok(entries) = fs::read_dir(findings) else {
+        return found;
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() {
+            continue;
+        }
+
+        if entry.file_name().to_string_lossy().starts_with("run_") {
+            found.push(path);
+        } else {
+            found.extend(every_run_folder(&path));
+        }
+    }
+
+    found
 }
 
 fn run_folders(findings: &Path) -> Vec<PathBuf> {
@@ -1359,6 +1433,86 @@ mod tests {
     /// seconds, no run folder because the pass never finished, and `submit` sending only run
     /// folders -- so the work existed on disk and could never be sent, silently.
     #[test]
+    /// The same name in both games is two names, and one being safe does not save the other.
+    ///
+    /// `accounted` used to be a set of bare lowercase names, so a name sitting in a Cold War run
+    /// folder marked the identical Black Ops 4 name as accounted for. Measured on this clone:
+    /// 1,653 names appear in both games' findings, so a killed Black Ops 4 pass could have any of
+    /// them silently skipped by the recovery written to save it.
+    #[test]
+    fn a_name_in_one_game_does_not_account_for_the_other() {
+        let root = std::env::temp_dir().join(format!("crossgame_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+
+        let findings = root.join("findings");
+        let cw = findings.join("blkopscw");
+        let bo4 = findings.join("blkops04");
+        let outbox = root.join("submissions");
+        fs::create_dir_all(cw.join("run_20260820-010101_all")).unwrap();
+        fs::create_dir_all(&bo4).unwrap();
+        fs::create_dir_all(&outbox).unwrap();
+
+        // Cold War holds this name in a run folder, so Cold War's copy is accounted for.
+        fs::write(cw.join("xmodel.txt"), "1111111111111111,shared_between_games\n").unwrap();
+        fs::write(
+            cw.join("run_20260820-010101_all").join("xmodel.txt"),
+            "1111111111111111,shared_between_games\n",
+        )
+        .unwrap();
+
+        // Black Ops 4 holds the same name, stranded by a kill, in no run folder at all.
+        fs::write(bo4.join("xmodel.txt"), "1111111111111111,shared_between_games\n").unwrap();
+
+        let recovered = recover_stranded(&findings, &outbox);
+
+        assert_eq!(
+            recovered.len(),
+            1,
+            "the Black Ops 4 copy was treated as accounted for because Cold War held the same \
+             name, so a killed pass loses it with nothing said"
+        );
+        assert!(
+            recovered[0].starts_with(&bo4),
+            "recovered into the wrong game's tree: {:?}",
+            recovered[0]
+        );
+    }
+
+    /// A superseded run still accounts for its names, so they are not recovered again and again.
+    ///
+    /// `run_folders` skips `superseded/` on purpose -- those results were organised away and must
+    /// not be sent twice. Asking the *other* question with the same walk left their names looking
+    /// stranded, so every `submit` built a fresh recovery folder holding names that had already
+    /// gone. They died at the exclusion step, so it was churn rather than loss, but an overnight
+    /// rotation submits after every job and that is dozens of folders for nothing.
+    #[test]
+    fn a_superseded_run_still_accounts_for_its_names() {
+        let root = std::env::temp_dir().join(format!("superseded_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+
+        let findings = root.join("findings");
+        let game = findings.join("blkops04");
+        let outbox = root.join("submissions");
+        fs::create_dir_all(game.join("superseded").join("run_20260819-010101_all")).unwrap();
+        fs::create_dir_all(&outbox).unwrap();
+
+        fs::write(game.join("xmodel.txt"), "3333333333333333,filed_away_earlier\n").unwrap();
+        fs::write(
+            game.join("superseded")
+                .join("run_20260819-010101_all")
+                .join("xmodel.txt"),
+            "3333333333333333,filed_away_earlier\n",
+        )
+        .unwrap();
+
+        let recovered = recover_stranded(&findings, &outbox);
+
+        assert!(
+            recovered.is_empty(),
+            "a name held by a superseded run was recovered again, which every submit would repeat"
+        );
+    }
+
     fn a_killed_run_is_recovered_from_the_aggregate_files() {
         let root = std::env::temp_dir().join(format!("stranded_{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
