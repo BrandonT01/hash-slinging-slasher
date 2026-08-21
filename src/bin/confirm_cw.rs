@@ -321,6 +321,9 @@ fn main() {
         results = results.keeping_spelling();
     }
     let mut lines = results.seed_names();
+    // Filled below when the sources include them, and fingerprinted by content: see the note
+    // beside `Fingerprint::of` for why this one corpus goes in and the rest does not.
+    let mut harvested: Vec<String> = Vec::new();
     println!("confirmed names as seeds: {}", lines.len());
 
     if sources == Sources::All {
@@ -335,16 +338,32 @@ fn main() {
             lines.extend(borrowed);
         }
 
-        for (label, folder) in [
-            ("harvested from the alpha", paths::harvest().unwrap_or_default()),
-            ("harvested from the retail build", paths::harvest().unwrap_or_default()),
-            ("borrowed from the earlier game", paths::borrowed().unwrap_or_default()),
-            ("found deriving images from materials", paths::findings()),
-        ] {
-            let found = folder_names(folder);
-            println!("{label}: {}", found.len());
-            lines.extend(found);
+        // What `config.toml` points at, which is the only part of this corpus that is not the
+        // same on every clone: a contributor who owns a build harvests strings out of it. Kept
+        // apart from everything else so the fingerprint can carry it -- see below.
+        //
+        // Deduplicated by folder, because the same one was read twice under two labels, "the
+        // alpha" and "the retail build". `paths::harvest()` returns one path, so every string in
+        // it was cut into pieces twice for nothing.
+        let mut folders: Vec<std::path::PathBuf> =
+            [paths::harvest(), paths::borrowed()].into_iter().flatten().collect();
+        folders.sort();
+        folders.dedup();
+
+        for folder in &folders {
+            let found = folder_names(folder.clone());
+            println!("harvested or borrowed from {}: {}", folder.display(), found.len());
+            harvested.extend(found);
         }
+
+        harvested.sort();
+        harvested.dedup();
+        println!("harvested or borrowed in total: {}", harvested.len());
+        lines.extend(harvested.iter().cloned());
+
+        let found = folder_names(paths::findings());
+        println!("found deriving images from materials: {}", found.len());
+        lines.extend(found);
 
         let vocabulary = if every_table {
             all_table_names()
@@ -362,6 +381,21 @@ fn main() {
         lines.extend(pool);
     }
 
+    // A seeds-only pass is the one case where the corpus *is* the local findings tree: nothing
+    // else is added below, so a fingerprint without it would describe an empty search and two
+    // contributors with entirely different confirmed names would be told they had run the same
+    // one. So it goes in the way `confirm_list` puts its candidates in -- as a digest of the
+    // content, order-independent, and without keeping a second copy of several million names.
+    // The `All` pass deliberately does not: there the findings are a fraction of a corpus
+    // dominated by the shared tables, and mixing them in is what gave every machine a private
+    // fingerprint. See the note beside `Fingerprint::of` below.
+    let seed_digest = match sources {
+        Sources::Seeds => lines
+            .iter()
+            .fold(0u64, |total, name| total.wrapping_add(hash64(name))),
+        Sources::All => 0,
+    };
+
     let seeds = lines.len();
     let started = Instant::now();
     let pieces = stems(&lines);
@@ -376,8 +410,40 @@ fn main() {
     // come out goes in; nothing about this machine or this moment does. If somebody has already
     // run and submitted this exact configuration, it will find precisely what they found, and
     // saying so now is worth more than an hour of confirming it.
+    //
+    // **Nothing counted off this machine's disk may go in here**, and that is the whole reason
+    // the guard was silent through the worst night this project has had. The fingerprint used to
+    // mix in `seed lines`, `pieces` and `wanted`. Every one of the three is a local number:
+    // `seed lines` counts the gitignored `findings/` tree, so no two contributors can ever agree
+    // -- measured across three people running the *same* method, 3,383,984 against 5,957,759
+    // against 3,257,412 -- while `pieces` follows it and `wanted` moves every time somebody opens
+    // a pull request. The result was 48 distinct fingerprints for one method, 196 rows in
+    // `state/swept.txt`, and `warn_if_swept` never firing once while everybody re-ground the same
+    // ground. What is left is what actually decides the answer and is identical on every clone:
+    // the method, the game, the pools, the two flags and the two lists.
+    //
+    // The harvested corpus is the exception, and it goes in by content rather than by size. A
+    // contributor who owns a build points `config.toml` at what they scraped out of it, and that
+    // genuinely is a different search -- it is the one search here nobody else can run, and
+    // stopping it because a fresh clone got there first would be the most expensive thing this
+    // guard could possibly do. It is absent on a fresh clone, so it feeds an empty list and every
+    // ordinary contributor still shares one fingerprint, which is the case the guard exists for.
+    //
+    // The local findings tree stays out of an `All` pass even so. Everybody has one, no two are
+    // alike, and it grows every pass -- so including it would give every machine its own
+    // fingerprint again, for material whose marginal reach is the 55, 294 and 51 names measured
+    // across three folds. A `seeds` pass is the opposite case and carries its digest, because
+    // there the findings tree is the whole corpus rather than a fraction of one.
+    //
+    // **Four passes, four names.** The sound arm used to be `(true, _)`, which was survivable
+    // only while the removed counts happened to separate the two sound passes: with those gone,
+    // `--sounds` and `--sounds seeds` fingerprinted identically, so whichever was submitted first
+    // retired the other -- and `run_label` carries a test, `every_pass_has_its_own_label`, saying
+    // exactly why that must not happen ("the seeds-only sound pass would retire the expensive one
+    // before it ever ran").
     let fingerprint = Fingerprint::of(match (sounds, sources) {
-        (true, _) => "confirm_cw/sounds",
+        (true, Sources::All) => "confirm_cw/sounds",
+        (true, Sources::Seeds) => "confirm_cw/soundseeds",
         (false, Sources::All) => "confirm_cw/all",
         (false, Sources::Seeds) => "confirm_cw/seeds",
     })
@@ -387,9 +453,8 @@ fn main() {
     .with("fold", if no_fold { "no" } else { "yes" })
     .with_list("beginnings", &prefixes)
     .with_list("endings", &endings)
-    .with_count("seed lines", seeds)
-    .with_count("pieces", pieces.len())
-    .with_count("wanted", wanted.len())
+    .with_list("harvested", &harvested)
+    .with("seeds", &format!("{seed_digest:016x}"))
     .finish();
 
     println!("fingerprint: {fingerprint}");
@@ -480,10 +545,16 @@ fn main() {
                 .measured("new here", results.added())
                 .fingerprint(&fingerprint)
                 .next_step(
-                    "this configuration is now exhausted. Re-measure the lists with \
-                     `python scripts/derive_lists.py` so the confirmed names widen them, which \
-                     changes the fingerprint and reopens the method -- or run a method that \
-                     reaches somewhere else entirely (METHODS.md).",
+                    "this configuration is now exhausted, and what reopens it is different \
+                     ground rather than a different name. Re-measuring the lists is not the \
+                     remedy this line used to recommend: measured over three consecutive folds \
+                     it returned 55 names, then 294, then 51, the last on a corpus two and a \
+                     half times larger. It changes the fingerprint without changing what the \
+                     search can reach, and following it is most of how the yield here collapsed. \
+                     Run a method that reaches somewhere else -- METHODS.md says what each one \
+                     gets at that nothing else does -- or invent one: `confirm_list` takes \
+                     candidate names on standard input, so a method is a script that prints \
+                     names.",
                 ),
             );
 

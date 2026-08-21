@@ -260,7 +260,6 @@ Run a method from METHODS.md instead. If you genuinely need this              po
 
     let fingerprint = Fingerprint::of("confirm_localize")
         .with("game", &config::game())
-        .with_count("wanted", wanted.len())
         .finish();
     recon::warn_if_swept(&fingerprint);
 

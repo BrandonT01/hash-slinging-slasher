@@ -257,7 +257,6 @@ fn main() {
         .with("label", &label)
         .with_count("candidates", candidates as usize)
         .with("digest", &format!("{digest:016x}"))
-        .with_count("wanted", wanted.len())
         .finish();
 
     println!("fingerprint: {fingerprint}");

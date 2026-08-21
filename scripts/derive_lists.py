@@ -18,8 +18,15 @@ measured from the tables alone cannot see them.
 Only Cold War is measured. The `_v2` tables are MW2022 and BO6 and teach the wrong conventions,
 though every table is still read for exclusion elsewhere.
 
-Writes data/prefixes.txt and data/suffixes.txt, one item per line, and refuses to shrink either:
-a pass has to be able to be a superset of the pass before it.
+Writes data/prefixes.txt and data/suffixes.txt, one item per line. What a previous measurement
+found is carried forward, so a pass can be a superset of the pass before it -- but only as far as
+this group's own corpus still supports it. A capped list has a fixed number of slots, and an entry
+no sound table and no confirmed sound name has ever contained is not vocabulary for a sound
+search, however long it has been in the file.
+
+There are two groups, and they do not share a budget or a corpus: a general search hunts models,
+materials, images and anims, and a sound search hunts `sound_asset` and `sound_alias`. Each
+measures its own tables and its own half of the confirmed names.
 """
 import settings
 import collections, os, sys, glob
@@ -37,8 +44,12 @@ def teaches_the_wrong_shape(kind, name):
 
 HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TABLES = settings.tables_csv()
+# One folder, and it used to be named twice. `CONFIRMED` and `FROM_MATERIALS` resolved to the
+# same path and `found_names` walked both, so every confirmed name was measured twice: 136,029
+# lines on disk reported as 272,034. That halves every threshold the confirmed takes are held to
+# -- `FOUND_PREFIX_MIN` of 40 was really a bar of 20 -- and the entries it waved through are a
+# good part of what displaced the published vocabulary out of these capped lists.
 CONFIRMED = settings.path("findings", "findings")
-FROM_MATERIALS = settings.path("findings", "findings")
 DATA = os.path.join(HERE, "data")
 
 # The tables that are Cold War rather than a newer game, by their marker density.
@@ -87,12 +98,34 @@ ROOTED_MIN = 100    # a directory carrying a leading token
 FOUND_ENDING_MIN = 5
 FOUND_PREFIX_MIN = 40
 
+# What the published tables' own commonest entries are guaranteed, before the confirmed corpus
+# competes for the ceiling.
+#
+# This is the fix for how the collapse-era lists lost their vocabulary. The confirmed take ran
+# first and uncapped: it took 558 of the 700 beginning slots, so `published at >=200` and
+# `published directory plus token` were measured, ranked and then truncated away in full. The
+# shipped file carried 418 beginnings heading fewer than 200 published names, 225 heading none at
+# all, and left out 51 of the 200 commonest published beginnings -- `volume0_state0_` (46,065
+# names), `volume1_`, `mc/ui_`, `mc/p9_`. Each re-measure made it strictly worse, because the
+# confirmed corpus only ever grows.
+#
+# Measured rather than hand-listed, so it protects a group nobody has written a `MUST_KEEP` for:
+# the sound lists had `{}` for both guards while 289 of the 400 commonest published sound
+# beginnings -- heading 173,255 names -- were absent from the file hunting the largest unnamed
+# pool in the project.
+PUBLISHED_FLOOR_PREFIXES = 150
+PUBLISHED_FLOOR_ENDINGS = {"one": 600, "two": 250, "three": 100}
+
 # Hard ceilings on what one measurement may add. Peeling makes an ending nearly free in time,
 # but nothing makes it free in accuracy: a run of n candidates against w unnamed ids is expected
 # to match n * w / 2^63 names by coincidence however the work is arranged. These keep a pass to
 # roughly two or three such names as the searches feed each other and the lists grow.
 MOST_ENDINGS = 4800
 MOST_PREFIXES = 700
+
+# The most beginning slots one measurement of the confirmed corpus may take. See the note beside
+# `PUBLISHED_FLOOR_PREFIXES` for what uncapped cost.
+CONFIRMED_PREFIX_SHARE = 150
 
 # What must survive every regeneration, whatever else is measured.
 #
@@ -144,6 +177,11 @@ MUST_KEEP_ENDINGS = {
 
 # Endings a family varies that no table can show, because a model's mesh entry hides them behind
 # its own hash.
+#
+# **Seeded, never appended.** These are hand-written and no measurement can re-derive them, so
+# adding them last put them first in line for the ceiling: `_cm` -- named in this file's own
+# docstring as the ending a hand list missed, 12,727 occurrences -- along with `_gm`, `_jup`,
+# `_lod2`..`_lod6`, `t9_` and `wm_` were all missing from the shipped lists.
 EXTRA = ["_lod0", "_lod1", "_lod2", "_lod3", "_lod4", "_lod5", "_lod6", "_s1", "_s2", "_s3",
          "_000", "_bc", "_cm", "_dm", "_gm", "_jup", "_lg", "_m0", "_m1", "_v3", "_v4", "_v5",
          "_v6"]
@@ -161,8 +199,17 @@ def table_names(table):
                 yield line.split(",", 1)[1].lower().replace(chr(92), "/")
 
 
-def found_names():
-    for folder in (CONFIRMED, FROM_MATERIALS):
+def found_names(sound=None):
+    """The names this project has confirmed, optionally only the sound ones or only the rest.
+
+    Split because the searches are split. A sound ending tried against a model id can only ever
+    be a coincidence, and vice versa -- so measuring every confirmed name into both groups spent
+    each list's ceiling on vocabulary that cannot match what it hunts. It showed: the general
+    endings carried `_00.rn75.pc.en.snd` and six more encoding tails, and the sound beginnings
+    carried `mc/`, `mc/mtl_`, `mc/mtl_p8_` and `i_mtl_`, none of which heads a single sound name
+    in any of the three sound tables.
+    """
+    for folder in (CONFIRMED,):
         # Recursive, because findings are kept per game now -- findings/<game>/ and its run_*
         # folders. A flat glob of the root would quietly measure nothing at all.
         for path in glob.glob(os.path.join(folder, "**", "*.txt"), recursive=True):
@@ -172,13 +219,21 @@ def found_names():
             # text already ships in the build, and their conventions belong to no hunted pool.
             if kind.startswith("localizeentry"):
                 continue
+
+            if sound is not None and kind.startswith("sound") != sound:
+                continue
             with open(path, encoding="utf-8", errors="replace") as handle:
                 for line in handle:
                     if teaches_the_wrong_shape(kind, line):
                         continue
                     line = line.strip()
                     if "," in line:
-                        yield line.split(",", 1)[1].lower()
+                        # Folded to forward slashes exactly as `table_names` folds them. Black Ops
+                        # 4's SAB sound names keep their backslashes, so without this a confirmed
+                        # `vox\scripted\mpl\vox_thing` was measured as one enormous prefix with no
+                        # directory in it, and two dead backslash entries reached
+                        # data/prefixes.txt where nothing could ever match them.
+                        yield line.split(",", 1)[1].lower().replace(chr(92), "/")
 
 
 def measure(names):
@@ -228,12 +283,20 @@ def measure(names):
                 directories=directories, rooted=rooted)
 
 
+def seeded(must_keep, extra):
+    """The head of a list: what must survive, then the hand-written entries no measurement can
+    reach. Deduplicated, order preserved."""
+    items = list(dict.fromkeys(list(must_keep) + list(extra)))
+    return items, set(items)
+
+
 # Measured per table as well as all together. The tables differ in size by an order of
 # magnitude, and a single global popularity ranking lets the biggest pool's conventions crowd
 # every other pool's out of the ceiling -- the committed lists once carried 9 xanim-shaped
 # endings out of 4,800 against 47,859 published xanim names. Each table's own commonest
 # beginnings and endings are guaranteed a place first; global popularity fills the rest.
-def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_sound=True):
+def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, extra_endings=(),
+           extra_prefixes=(), sound_group=False, lean_sound=True):
     """Measure one group of tables into its own pair of lists.
 
     **One budget per search, not one budget shared.** The ceilings exist because coincidental
@@ -257,15 +320,38 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
         for key in published:
             published[key].update(measured[key])
 
-    confirmed = measure(found_names())
+    confirmed = measure(found_names(sound=sound_group))
+
+    # What this group's own corpus says a word exists at all. A carried entry outside it is
+    # vocabulary from somebody else's search: `_00.rn75.pc.en.snd` in a list hunting models, or
+    # `mc/` in a list hunting sound. Used on the carry only -- the hand-written extras are seeded,
+    # and they are precisely the entries no measurement can support.
+    supported = {}
+    for name, keys in (("endings", ("one", "two", "three")),
+                       ("beginnings", ("prefixes", "directories", "rooted"))):
+        supported[name] = set()
+        for key in keys:
+            supported[name] |= set(published[key]) | set(confirmed[key])
 
     print(f"measured {sum(published['one'].values())} published names and "
           f"{sum(confirmed['one'].values())} confirmed ones", file=sys.stderr)
 
+    def floor_of(counter, threshold, most):
+        """The group's own commonest published entries, which no other take may displace."""
+        return [key for key, count in counter.most_common()[:most] if count >= threshold]
+
+    floor_endings = {key: floor_of(published[key], minimum, PUBLISHED_FLOOR_ENDINGS[key])
+                     for key, minimum in (("one", ONE_MIN), ("two", TWO_MIN), ("three", THREE_MIN))}
+    floor_prefixes = floor_of(published["prefixes"], PREFIX_MIN, PUBLISHED_FLOOR_PREFIXES)
+
     # Seeded with what must survive, before anything competes for the ceiling. A guard that only
     # *detects* the loss leaves somebody to fix it by hand every time a table is added; taking these
     # first means the loss cannot happen, and the guard below becomes the belt to this pair of braces.
-    suffixes, seen = list(keep_endings), set(keep_endings)
+    #
+    # The hand-written extras are seeded with them, rather than appended after every take as they
+    # used to be. Appending put the one part of these lists that no measurement can reproduce last
+    # in the queue for a ceiling that binds every time.
+    suffixes, seen = seeded(keep_endings, extra_endings)
 
 
     def take(counter, threshold, note, cap=None):
@@ -294,8 +380,17 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
     # So confirmed keeps its priority but not the whole ceiling. The published tables are the only
     # source of vocabulary this project has not already found, and a list that cannot see them
     # stops learning anything new.
-    confirmed_share = max(1, (MOST_ENDINGS * 3) // 5)
+    confirmed_share = max(1, (MOST_ENDINGS * 2) // 5)
     print("endings", file=sys.stderr)
+
+    # The published floor comes first, and it is a take rather than part of the seed on purpose:
+    # if anything above it ever grows enough to eat the ceiling, these fall past it and the guard
+    # below says so. Seeding them would make the guard unfirable, which is the exact shape of the
+    # bug it replaces.
+    for key in ("one", "two", "three"):
+        take(collections.Counter({k: published[key][k] for k in floor_endings[key]}), 1,
+             f"published floor, {key} segment")
+
     take(confirmed["one"], FOUND_ENDING_MIN, f"confirmed, one segment at >={FOUND_ENDING_MIN}",
          cap=confirmed_share // 3)
     take(confirmed["two"], FOUND_ENDING_MIN, f"confirmed, two segments at >={FOUND_ENDING_MIN}",
@@ -332,12 +427,7 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
     take(published["one"], ONE_MIN, f"published, one segment at >={ONE_MIN}")
     take(published["two"], TWO_MIN, f"published, two segments at >={TWO_MIN}")
     take(published["three"], THREE_MIN, f"published, three segments at >={THREE_MIN}")
-    for item in EXTRA:
-        if item not in seen:
-            seen.add(item)
-            suffixes.append(item)
-
-    prefixes, seen_prefix = list(keep_prefixes), set(keep_prefixes)
+    prefixes, seen_prefix = seeded(keep_prefixes, extra_prefixes)
 
 
     def take_prefix(counter, threshold, note, cap=None):
@@ -372,9 +462,15 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
 
     take_prefix(shallow(confirmed["directories"]), 1, "every shallow confirmed directory")
     take_prefix(shallow(published["directories"]), 1, "every shallow published directory")
+    take_prefix(collections.Counter({k: published["prefixes"][k] for k in floor_prefixes}), 1,
+                "published floor")
     take_prefix(deep(confirmed["directories"]), 1, "deep confirmed directories", cap=40)
     take_prefix(deep(published["directories"]), 1, "deep published directories", cap=120)
-    take_prefix(confirmed["prefixes"], FOUND_PREFIX_MIN, f"confirmed at >={FOUND_PREFIX_MIN}")
+
+    # Capped, and this is the take the collapse came out of. Uncapped it took 558 of 700 slots and
+    # left nothing for the published beginnings measured after it.
+    take_prefix(confirmed["prefixes"], FOUND_PREFIX_MIN, f"confirmed at >={FOUND_PREFIX_MIN}",
+                cap=CONFIRMED_PREFIX_SHARE)
 
     # Each pool's own commonest beginnings, held to a share each, for the same reason as the
     # endings above.
@@ -384,51 +480,57 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
 
     take_prefix(published["prefixes"], PREFIX_MIN, f"published at >={PREFIX_MIN}")
     take_prefix(published["rooted"], ROOTED_MIN, f"published directory plus token at >={ROOTED_MIN}")
-    for item in EXTRA_PREFIX:
-        if item not in seen_prefix:
-            seen_prefix.add(item)
-            prefixes.append(item)
 
 
 
 
-    def guard_lists(prefixes, must_keep):
-        """Refuse to write a list that has lost a beginning the game depends on."""
-        have = set(prefixes)
+    def refuse_if_damaged(kept, dropped, must_keep, floor, counts, what, verb):
+        """Refuse to write a list that lost vocabulary the game depends on.
+
+        **It watches what the ceiling cut, which the guard it replaces could not.** That one
+        seeded `MUST_KEEP` at the head of the list and truncation cuts the tail, so `missing` was
+        empty by construction and "REFUSING TO WRITE" was dead code -- it checked the 24 entries
+        that were the only ones incapable of being lost. `eace59b`'s commit message reports "no
+        sign of the capped-list displacement" for a run that dropped 344 beginnings, and
+        scripts/check_docs.py repeated the mistake, so CI stayed green through the whole collapse.
+
+        So both halves are checked here: the hand-written must-keeps, and the group's own measured
+        floor, which is a *take* rather than a seed and can therefore genuinely fall off the end.
+        Whatever else the ceiling cuts is reported, not refused -- a capped list has to cut
+        something, and the question is only ever whether it cut something that mattered.
+        """
+        have = set(kept)
         missing = sorted(k for k in must_keep if k not in have)
+        lost = sorted((k for k in dropped if k in set(floor)),
+                      key=lambda k: -counts.get(k, 0))
 
-        if missing:
-            print("", file=sys.stderr)
-            print("REFUSING TO WRITE: the measurement dropped beginnings that must not be lost:", file=sys.stderr)
-            for key in missing:
-                print("    %-12s heads %d published names" % (key, must_keep[key]), file=sys.stderr)
-            print("", file=sys.stderr)
-            print("A capped list displaces rather than grows. Something newly measured has crowded", file=sys.stderr)
-            print("these out -- cap that take, or raise MOST_PREFIXES, but do not ship this.", file=sys.stderr)
-            raise SystemExit(1)
+        cut = sorted(((k, counts.get(k, 0)) for k in dropped if counts.get(k, 0)),
+                     key=lambda pair: -pair[1])
+        if cut:
+            print("  the ceiling cut %d measured %s, the largest being %s (%d published names)"
+                  % (len(cut), what, cut[0][0], cut[0][1]), file=sys.stderr)
 
+        if not missing and not lost:
+            return
 
-
-
-    def guard_endings(endings, must_keep):
-        """Refuse to write an endings list that has lost one the game depends on."""
-        have = set(endings)
-        missing = sorted(k for k in must_keep if k not in have)
-
-        if missing:
-            print("", file=sys.stderr)
-            print("REFUSING TO WRITE: the measurement dropped endings that must not be lost:", file=sys.stderr)
-            for key in missing:
-                print("    %-14s closes %d published names" % (key, must_keep[key]), file=sys.stderr)
-            print("", file=sys.stderr)
-            print("A capped list displaces rather than grows. Cap whatever was newly measured, or", file=sys.stderr)
-            print("raise MOST_ENDINGS -- but do not ship this.", file=sys.stderr)
-            raise SystemExit(1)
+        print("", file=sys.stderr)
+        print("REFUSING TO WRITE: the measurement dropped %s that must not be lost:" % what,
+              file=sys.stderr)
+        for key in missing:
+            print("    %-16s %s %d published names" % (key, verb, must_keep[key]), file=sys.stderr)
+        for key in lost:
+            print("    %-16s %s %d published names (the measured floor)"
+                  % (key, verb, counts.get(key, 0)), file=sys.stderr)
+        print("", file=sys.stderr)
+        print("A capped list displaces rather than grows. Something measured before these has", file=sys.stderr)
+        print("crowded them out -- cap that take, but do not ship this.", file=sys.stderr)
+        raise SystemExit(1)
 
 
-    def write(name, items, most, guard=None):
+    def write(name, items, most, guard=None, supported=None):
         """Write a list: what this measurement found, then whatever the previous list had that it
-        did not reach, and the whole thing held to a ceiling.
+        did not reach and this group's corpus still supports, and the whole thing held to a
+        ceiling.
 
         The ceiling binds the total rather than only the new part. Carrying forward every item any
         past measurement ever produced is what a superset rule asks for, but the accuracy cost of a
@@ -438,23 +540,46 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
         """
         path = os.path.join(DATA, name)
         kept = []
+        stale = 0
         if os.path.exists(path):
             with open(path, encoding="utf-8") as handle:
                 previous = [line.strip() for line in handle if line.strip()]
             have = set(items)
             kept = [item for item in previous if item not in have]
 
+            # The carry is where a superset rule and a capped list meet, and it is how vocabulary
+            # this group can never match lives for ever. The sound lists carried all 23 of the
+            # general list's hand-written endings -- `_lod0`..`_lod6`, `_cm`, `_jup` -- measured
+            # at **zero** occurrences across all three sound tables, while the file sat exactly on
+            # its ceiling; the general list carried `_00.rn75.pc.en.snd` for the same reason.
+            # Taking them out of a group's *seed* does nothing on its own, because the previous
+            # file hands them straight back. So the carry is held to what this group's own corpus
+            # supports at all, which the seeded entries are exempt from -- they are the ones no
+            # measurement can reach.
+            if supported is not None:
+                before = len(kept)
+                kept = [item for item in kept if item in supported]
+                stale = before - len(kept)
+
         whole = (items + kept)[:most]
-        dropped = len(items) + len(kept) - len(whole)
+        cut = (items + kept)[most:]
+        dropped = len(cut)
 
-        # Checked against what will actually be written, after the ceiling has cut it. Guarding the
-        # input would pass happily while the file that lands is gutted.
+        # Checked against what will actually be written, and against what the ceiling cut to make
+        # room. Guarding the input would pass happily while the file that lands is gutted.
         if guard is not None:
-            guard(whole)
+            guard(whole, cut)
 
-        with open(path, "w", encoding="utf-8") as handle:
+        # `newline=""` rather than the default, which on Windows turns every `\n` into a CRLF
+        # and leaves the working copy disagreeing with `.gitattributes` -- the file this project
+        # settled the question in, after a CRLF/LF mismatch produced a pull request that rewrote
+        # 95 lines of an unchanged file.
+        with open(path, "w", encoding="utf-8", newline="") as handle:
             for item in whole:
                 handle.write(item + "\n")
+
+        if stale:
+            print(f"  {stale} carried item(s) this group can never match, dropped", file=sys.stderr)
 
         note = f", {dropped} past the ceiling of {most} dropped" if dropped else ""
         print(f"{name}: {len(items)} measured, {len(kept)} carried{note}, {len(whole)} total",
@@ -462,10 +587,20 @@ def derive(tables, suffix_file, prefix_file, keep_endings, keep_prefixes, lean_s
         return len(whole)
 
 
+    ending_counts = collections.Counter()
+    for key in ("one", "two", "three"):
+        ending_counts.update(published[key])
+    every_floor_ending = [key for group in floor_endings.values() for key in group]
+
     endings = write(suffix_file, suffixes, MOST_ENDINGS,
-                    (lambda got: guard_endings(got, keep_endings)) if keep_endings else None)
+                    lambda got, cut: refuse_if_damaged(got, cut, keep_endings, every_floor_ending,
+                                                       ending_counts, "endings", "closes"),
+                    supported=supported["endings"])
     beginnings = write(prefix_file, prefixes, MOST_PREFIXES,
-                       (lambda got: guard_lists(got, keep_prefixes)) if keep_prefixes else None)
+                       lambda got, cut: refuse_if_damaged(got, cut, keep_prefixes, floor_prefixes,
+                                                          published["prefixes"], "beginnings",
+                                                          "heads"),
+                       supported=supported["beginnings"])
 
     return endings, beginnings
 
@@ -482,14 +617,29 @@ GROUPS = [
         "prefixes.txt",
         MUST_KEEP_ENDINGS,
         MUST_KEEP_PREFIXES,
+        EXTRA,
+        EXTRA_PREFIX,
+        False,
     ),
     (
         "the sound lists",
         ["fnv1a_soundbanks_aliases", "fnv1a_english_xsounds", "fnv1a_xsounds"],
         "sound.suffixes.txt",
         "sound.prefixes.txt",
+        # No hand-written must-keeps: a sound ending is `_01.rn75.pc.en.snd` and a sound beginning
+        # is a path, and neither is something anybody can write down forty of from memory. What
+        # protects this pair is the measured floor, which is the whole reason it is measured.
         {},
         {},
+        # And none of the general list's hand-written extras, which are model and material shaped
+        # -- `_lod3` and `wm_` cannot end or head a sound name, and thirty slots of a capped list
+        # is thirty sound beginnings not carried. Dropped from the carry as well as the seed, or
+        # the previous file simply hands them back.
+        (),
+        (),
+        # And only the confirmed *sound* names, for the same reason: this list is spent on
+        # vocabulary that can reach sound ids or it is spent on nothing.
+        True,
     ),
 ]
 
@@ -497,11 +647,14 @@ GROUPS = [
 PIECES = 25_000_000
 UNNAMED = 270_727
 
-for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
+def main():
+  for title, tables, suffix_file, prefix_file, keep_e, keep_p, extra_e, extra_p, is_sound in GROUPS:
     print("", file=sys.stderr)
     print(f"=== {title} ===", file=sys.stderr)
     # The sound group must not lean on itself -- see `lean` in `derive`.
     endings, beginnings = derive(tables, suffix_file, prefix_file, keep_e, keep_p,
+                                 extra_endings=extra_e, extra_prefixes=extra_p,
+                                 sound_group=is_sound,
                                  lean_sound=(title != "the sound lists"))
 
     per_stem = (beginnings + 1) * (endings + 1)
@@ -510,3 +663,7 @@ for title, tables, suffix_file, prefix_file, keep_e, keep_p in GROUPS:
     print(f"against {PIECES:,} pieces that is "
           f"{PIECES * per_stem * UNNAMED / 9.223e18:.1f} names expected by coincidence",
           file=sys.stderr)
+
+
+if __name__ == "__main__":
+    main()
