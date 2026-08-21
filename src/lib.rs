@@ -1368,8 +1368,6 @@ mod tests {
         let _ = fs::remove_dir_all(&folder);
     }
 
-    use super::*;
-
     /// The five default types must resolve in **both** games, since both are ground now.
     ///
     /// Against the tables directly rather than through `pool_index`, which reads the configured

@@ -796,63 +796,71 @@ fn scripts_in(folders: &[PathBuf]) -> Vec<PathBuf> {
 /// sending, so the worst case of counting a name stranded when it is not is a batch that comes to
 /// nothing -- against a best case of recovering somebody's whole session.
 fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
-    // Keyed on game, type and name, not on the name alone.
+    // Keyed on game, type and name, never on the name alone.
     //
-    // A bare name set collapses both titles into one. Measured on this clone: 1,653 names appear
-    // in both games' findings, so a name sitting in a Cold War run folder marked the identical
-    // Black Ops 4 name as accounted for -- and a Black Ops 4 pass that was killed then had that
-    // name skipped by the recovery written to save it. The same collapse happened across types,
-    // a name filed under `image` shadowing the identical string stranded under `material`.
+    // A bare name set collapses the two titles into one. Measured on this clone: 1,653 names
+    // appear in both games' findings, so a name sitting in a Cold War run folder marked the
+    // identical Black Ops 4 name as accounted for -- and a killed Black Ops 4 pass then had that
+    // name skipped by the recovery written to save it, with no route left to send it. The same
+    // collapse applied across types, a name filed under `image` shadowing the identical string
+    // stranded under `material`.
+    //
+    // The game is taken from the directory being walked, never derived by stripping a prefix off
+    // a path. An earlier version of this did the latter and passed on Windows while failing two
+    // different ways on Linux -- once recovering the wrong game, once recovering nothing -- both
+    // explained by `strip_prefix` coming back empty, which silently keys everything as `("", ..)`
+    // and makes every name account for every other. The loop already knows which game it is in;
+    // asking the filesystem a second time was the whole mistake.
     let mut accounted: HashSet<(String, String, String)> = HashSet::new();
 
-    let remember = |game: &str, kind: &str, name: &str, set: &mut HashSet<_>| {
-        set.insert((game.to_owned(), kind.to_lowercase(), name.to_lowercase()));
-    };
-
-    // Every run folder, *including* superseded ones. `run_folders` skips those deliberately --
-    // they are organised-away results and must not be sent again -- but skipping them here left
-    // their names looking stranded, so every `submit` rebuilt a recovery folder holding them and
-    // re-offered names that had already gone. They died at the exclusion step, so it was churn
-    // rather than loss: dozens of pointless folders across an overnight rotation.
-    for folder in every_run_folder(findings) {
-        let game = game_under(findings, &folder);
-        for (kind, _, name) in names_in(&folder) {
-            remember(&game, &kind, &name, &mut accounted);
-        }
-    }
-
-    for folder in fs::read_dir(outbox).into_iter().flatten().flatten() {
-        let folder = folder.path();
-        // `submissions/<who>_<GAME>_<stamp>/`, which is where the game is.
-        let game = folder
+    // Everything already sent. `submissions/<who>_<GAME>_<stamp>/`, so the game is in the name.
+    for entry in fs::read_dir(outbox).into_iter().flatten().flatten() {
+        let folder = entry.path();
+        let game = entry
             .file_name()
-            .and_then(|name| name.to_str())
-            .and_then(|name| name.split('_').nth(1))
+            .to_string_lossy()
+            .split('_')
+            .nth(1)
             .unwrap_or_default()
             .to_uppercase();
 
         for (kind, _, name) in names_in(&folder) {
             // A submission names its files `<kind>_<stamp>.txt`.
-            let kind = strip_stamp(&kind).to_owned();
-            remember(&game, &kind, &name, &mut accounted);
+            accounted.insert((
+                game.clone(),
+                strip_stamp(&kind).to_lowercase(),
+                name.to_lowercase(),
+            ));
         }
     }
 
     let mut recovered = Vec::new();
 
-    for game in fs::read_dir(findings).into_iter().flatten().flatten() {
-        let folder = game.path();
-        if !folder.is_dir() {
+    for entry in fs::read_dir(findings).into_iter().flatten().flatten() {
+        let game_folder = entry.path();
+        if !game_folder.is_dir() {
             continue;
         }
 
-        // The aggregate files sit directly in the game folder; run folders are below it.
-        let game = game_under(findings, &folder);
+        let game = entry.file_name().to_string_lossy().to_uppercase();
 
+        // Every run folder under this game, superseded ones included. `run_folders` leaves those
+        // out on purpose -- they were organised away and must not be sent again -- but this is
+        // the other question, has the name been written down anywhere, and there a superseded run
+        // counts. Skipping them made every `submit` rebuild a recovery folder holding names that
+        // had already gone.
+        let mut here = accounted.clone();
+        for folder in every_run_folder(&game_folder) {
+            for (kind, _, name) in names_in(&folder) {
+                here.insert((game.clone(), kind.to_lowercase(), name.to_lowercase()));
+            }
+        }
+
+        // The aggregate files sit directly in the game folder; run folders are below it.
         let mut stranded: Vec<(String, u64, String)> = Vec::new();
-        for (kind, id, name) in names_in(&folder) {
+        for (kind, id, name) in names_in(&game_folder) {
             let key = (game.clone(), kind.to_lowercase(), name.to_lowercase());
-            if !accounted.contains(&key) {
+            if !here.contains(&key) {
                 stranded.push((kind, id, name));
             }
         }
@@ -861,7 +869,7 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
             continue;
         }
 
-        let into = folder.join(format!("run_{}_recovered", stamp()));
+        let into = game_folder.join(format!("run_{}_recovered", stamp()));
         if fs::create_dir_all(&into).is_err() {
             continue;
         }
@@ -874,9 +882,12 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
         let mut wrote = 0;
         for (kind, mut rows) in by_kind {
             rows.sort_by(|a, b| a.1.to_lowercase().cmp(&b.1.to_lowercase()));
-            let text: String =
-                rows.iter().map(|(id, name)| format!("{id:x},{name}
-")).collect();
+
+            let mut text = String::new();
+            for (id, name) in &rows {
+                text.push_str(&format!("{id:x},{name}\n"));
+            }
+
             if fs::write(into.join(format!("{kind}.txt")), text).is_ok() {
                 wrote += rows.len();
             }
@@ -887,28 +898,13 @@ fn recover_stranded(findings: &Path, outbox: &Path) -> Vec<PathBuf> {
             continue;
         }
 
-        println!(
-            "  recovered {wrote} name(s) that belonged to no run folder -- from a pass that was              interrupted before it could write one"
-        );
+        println!("recovered {wrote} name(s) a killed run left behind, into {}", into.display());
         recovered.push(into);
     }
 
     recovered
 }
 
-/// Which game a path under a findings tree belongs to: the first component below the root.
-///
-/// Taken relative to the tree being walked rather than through `paths::game_of`, which strips
-/// the *installed* findings root. That is the same answer in a real run and the wrong one
-/// anywhere else -- including under test, where every folder would come back with no game at all
-/// and the two titles would collapse into one set again, which is the bug this is here to stop.
-fn game_under(findings: &Path, path: &Path) -> String {
-    path.strip_prefix(findings)
-        .ok()
-        .and_then(|rest| rest.components().next())
-        .map(|first| first.as_os_str().to_string_lossy().to_uppercase())
-        .unwrap_or_default()
-}
 
 /// Every `run_*` folder, superseded ones included, for deciding what is *accounted for*.
 ///
@@ -1455,7 +1451,7 @@ mod tests {
     /// This is the failure it guards: names checkpointed into the aggregate file every sixty
     /// seconds, no run folder because the pass never finished, and `submit` sending only run
     /// folders -- so the work existed on disk and could never be sent, silently.
-    #[test]
+
     /// The same name in both games is two names, and one being safe does not save the other.
     ///
     /// `accounted` used to be a set of bare lowercase names, so a name sitting in a Cold War run
@@ -1537,6 +1533,7 @@ mod tests {
         );
     }
 
+    #[test]
     fn a_killed_run_is_recovered_from_the_aggregate_files() {
         let root = std::env::temp_dir().join(format!("stranded_{}", std::process::id()));
         let _ = fs::remove_dir_all(&root);
