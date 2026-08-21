@@ -22,7 +22,7 @@ Writes data/prefixes.txt and data/suffixes.txt, one item per line, and refuses t
 a pass has to be able to be a superset of the pass before it.
 """
 import settings
-import collections, os, re, sys, glob
+import collections, os, sys, glob
 
 # A sound name's encoding tail. One confirmed xmodel genuinely carries one -- somebody at Treyarch
 # pasted a sound path onto a model, verified in Saluki -- and it is kept and submitted as the fact
@@ -39,25 +39,7 @@ HERE = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 TABLES = settings.tables_csv()
 CONFIRMED = settings.path("findings", "findings")
 FROM_MATERIALS = settings.path("findings", "findings")
-
-# Everybody's merged work, which is the vocabulary that actually widens these lists.
-#
-# This was measured on 2026-08-21 and it is the reason this path exists at all. Folding in 1,218
-# names merged from another contributor took the general search from 55 names to 294. Folding in
-# ~2,000 names found by *these same passes* took the next one to 51 -- worse than before the fold,
-# on a corpus two and a half times larger. A search that re-measures its own output learns the
-# beginnings and endings it has just finished using; it is somebody else's names that describe
-# ground this machine has never been near.
-#
-# And until that day, `submissions/` was never read here at all: 103,320 names from every
-# contributor, sitting committed in the repository, feeding nothing. They reach the published
-# tables eventually, but "eventually" is upstream's merge schedule, not tonight's pass.
-SUBMISSIONS = os.path.join(HERE, "submissions")
-
 DATA = os.path.join(HERE, "data")
-
-# `submissions/` names a file `<kind>_<yyyymmdd-hhmmss>.txt`; `findings/` names it `<kind>.txt`.
-STAMPED = re.compile(r"_\d{8}-\d{6}$")
 
 # The tables that are Cold War rather than a newer game, by their marker density.
 # **Order matters.** Each table gets a capped share below, but the shares are taken in this order
@@ -180,11 +162,11 @@ def table_names(table):
 
 
 def found_names():
-    for folder in (CONFIRMED, FROM_MATERIALS, SUBMISSIONS):
+    for folder in (CONFIRMED, FROM_MATERIALS):
         # Recursive, because findings are kept per game now -- findings/<game>/ and its run_*
         # folders. A flat glob of the root would quietly measure nothing at all.
         for path in glob.glob(os.path.join(folder, "**", "*.txt"), recursive=True):
-            kind = STAMPED.sub("", os.path.basename(path).split(".")[0])
+            kind = os.path.basename(path).split(".")[0]
 
             # localizeentry is never measured: those names are CATEGORY/KEY pairs whose plain
             # text already ships in the build, and their conventions belong to no hunted pool.
