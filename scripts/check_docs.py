@@ -170,6 +170,30 @@ def main():
             % (", ".join(lost), sum(heads[k] for k in lost))
         )
 
+    # A contributed generator that cannot find `snapshot.py` is a method that dies on arrival.
+    #
+    # Only `scripts/contributed/` is checked. A script in `scripts/` proper sits beside
+    # `snapshot.py`, so a plain import is right there -- it is being filed one level down that
+    # breaks it, and that is where the copy lands.
+    #
+    # `submit` files one into `scripts/contributed/`, one level below `snapshot.py`, so a script
+    # that adds only its own directory to `sys.path` works for its author and fails for everybody
+    # who merges it. scripts/README.md has said to walk up for the whole life of the repository
+    # and five of ten contributed scripts still did not, which is why this is a check rather than
+    # a paragraph. Checked by reading, never by importing: this is other people's code.
+    for script in sorted(glob.glob("scripts/contributed/*.py")):
+        text = open(script, encoding="utf-8", errors="ignore").read()
+        if not re.search(r"^import snapshot", text, re.M):
+            continue
+        if 'os.path.join(_root, "scripts", "snapshot.py")' in text:
+            continue
+
+        problems.append(
+            "%s imports `snapshot` without walking up to find `scripts/`. It will fail once "
+            "`submit` files it into scripts/contributed/ -- see the pattern in scripts/README.md."
+            % script
+        )
+
     if problems:
         print("%d problem(s):\n" % len(problems))
         for problem in problems:
