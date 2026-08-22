@@ -46,6 +46,7 @@ and anything it ranks strongly belongs in this list.
 """
 import argparse
 import os
+import re
 import subprocess
 import sys
 
@@ -87,6 +88,16 @@ DERIVATIONS = [
         "script": "scripts/final_byte.py",
         "args": [],
         "why": "one name per 18 candidates, the best measured here -- solved, not swept",
+    },
+    {
+        "label": "tails of length 3",
+        "plan": "plans/tails3.txt",
+        # Rebuilt every round, not written once. The stems are every known name cut short by
+        # three, so a round that confirms names gives the next one stems it did not have -- which
+        # is exactly what makes this a derivation rather than a plan somebody saved. It also means
+        # the plan need not be committed, which matters: its stem list is 626,755 lines.
+        "build": ["scripts/tails.py", "--length", "3", "--write-plan", "plans/tails3.txt"],
+        "why": "31.7 billion candidates in twenty-one seconds -- free, and it returned 1,151",
     },
     {
         "label": "family gap filling",
@@ -229,8 +240,66 @@ def self_test():
         shutil.rmtree(root, ignore_errors=True)
 
 
+def run_plan(entry, game, dry_run):
+    """A derivation that is a plan rather than a generator, run through `confirm_plan`.
+
+    Some of the cheapest things here are cross products, and a cross product printed by Python runs
+    at a thousandth of the engine's speed. `tails of length 3` is 31.7 billion candidates and takes
+    **twenty-one seconds** -- `--efficiency` calls it *free* and it has returned 1,151 names. A
+    generator could not offer that at any price.
+
+    So the closure runs both shapes. What makes something belong here is not how it is written but
+    that it costs seconds and refills as the corpus grows.
+    """
+    plan = os.path.join(ROOT, entry["plan"])
+    tool = binary("confirm_plan")
+
+    # Built from the corpus as it stands now, every round.
+    if entry.get("build"):
+        built = subprocess.run(
+            [sys.executable, os.path.join(ROOT, entry["build"][0])] + entry["build"][1:],
+            cwd=os.path.join(ROOT, "scripts"),
+            capture_output=True,
+            text=True,
+            timeout=1800,
+        )
+        if built.returncode != 0:
+            print("  %-42s could not build its plan" % entry["label"])
+            return 0
+
+    if not os.path.exists(plan):
+        print("  %-42s skipped: %s is not here" % (entry["label"], entry["plan"]))
+        return 0
+    if not tool:
+        print("  %-42s skipped: confirm_plan is not built" % entry["label"])
+        return 0
+
+    command = [tool, plan] + (["--game", game] if game else [])
+
+    if dry_run:
+        sized = subprocess.run(command + ["--size"], capture_output=True, text=True, timeout=900)
+        found = re.search(r"candidates: (\d+)", sized.stdout)
+        print(
+            "  %-42s %12s candidates"
+            % (entry["label"], format(int(found.group(1)), ",") if found else "?")
+        )
+        return 0
+
+    before = confirmed_total(game)
+    if subprocess.run(command, stdout=subprocess.DEVNULL).returncode != 0:
+        print("  %-42s confirm_plan would not run" % entry["label"])
+        return 0
+
+    gained = confirmed_total(game) - before
+    print("  %-42s %+d" % (entry["label"], gained))
+    return max(gained, 0)
+
+
 def run_derivation(entry, confirm, game, dry_run):
     """One derivation: generate candidates, hand them to `confirm_list`, report what it found."""
+    if "plan" in entry:
+        return run_plan(entry, game, dry_run)
+
     script = os.path.join(ROOT, entry["script"])
     if not os.path.exists(script):
         print("  %-42s skipped: %s is not here" % (entry["label"], entry["script"]))
