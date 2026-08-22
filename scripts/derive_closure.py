@@ -123,14 +123,21 @@ def binary(name):
     return None
 
 
-def confirmed_total(game=None):
+def confirmed_total(game=None, folder=None):
     """How many names this machine has confirmed, which is what a round is judged by.
 
     Counted from the findings files rather than from what `confirm_list` prints, because a round
     is several tools and the only figure that means the same thing across all of them is the one
     on disk.
+
+    **This is the function whose failure is invisible.** Every round's yield is the difference
+    between two calls to it, so a version that returned a constant -- a moved folder, a changed
+    filename convention, a permissions error swallowed -- would report every round as gaining
+    nothing, for ever, and read exactly like a corpus that is properly closed. Both outcomes print
+    the same reassuring sentence. `--self-test` exists to tell them apart, and is worth running
+    after any change to how findings are stored.
     """
-    folder = os.path.join(ROOT, "findings")
+    folder = folder or os.path.join(ROOT, "findings")
     if not os.path.isdir(folder):
         return 0
 
@@ -146,6 +153,73 @@ def confirmed_total(game=None):
                 with open(os.path.join(here, name), encoding="utf-8", errors="replace") as handle:
                     total += sum(1 for line in handle if line.strip())
     return total
+
+
+
+def worth_another_round(gained):
+    """Whether a round that gained this much justifies deriving from it again.
+
+    Its own function so it can be tested. The loop is the part of this that runs unattended for
+    hours, and "keeps going" and "stops immediately" are both plausible-looking failures.
+    """
+    return gained >= WORTH_ANOTHER_ROUND
+
+
+def self_test():
+    """Proves the two things a closure run cannot show you about itself.
+
+    A round reports `gained` as the difference between two counts of what is on disk. When that
+    is zero the tool prints that the corpus is closed -- which is true, unless the counter is
+    broken, in which case it prints exactly the same thing and always will. Nothing in a real run
+    distinguishes the two, so it is checked here against a tree whose contents are known.
+    """
+    import shutil
+    import tempfile
+
+    root = tempfile.mkdtemp(prefix="closure_selftest_")
+    try:
+        cw = os.path.join(root, "blkopscw")
+        bo4 = os.path.join(root, "blkops04")
+        os.makedirs(cw)
+        os.makedirs(bo4)
+
+        def write(folder, name, lines):
+            path = os.path.join(folder, name)
+            with open(path, "w", encoding="utf-8", newline="\n") as handle:
+                handle.write("\n".join(lines) + "\n")
+
+        write(cw, "image.txt", ["1111,i_one", "2222,i_two"])
+        write(cw, "xmodel.txt", ["3333,m_one"])
+        write(bo4, "image.txt", ["4444,i_three"])
+
+        # Counts every game by default, one game when asked, and does not count a run folder's
+        # copy twice -- findings hold both the aggregate files and per-run folders.
+        assert confirmed_total(folder=root) == 4, confirmed_total(folder=root)
+        assert confirmed_total(game="BLKOPSCW", folder=root) == 3
+        assert confirmed_total(game="blkops04", folder=root) == 1, "the game match must ignore case"
+
+        # The counter has to *move* when the corpus does. A constant would report every round as
+        # gaining nothing and read as a closed corpus for ever.
+        before = confirmed_total(folder=root)
+        write(cw, "material.txt", ["5555,mc/mtl_one", "6666,mc/mtl_two"])
+        after = confirmed_total(folder=root)
+        assert after - before == 2, "the counter did not move when names were added: %d -> %d" % (before, after)
+
+        # And it must not count blank lines, which a generator writing an empty file would add.
+        write(cw, "xanim.txt", ["", "  ", ""])
+        assert confirmed_total(folder=root) == after, "blank lines must not count as names"
+
+        # A missing tree is zero rather than an exception: a fresh clone has confirmed nothing.
+        assert confirmed_total(folder=os.path.join(root, "nothing_here")) == 0
+
+        assert worth_another_round(1) is True
+        assert worth_another_round(0) is False
+        assert worth_another_round(500) is True
+
+        print("self-test passed: the round counter tracks the corpus, and the loop stops on zero.")
+        return 0
+    finally:
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def run_derivation(entry, confirm, game, dry_run):
@@ -205,12 +279,16 @@ def run_derivation(entry, confirm, game, dry_run):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--dry-run", action="store_true", help="say what it would run, and stop")
+    parser.add_argument("--self-test", action="store_true", help="prove the round counter works")
     parser.add_argument("--once", action="store_true", help="one round rather than a fixpoint")
     parser.add_argument("--game", help="force a game for this run")
     parser.add_argument(
         "--rounds", type=int, default=MOST_ROUNDS, help="most rounds to run (default %d)" % MOST_ROUNDS
     )
     options = parser.parse_args(argv)
+
+    if options.self_test:
+        return self_test()
 
     confirm = binary("confirm_list")
     if not confirm and not options.dry_run:
@@ -241,7 +319,7 @@ def main(argv):
 
         if options.once:
             break
-        if gained < WORTH_ANOTHER_ROUND:
+        if not worth_another_round(gained):
             print(
                 "no derivation found anything new, so the corpus is closed under all of them.\n"
                 "That is the correct end, not a failure: it means every name these relations can\n"

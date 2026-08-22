@@ -51,7 +51,7 @@
 use std::path::{Path, PathBuf};
 use std::time::Instant;
 
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::search::{candidate_space, run_best};
 use slasher::{
@@ -375,6 +375,14 @@ fn main() {
                     // compared with one that does.
                     .measured("candidates tested", candidates)
                     .measured("new", results.added())
+                    // Not a fingerprint, and it must never block a run. The fingerprint says
+                    // "identical or not", which is blind to the commoner waste: a plan sharing
+                    // nine tenths of its stems with one somebody ran last night. These let the
+                    // next person measure that before spending the hour -- see
+                    // `scripts/overlap.py`.
+                    .measured("sketch beginnings", Sketch::of(&plan.beginnings))
+                    .measured("sketch stems", Sketch::of(&plan.stems))
+                    .measured("sketch endings", Sketch::of(&plan.endings))
                     .fingerprint(&fingerprint)
                     .next_step(
                         "a plan is spent at these three lists and no other. Change what it aims \

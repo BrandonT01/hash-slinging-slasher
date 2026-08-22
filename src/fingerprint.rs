@@ -99,8 +99,165 @@ impl Fingerprint {
     }
 }
 
+/// How many of a list's smallest hashes a sketch keeps.
+///
+/// The sketch answers "how much do these two lists share", to roughly a tenth. Thirty-two values
+/// is 512 characters in a run note -- small enough to sit in every submission, coarse enough that
+/// it can only ever say "these are broadly the same ground", which is the only claim worth making
+/// from it.
+const SKETCH: usize = 32;
+
+/// A summary of a list that survives being compared with a *different* list.
+///
+/// The fingerprint beside it answers one question perfectly and one not at all: two searches are
+/// identical, or they are not. That is what stopped five contributors submitting the same 430
+/// names, and it is blind to the far commoner case -- a plan sharing ninety per cent of its stems
+/// with one somebody ran last night. Those two fingerprints differ, so nothing warns anybody, and
+/// the second run spends an hour to return the first one's names minus a handful.
+///
+/// `state/swept.txt` holds 264 of those opaque digests and cannot answer a single question about
+/// how they relate. This is the part that can: the k smallest hashes of a list estimate how much
+/// two lists share, without either side keeping the lists.
+///
+/// Deliberately not a fingerprint. It cannot decide anything on its own and must never be used to
+/// block a run -- an 18% error either way is fine for "you may be re-treading this" and useless
+/// for "you are".
+pub struct Sketch;
+
+impl Sketch {
+    /// Scatters a hash so that "the smallest k" is a fair sample of a list rather than a run of
+    /// similar names.
+    ///
+    /// This is not optional and the reason is worth keeping. FNV-1a barely avalanches on short
+    /// strings that share a prefix: `token_70` through `token_74` hash to values 1.1e15 apart, in
+    /// order, so the thirty-two smallest hashes of a name list are thirty-two *consecutive names*
+    /// rather than a random sample of it. Two lists sharing half their entries then sketched to
+    /// entirely different runs and measured as **zero** overlap -- which is exactly the answer
+    /// that would have made this feature quietly useless, since asset names are far more
+    /// structured than that test was.
+    ///
+    /// SplitMix64's finalizer, which is a bijection, so it cannot make two different names
+    /// collide that did not already.
+    fn scatter(mut hash: u64) -> u64 {
+        hash ^= hash >> 30;
+        hash = hash.wrapping_mul(0xBF58476D1CE4E5B9);
+        hash ^= hash >> 27;
+        hash = hash.wrapping_mul(0x94D049BB133111EB);
+        hash ^ (hash >> 31)
+    }
+
+    /// The sketch of a list, as hex. Empty string for an empty list.
+    pub fn of<S: AsRef<str>>(items: &[S]) -> String {
+        let mut hashes: Vec<u64> =
+            items.iter().map(|item| Self::scatter(crate::hash64(item.as_ref()))).collect();
+        hashes.sort_unstable();
+        hashes.dedup();
+        hashes.truncate(SKETCH);
+
+        hashes.iter().map(|hash| format!("{hash:016x}")).collect::<Vec<_>>().join("")
+    }
+
+    /// Roughly what share of two sketched lists is common to both, 0.0 to 1.0.
+    ///
+    /// The k-minimum-values estimator: over the union of the two sketches, the share of values
+    /// present in both. Returns `None` when either side is empty, because "no overlap" and
+    /// "nothing to compare" are different answers and a caller that conflates them will warn
+    /// about every list nobody has sketched yet.
+    pub fn overlap(left: &str, right: &str) -> Option<f64> {
+        let parse = |text: &str| -> Vec<u64> {
+            text.as_bytes()
+                .chunks(16)
+                .filter(|chunk| chunk.len() == 16)
+                .filter_map(|chunk| u64::from_str_radix(std::str::from_utf8(chunk).ok()?, 16).ok())
+                .collect()
+        };
+
+        let left = parse(left);
+        let right = parse(right);
+        if left.is_empty() || right.is_empty() {
+            return None;
+        }
+
+        // Only the smallest k of the *combined* set is a fair sample of the union; beyond that
+        // one side simply ran out of values and would look like disagreement.
+        let mut union: Vec<u64> = left.iter().chain(right.iter()).copied().collect();
+        union.sort_unstable();
+        union.dedup();
+        union.truncate(SKETCH.min(left.len()).min(right.len()));
+
+        if union.is_empty() {
+            return None;
+        }
+
+        let in_left: std::collections::HashSet<u64> = left.into_iter().collect();
+        let in_right: std::collections::HashSet<u64> = right.into_iter().collect();
+        let both = union.iter().filter(|v| in_left.contains(v) && in_right.contains(v)).count();
+
+        Some(both as f64 / union.len() as f64)
+    }
+}
+
 #[cfg(test)]
 mod tests {
+
+    /// A sketch has to say "the same" for the same list and "not the same" for a different one,
+    /// and -- the whole point -- something sensible in between.
+    #[test]
+    fn a_sketch_measures_how_much_two_lists_share() {
+        let letters = |from: u32, to: u32| -> Vec<String> {
+            (from..to).map(|n| format!("token_{n}")).collect()
+        };
+
+        let all = Sketch::of(&letters(0, 200));
+        let same = Sketch::of(&letters(0, 200));
+        let half = Sketch::of(&letters(100, 300));
+        let none = Sketch::of(&letters(1000, 1200));
+
+        assert_eq!(all, same, "the same list must sketch identically");
+
+        let identical = Sketch::overlap(&all, &same).expect("two sketched lists");
+        assert!(identical > 0.99, "identical lists should overlap fully, got {identical}");
+
+        let overlapping = Sketch::overlap(&all, &half).expect("two sketched lists");
+        assert!(
+            (0.1..0.75).contains(&overlapping),
+            "half-shared lists should land between, got {overlapping}"
+        );
+
+        let apart = Sketch::overlap(&all, &none).expect("two sketched lists");
+        assert!(apart < 0.25, "disjoint lists should barely overlap, got {apart}");
+
+        assert!(overlapping < identical, "sharing half must read as less than sharing all");
+        assert!(apart < overlapping, "sharing nothing must read as less than sharing half");
+    }
+
+    /// The sketch has a second implementation, in `scripts/overlap.py`, which has to produce the
+    /// identical string or a plan can never be matched against a recorded run -- and would report
+    /// "nothing on record looks like this plan" for every plan, for ever, which is the reassuring
+    /// failure rather than the loud one.
+    ///
+    /// Pinned as a literal on both sides. `scripts/overlap.py` asserts the same value.
+    #[test]
+    fn the_python_side_computes_the_same_sketch() {
+        let list = ["mc/mtl_wpn_ak47", "i_wpn_ak47_c", "zmb/ai/nosferatu", "token_7", "_barrel_c"];
+
+        assert_eq!(
+            Sketch::of(&list),
+            "272847589166a63e81de050a13ba3960bbc39531c9277735d0b9e574cfee006adb07a4b5dba9ed84",
+            "scripts/overlap.py must agree with this byte for byte"
+        );
+    }
+
+    /// Nothing to compare is not the same answer as nothing in common, and a caller that treats
+    /// them alike warns about every run recorded before sketches existed.
+    #[test]
+    fn an_unsketched_list_is_not_a_disagreement() {
+        let something = Sketch::of(&["a_token", "b_token"]);
+
+        assert_eq!(Sketch::overlap("", &something), None);
+        assert_eq!(Sketch::overlap(&something, ""), None);
+        assert_eq!(Sketch::of::<&str>(&[]), "");
+    }
     use super::*;
 
     /// The property the whole idea rests on: the same search fingerprints the same everywhere,

@@ -175,6 +175,25 @@ def read(folder):
         header.update(one_header)
         runs += one_runs
 
+    # A submission holding exactly one run that recorded no yield is not ambiguous: every name it
+    # sent came from that run, because there was nothing else in it. Recovering those is not the
+    # guess the old report made -- that credited *every* method in a multi-run submission with the
+    # whole batch, which is unrecoverable precisely because it cannot be divided. This is 58 of
+    # the 102 runs that record nothing, and it is arithmetic rather than attribution.
+    if len(runs) == 1 and runs[0]["found"] is None and names:
+        runs[0]["found"] = len(names)
+        runs[0]["found_label"] = "sole run in its submission"
+
+    # What each run's names came to *after* `submit` dropped everything already published or
+    # claimed by somebody else. A run's own `new` counts names new to the machine that ran it,
+    # which is the larger number and the misleading one: METHODS.md records continuations finding
+    # 496 of which 5 were new to anybody else. Apportioned by share, because a submission reports
+    # one total for however many runs went into it.
+    claimed = sum(run["found"] for run in runs if run["found"])
+    share = (len(names) / claimed) if claimed else None
+    for run in runs:
+        run["landed"] = round(run["found"] * share) if share is not None and run["found"] else None
+
     return {
         "who": who,
         "when": parse_stamp(who),
@@ -253,6 +272,7 @@ def summarise(runs):
     attributed = [run for run in runs if run["found"] is not None]
 
     names = sum(run["found"] for run in attributed)
+    landed = sum(run["landed"] or 0 for run in attributed)
     candidates = sum(run["candidates"] for run in measured)
     names_measured = sum(run["found"] for run in measured)
 
@@ -292,6 +312,7 @@ def summarise(runs):
         "runs": len(runs),
         "attributed_runs": len(attributed),
         "names": names,
+        "landed": landed,
         "candidates": candidates,
         "names_measured": names_measured,
         "per": lifetime,
@@ -326,17 +347,18 @@ def show_by_method(read_all):
     summaries, order = rank(by_method, "per")
 
     print(
-        "%-46s %5s %9s %14s %12s %10s %s"
-        % ("method", "runs", "names", "candidates", "1 name per", "last run", "state")
+        "%-42s %5s %8s %8s %13s %11s %9s %s"
+        % ("method", "runs", "found", "landed", "candidates", "1 name per", "last run", "state")
     )
     for method in order:
         s = summaries[method]
         print(
-            "%-46s %5d %9s %14s %12s %10s %s"
+            "%-42s %5d %8s %8s %13s %11s %9s %s"
             % (
-                method[:46],
+                method[:42],
                 s["runs"],
                 thousands(s["names"]),
+                thousands(s["landed"]),
                 thousands(s["candidates"]) if s["candidates"] else "-",
                 format(int(s["per"]), ",") if s["per"] else "-",
                 s["last"].strftime("%m-%d") if s["last"] else "-",
@@ -351,14 +373,21 @@ def show_by_method(read_all):
         "in no method's names -- `--unattributed` says which."
         % (total_runs, len(read_all), total_runs - unattributed, unattributed)
     )
+    found = sum(entry["names"] for entry in summaries.values())
+    landed = sum(entry["landed"] for entry in summaries.values())
     print(
-        "\nRanked by candidates per name, best first, because that is what predicts the next run.\n"
-        "`names` is what the run found new to the machine that ran it, which is more than reached\n"
-        "the community: %s were sent in total after `submit` dropped what was already published or\n"
-        "claimed. `state` is spent when the last two runs found nothing or recent yield is %gx worse\n"
-        "than lifetime, cooling at %gx, unmeasured when no run recorded its candidate count."
+        "\nRanked by candidates per name, best first, because that is what predicts the next run.\n\n"
+        "`found` is what a run found new to the machine that ran it. `landed` is what survived\n"
+        "`submit` dropping everything already published or claimed by somebody else: %s of %s\n"
+        "across the whole record, so %.0f%% of what a run calls new is already somebody else's.\n"
+        "**Read `landed`.** METHODS.md records continuations finding 496 names of which 5 were new\n"
+        "to anybody, and `found` cannot tell that from a method that found 496 nobody had.\n\n"
+        "`state` is spent when the last two runs found nothing, or the latest run is %gx worse than\n"
+        "that method at its best; cooling at %gx; unmeasured when no run recorded its candidates."
         % (
-            thousands(sum(entry["sent"] for entry in read_all)),
+            thousands(landed),
+            thousands(found),
+            100.0 * (1.0 - landed / found) if found else 0.0,
             SPENT_FACTOR,
             COOLING_FACTOR,
         )

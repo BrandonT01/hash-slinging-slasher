@@ -25,7 +25,7 @@
 use std::collections::HashSet;
 use std::time::{Duration, Instant};
 
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::loader::{loaded_assets, unnamed, wanted_for_search};
 use slasher::search::{self, Meet};
 use slasher::{
@@ -557,6 +557,11 @@ fn main() {
                 .measured("matches", found.len())
                 .measured("distinct names reached", distinct.len())
                 .measured("new here", results.added())
+                // See `confirm_plan`: these estimate how much this run's ground overlaps another
+                // person's, which the fingerprint beside them cannot.
+                .measured("sketch beginnings", Sketch::of(&prefixes))
+                .measured("sketch stems", Sketch::of(&pieces))
+                .measured("sketch endings", Sketch::of(&endings))
                 .fingerprint(&fingerprint)
                 .next_step(
                     "this configuration is now exhausted, and what reopens it is different \

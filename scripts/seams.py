@@ -170,11 +170,48 @@ REDUCTIONS = [
 ]
 
 
-def load(kind):
-    """Every known name of one type: published, submitted by anybody, and confirmed here."""
+def ids_of(game):
+    """Every id one game's snapshot holds, as a set, for deciding which names are that game's.
+
+    The published tables are not split by game -- Cold War and Black Ops 4 share one hash and one
+    set of files -- so there is no table to read per game and no way to partition names by where
+    they came from. What there is, is each game's own snapshot of the ids it actually loads. A
+    name belongs to a game exactly when the game holds an asset under its hash, and that is a
+    membership test rather than a guess.
+    """
+    for path in snapshot.snapshots():
+        shot = snapshot.read(path)
+        if shot.game.upper() == game.upper():
+            return {asset_id for asset_id, _ in shot.records}
+
+    raise SystemExit(
+        "no snapshot for %s. It is one of: %s"
+        % (game, ", ".join(sorted(snapshot.read(p).game for p in snapshot.snapshots())))
+    )
+
+
+def load(kind, held=None):
+    """Every known name of one type: published, submitted by anybody, and confirmed here.
+
+    `held` narrows to the names one game actually holds an asset for. Without it a seam is
+    measured across both games at once, which reads as moderately strong for a relation that is
+    strong in one and dead in the other -- and the two games are far enough apart in what is named
+    (Black Ops 4 images 64%, Cold War 82%) for that to matter.
+    """
     names = set(snapshot.table_names(TABLES[kind]))
     names.update(snapshot.confirmed_names(kind))
-    return {name.strip().lower().replace("\\", "/") for name in names if name.strip()}
+    names = {name.strip().lower().replace("\\", "/") for name in names if name.strip()}
+
+    if held is None:
+        return names
+
+    # Both spellings of the top bit, as `known_hashes` does: a loader id has bit 63 cleared and
+    # the name's own hash may not have.
+    return {
+        name
+        for name in names
+        if snapshot.fnv1a(name) in held or (snapshot.fnv1a(name) & snapshot.ID_MASK) in held
+    }
 
 
 def cores(names, reduce):
@@ -193,6 +230,10 @@ def main(argv):
     parser.add_argument("--min-shared", type=int, default=200, help="hide weaker relations")
     parser.add_argument("--top", type=int, default=40, help="how many rows to print")
     parser.add_argument("--types", nargs="+", default=sorted(TABLES), help="which types to cross")
+    parser.add_argument(
+        "--game",
+        help="narrow to the names this game actually holds an asset for (BLKOPSCW, BLKOPS04)",
+    )
     options = parser.parse_args(argv)
 
     wanted = sorted(set(options.pair)) if options.pair else options.types
@@ -203,10 +244,19 @@ def main(argv):
                 % (kind, ", ".join(sorted(TABLES)))
             )
 
+    held = None
+    if options.game:
+        held = ids_of(options.game)
+        print(
+            "narrowed to %s: %s ids in its snapshot"
+            % (options.game.upper(), format(len(held), ",")),
+            file=sys.stderr,
+        )
+
     print("loading names...", file=sys.stderr)
     names = {}
     for kind in wanted:
-        names[kind] = load(kind)
+        names[kind] = load(kind, held)
         print("  %-12s %s known names" % (kind, format(len(names[kind]), ",")), file=sys.stderr)
 
     # Every type reduced every way, once. The measurement that follows is then set arithmetic

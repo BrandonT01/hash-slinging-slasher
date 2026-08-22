@@ -32,6 +32,7 @@ a program that prints names; anything that can print names is a method.
 | `snapshot.py` | run directly for a one-line summary per game. Used as a library by everything else. |
 | `check_docs.py` | whether the documentation still describes the repository that exists. Runs in CI. |
 | `uncarried.py` | the beginnings `data/prefixes.txt` carries **no cut of**, so the general search cannot build a single name starting that way. 208 of them head 12,311 published names, including the whole optics family (`reflex_`, `acog_`, `holo_`). `--write-plan` turns them into a plan. |
+| `overlap.py` | how much ground a plan shares with searches other people have already run. The fingerprint answers "identical or not" and is blind to a plan sharing nine tenths of its stems with last night's; this estimates that from the sketches runs now record. Advice, never a gate. |
 | `reach.py` | **what share of known names the lists could rebuild at all.** A ceiling, not a yield: whatever the lists cannot express, no pass can find however long it runs, and nothing in a run says so. `--missing` names the commonest beginnings and endings not carried. |
 
 ## Generators
