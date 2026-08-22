@@ -1,0 +1,4 @@
+b368015c03eeab1,core_frontend_bc7_combo
+1ad8bd276e042534,core_frontend_bc4_combo
+47ac16a56648240c,core_frontend_bc3_srgb_combo
+70c3643c0aab1518,core_frontend_bc7_srgb_combo
