@@ -73,6 +73,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | image channel completion | 1 | 3 | 553 | 7,124,369 | 12,883 | 5,159 | 63,655 | 2026-08-20 | 2026-08-21 | spent |
 | alias slot substitution | 4 | 9 | 1,354 | 21,780,323 | 16,085 | 6,535 | 2,047,927 | 2026-08-20 | 2026-08-21 | spent |
 | rare-token-compound-splice-anim | 1 | 3 | 30 | 521,194 | 17,373 | 10,849 | 17,385 | 2026-08-20 | 2026-08-20 | live |
+| black ops 3 build names, verbatim | 1 | 1 | 4 | 73,303 | 18,325 | 18,325 | 18,325 | 2026-08-22 | 2026-08-22 | untried |
 | family gap filling | 1 | 1 | 1 | 22,594 | 22,594 | 22,594 | 22,594 | 2026-08-19 | 2026-08-19 | untried |
 | paired-token-blocks-alias-deterministic | 1 | 2 | 14 | 481,544 | 34,396 | 24,067 | 60,216 | 2026-08-20 | 2026-08-20 | live |
 | paired-token-blocks-anim-deterministic | 1 | 9 | 104 | 3,708,652 | 35,660 | 15,884 | 206,784 | 2026-08-20 | 2026-08-20 | spent |
@@ -110,17 +111,18 @@ table under a name you would not have guessed is the thing you are about to rebu
 | sab directory and basename recombination | 1 | 1 | 5 | 36,351,762 | 7,270,352 | 7,270,352 | 7,270,352 | 2026-08-21 | 2026-08-21 | untried |
 | edits image | 2 | 3 | 12 | 91,292,882 | 7,607,740 | 5,048,388 | 30,538,103 | 2026-08-20 | 2026-08-20 | cooling |
 | per-prefix-continuations-depth2-cap24 | 1 | 1 | 4 | 39,983,007 | 9,995,751 | 9,995,751 | 9,995,751 | 2026-08-20 | 2026-08-20 | untried |
+| keyword sweep: zombie models | 1 | 1 | 4 | 100,074,665 | 25,018,666 | 25,018,666 | 25,018,666 | 2026-08-21 | 2026-08-21 | untried |
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
-| uncarried beginnings, optics and prefixed families | 1 | 1 | 5 | 135,737,598,880 | 27,147,519,776 | 27,147,519,776 | 27,147,519,776 | 2026-08-22 | 2026-08-22 | untried |
+| uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
 | general search | 2 | 54 | 101,285 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
 | sound files and aliases | 1 | 36 | 28,997 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
 | images derived from materials | 1 | 9 | 5,252 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
 | family walking, whole words | 1 | 14 | 4,175 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | family walking, numbers in place | 1 | 11 | 1,136 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| not recorded | 1 | 23 | 1,087 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| not recorded | 1 | 24 | 1,089 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
 | sound dotted tails | 1 | 1 | 42 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
@@ -143,7 +145,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-77 distinct methods, run 105 ways between them, across 353 runs. `names` is what each run
+79 distinct methods, run 107 ways between them, across 357 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
