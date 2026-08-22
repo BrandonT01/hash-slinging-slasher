@@ -14,7 +14,7 @@
 
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::search::{candidate_space, run_best};
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::{config, endings_of, paths, pool_label, readiness, recon, stamp, table_keys, table_names, tables_look_complete, Results, RunNote};
 
 /// The tables the stems and the endings come from.
@@ -244,6 +244,11 @@ fn main() {
                     candidate_space(openings.len(), endings.len(), stems.len(), false),
                 )
                 .measured("new", results.added())
+                // See `confirm_plan`: lets `scripts/overlap.py` say how much ground this run
+                // shares with somebody else's, which a fingerprint cannot.
+                .measured("sketch beginnings", Sketch::of(&openings))
+                .measured("sketch stems", Sketch::of(&stems))
+                .measured("sketch endings", Sketch::of(&endings))
                 .fingerprint(&fingerprint),
             );
 

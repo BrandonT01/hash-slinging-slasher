@@ -27,7 +27,7 @@ use std::sync::atomic::{AtomicU64, AtomicUsize, Ordering};
 use std::time::{Duration, Instant};
 
 use slasher::loader::{loaded_assets, wanted_for_search};
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::{config, expected_by_chance, hash64, paths, pool_label, readiness, recon, table_keys, tables_look_complete, Filter, ID_MASK, Results, RunNote};
 
 /// How far a family is counted. Most stop in the low tens; a few run to the hundreds.
@@ -404,6 +404,11 @@ fn main() {
                 // the label `confirm_list` uses, so the two can be ranked against each other.
                 .measured("candidates tested", count)
                 .measured("new", results.added())
+                // The vocabulary this walk actually had. `seeds` are the names it varied,
+                // `tokens` what it substituted in -- between them they decide everything it
+                // could reach, which is what `scripts/overlap.py` compares.
+                .measured("sketch stems", Sketch::of(&seeds))
+                .measured("sketch endings", Sketch::of(&tokens))
                 .fingerprint(&fingerprint),
             );
         }

@@ -138,7 +138,7 @@ impl Sketch {
     ///
     /// SplitMix64's finalizer, which is a bijection, so it cannot make two different names
     /// collide that did not already.
-    fn scatter(mut hash: u64) -> u64 {
+    pub(crate) fn scatter(mut hash: u64) -> u64 {
         hash ^= hash >> 30;
         hash = hash.wrapping_mul(0xBF58476D1CE4E5B9);
         hash ^= hash >> 27;
@@ -197,8 +197,74 @@ impl Sketch {
     }
 }
 
+/// A sketch built from a stream, for searches whose candidates never exist as a list.
+///
+/// `confirm_list` is handed candidates on a pipe -- tens of millions of them, never collected --
+/// so there is no list to sketch and it recorded nothing. That mattered more than it looked:
+/// `confirm_list` is the path **every invented method** takes, so the overlap ledger was blind to
+/// exactly the half of the project it was built to protect. Only `confirm_cw` and `confirm_plan`
+/// carried sketches, which is why one contributor's submissions had them and another's did not.
+///
+/// Keeps the k smallest scattered hashes seen, which is the same summary `Sketch::of` produces for
+/// a list -- so a streamed run and a planned run can be compared with each other.
+#[derive(Default)]
+pub struct SketchStream {
+    /// Smallest first. Kept sorted and truncated rather than heaped: k is 32, so the insert is a
+    /// binary search into a 32-element vector and the branch is not taken for the overwhelming
+    /// majority of candidates.
+    smallest: Vec<u64>,
+}
+
+impl SketchStream {
+    pub fn new() -> Self {
+        Self { smallest: Vec::with_capacity(SKETCH + 1) }
+    }
+
+    /// Offers one candidate to the sketch.
+    pub fn add(&mut self, text: &str) {
+        let value = Sketch::scatter(crate::hash64(text));
+
+        // The common case, and it has to be cheap: already full and this is not small enough.
+        if self.smallest.len() == SKETCH && value >= self.smallest[SKETCH - 1] {
+            return;
+        }
+
+        match self.smallest.binary_search(&value) {
+            Ok(_) => return, // a repeat contributes nothing, exactly as the set in `Sketch::of`
+            Err(at) => self.smallest.insert(at, value),
+        }
+
+        self.smallest.truncate(SKETCH);
+    }
+
+    /// The sketch, in the same hex spelling `Sketch::of` writes.
+    pub fn finish(&self) -> String {
+        self.smallest.iter().map(|value| format!("{value:016x}")).collect::<Vec<_>>().join("")
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    /// A streamed sketch and a listed sketch of the same names must be identical, or a run that
+    /// streamed its candidates could never be compared with one that planned them -- which is the
+    /// whole point of having both.
+    #[test]
+    fn a_streamed_sketch_matches_the_listed_one() {
+        let names: Vec<String> = (0..500).map(|n| format!("mc/mtl_wpn_ak47_{n}")).collect();
+
+        let mut stream = SketchStream::new();
+        for name in &names {
+            stream.add(name);
+        }
+        // Offered twice over, since a stream has no way to deduplicate and a list does.
+        for name in &names {
+            stream.add(name);
+        }
+
+        assert_eq!(stream.finish(), Sketch::of(&names));
+        assert_eq!(SketchStream::new().finish(), "", "an empty stream sketches to nothing");
+    }
+
 
     /// A sketch has to say "the same" for the same list and "not the same" for a different one,
     /// and -- the whole point -- something sensible in between.

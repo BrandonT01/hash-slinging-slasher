@@ -19,7 +19,7 @@ use std::collections::HashSet;
 
 use slasher::loader::{loaded_assets, unnamed_in};
 use slasher::search::{candidate_space, Meet};
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::{all_table_names, config, folder_names, paths, pool_index, pool_label, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
 
 /// What marks the end of a sound name's own part and the start of the tail.
@@ -177,6 +177,10 @@ fn main() {
                     candidate_space(0, endings.len(), pieces.len(), true),
                 )
                 .measured("new", results.added())
+                // See `confirm_plan`. Sound runs carried no sketch, so the overlap ledger
+                // could not compare two contributors grinding the same sound vocabulary.
+                .measured("sketch stems", Sketch::of(&pieces))
+                .measured("sketch endings", Sketch::of(&endings))
                 .fingerprint(&fingerprint),
             );
         }

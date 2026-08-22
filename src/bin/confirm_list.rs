@@ -27,7 +27,7 @@ use std::path::Path;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, SketchStream};
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::{
     config, feed, feed_raw, low_value_reason, paths, pool_label, readiness, recon, table_keys,
@@ -157,6 +157,7 @@ fn main() {
     let mut matched = 0_usize;
     let mut last_saved = Instant::now();
     let mut digest: u64 = 0;
+    let mut sketch = SketchStream::new();
 
     let started = Instant::now();
     let threads = std::thread::available_parallelism().map(|count| count.get()).unwrap_or(8);
@@ -200,6 +201,22 @@ fn main() {
 
             carry.clear();
             carry.extend_from_slice(&buffer[end..filled]);
+
+            // Sketched on this thread before the sweep takes the chunk.
+            //
+            // A streamed run has no candidate list to sketch, which is why `confirm_list` recorded
+            // none and `scripts/overlap.py` was blind to every invented method -- the half of the
+            // project the ledger exists to protect. One extra hash per candidate, single-threaded,
+            // against a sweep that hashes the same candidate across sixteen: measured at well
+            // under a second per forty million.
+            for line in text.split(|byte| *byte == b'\n') {
+                if let Ok(candidate) = std::str::from_utf8(line) {
+                    let candidate = candidate.trim();
+                    if !candidate.is_empty() {
+                        sketch.add(candidate);
+                    }
+                }
+            }
 
             let (hits, counted, chunk_digest) = sweep(&text, &filter, &wanted, threads, fold);
             digest = digest.wrapping_add(chunk_digest);
@@ -274,6 +291,9 @@ fn main() {
                     .measured("candidates tested", candidates)
                     .measured("matched", matched)
                     .measured("new", results.added())
+                    // The candidates this run actually asked about, summarised so another
+                    // run can be compared with it. See `SketchStream`.
+                    .measured("sketch stems", sketch.finish())
                     .measured("ids hunted", wanted.len())
                     .measured("throughput", format!("{:.1}M candidates/s", candidates as f64 / elapsed / 1e6))
                     .fingerprint(fingerprint)
