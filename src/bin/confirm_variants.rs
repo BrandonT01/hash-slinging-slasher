@@ -398,6 +398,12 @@ fn main() {
                     began.elapsed(),
                 )
                 .measured("game", config::game())
+                .measured("ids hunted", wanted.len())
+                // `count` is the number this run actually tried, and it has been computed
+                // since the first version -- printed to the terminal and then dropped. Under
+                // the label `confirm_list` uses, so the two can be ranked against each other.
+                .measured("candidates tested", count)
+                .measured("new", results.added())
                 .fingerprint(&fingerprint),
             );
         }

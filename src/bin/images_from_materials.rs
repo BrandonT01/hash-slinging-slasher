@@ -13,7 +13,7 @@
 //! does not.
 
 use slasher::loader::{loaded_assets, wanted_for_search};
-use slasher::search::run_best;
+use slasher::search::{candidate_space, run_best};
 use slasher::fingerprint::Fingerprint;
 use slasher::{config, endings_of, paths, pool_label, readiness, recon, stamp, table_keys, table_names, tables_look_complete, Results, RunNote};
 
@@ -233,6 +233,17 @@ fn main() {
                     began.elapsed(),
                 )
                 .measured("game", config::game())
+                .measured("openings", openings.len())
+                .measured("endings", endings.len())
+                .measured("stems", stems.len())
+                .measured("ids hunted", wanted.len())
+                // The whole product across every slice, which is what the run covered however
+                // it was cut up. Same label as `confirm_list`, so the two can be ranked.
+                .measured(
+                    "candidates tested",
+                    candidate_space(openings.len(), endings.len(), stems.len(), false),
+                )
+                .measured("new", results.added())
                 .fingerprint(&fingerprint),
             );
 

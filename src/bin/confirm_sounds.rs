@@ -18,7 +18,7 @@
 use std::collections::HashSet;
 
 use slasher::loader::{loaded_assets, unnamed_in};
-use slasher::search::Meet;
+use slasher::search::{candidate_space, Meet};
 use slasher::fingerprint::Fingerprint;
 use slasher::{all_table_names, config, folder_names, paths, pool_index, pool_label, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
 
@@ -167,6 +167,16 @@ fn main() {
                     began.elapsed(),
                 )
                 .measured("game", config::game())
+                .measured("tails", endings.len())
+                .measured("stems", pieces.len())
+                .measured("ids hunted", wanted.len())
+                // Spelled as `confirm_list` spells it, so `methods_report.py` can rank this
+                // against every other method. Without it a run is ranked by how long it took.
+                .measured(
+                    "candidates tested",
+                    candidate_space(0, endings.len(), pieces.len(), true),
+                )
+                .measured("new", results.added())
                 .fingerprint(&fingerprint),
             );
         }
