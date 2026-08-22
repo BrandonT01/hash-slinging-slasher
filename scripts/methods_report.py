@@ -25,12 +25,22 @@ record its own yield is counted as unattributed rather than being given the batc
 `--unattributed`, which exists so the size of that gap stays visible instead of being quietly
 absorbed into the ranking.
 
-## The metric
+## The metric, and why there are two of them
 
-A method's worth is what it returns **per candidate**, not what it returns in a pass. Names per
-run rewards whatever ran longest, which is how a blind sweep testing 1.35 billion candidates for
-402 names outranks a derivation testing 596,049 for 1,514. Both numbers are printed; the ranking
-uses the first.
+Names per **run** rewards whatever ran longest -- that is how a blind sweep testing 1.35 billion
+candidates for 402 names outranked a derivation testing 596,049 for 1,514. So the ranking is by
+candidates per name instead.
+
+That correction has its own failure, and `confirm_plan` created it. Candidates are now nearly
+free: a plan testing 4.68 **trillion** of them finishes in fifty minutes. Ranked by candidates,
+such a plan reads as catastrophic -- 2026-08-22 as a whole scores "1 name per 1.65 billion" --
+while those same passes were landing two hundred names an hour.
+
+So `--efficiency` prints **names per hour** beside it, and that is the column to rank by when
+choosing what to run. What a contributor spends is time, not candidates.
+
+A method whose whole runtime is seconds gets **free** rather than a rate, because extrapolating it
+to an hour invents a number: it finishes, and the hour is still there. Free means run it always.
 
 `submissions/` records more than names: each batch carries an `about_*.md` naming the method, how
 long it ran, and (since the fingerprint was introduced) exactly what its inputs were. This reads
@@ -65,6 +75,14 @@ YIELD_LABELS = ("new", "new here", "names found")
 # even though its average over the two still reads healthy.
 SPENT_FACTOR = 10.0
 COOLING_FACTOR = 3.0
+
+# Total machine time a method has to have used before a per-hour rate is worth quoting.
+#
+# Below this it is reported as **free** instead. A derivation that finishes in three seconds does
+# not sustain its rate for an hour -- it finishes, and the hour is still there afterwards -- so
+# extrapolating gives "391,200 names an hour", which is not a claim anybody should act on. "Free"
+# is both honest and the more useful instruction: run it always, it never has to win a comparison.
+SUSTAINED = 120
 
 
 def parse_duration(text):
@@ -276,6 +294,27 @@ def summarise(runs):
     candidates = sum(run["candidates"] for run in measured)
     names_measured = sum(run["found"] for run in measured)
 
+    # Names per hour of machine, beside names per candidate, because neither is right alone.
+    #
+    # Candidates-per-name was the correction to names-per-run, which rewarded whatever ran longest.
+    # Then `confirm_plan` made candidates nearly free: a plan testing 4.68 *trillion* candidates
+    # finishes in fifty minutes, so ranking it by candidates buries it under a Python generator
+    # that tested forty million. Measured 2026-08-22: the day read "1 name per 1.65 billion" by
+    # candidates, which is true and useless, while the same passes were landing 200 names an hour.
+    #
+    # What a contributor actually spends is time. This is that number.
+    timed = [run for run in runs if run["seconds"] and run["found"] is not None]
+    seconds = sum(run["seconds"] for run in timed)
+    names_timed = sum(run["found"] for run in timed)
+
+    # A rate only where one means something. Extrapolating a three-second derivation to an hour
+    # reads as "391,200 names an hour", which is not a claim anybody should act on: that method
+    # finishes and stops, and the hour is still there afterwards. Those are reported as **free**
+    # instead, which is the honest description and the more useful one -- a method that costs
+    # seconds should simply always be run, and never has to win a comparison to earn it.
+    hourly = names_timed * 3600.0 / seconds if seconds >= SUSTAINED else None
+    free = bool(seconds) and seconds < SUSTAINED and names_timed > 0
+
     lifetime = per(candidates, names_measured)
 
     # Each measured run's own rate, in the order they ran. `best` is the method at its best and
@@ -316,6 +355,9 @@ def summarise(runs):
         "candidates": candidates,
         "names_measured": names_measured,
         "per": lifetime,
+        "hourly": hourly,
+        "free": free,
+        "machine": seconds,
         "best_per": best,
         "recent_per": latest,
         "state": state,
@@ -404,27 +446,32 @@ def show_efficiency(read_all):
         return
 
     print(
-        "%-42s %14s %9s %12s %12s %12s"
-        % ("method", "candidates", "names", "lifetime", "at its best", "latest run")
+        "%-38s %14s %8s %11s %11s %11s %9s"
+        % ("method", "candidates", "names", "lifetime", "at its best", "latest run", "names/hr")
     )
     for method in order:
         s = summaries[method]
         print(
-            "%-42s %14s %9s %12s %12s %12s"
+            "%-38s %14s %8s %11s %11s %11s %9s"
             % (
-                method[:42],
+                method[:38],
                 thousands(s["candidates"]),
                 thousands(s["names_measured"]),
                 format(int(s["per"]), ","),
                 format(int(s["best_per"]), ",") if s["best_per"] else "-",
                 format(int(s["recent_per"]), ",") if s["recent_per"] else "-",
+("free" if s["free"] else (format(int(s["hourly"]), ",") if s["hourly"] else "-")),
             )
         )
     print(
-        "\nAll three columns are candidates per name, so smaller is better. Where `latest run` is\n"
-        "far worse than `at its best` the method has been ground out on the corpus it had, and the\n"
-        "lifetime figure is being held up by the day it was new. That gap, not the lifetime column,\n"
-        "is what says whether running it again would pay."
+        "\nThe three middle columns are candidates per name, so smaller is better. Where `latest run`\n"
+        "is far worse than `at its best`, the method has been ground out on the corpus it had and\n"
+        "the lifetime figure is being held up by the day it was new. That gap is what says whether\n"
+        "running it again would pay.\n\n"
+        "**`names/hr` is the one to rank by when choosing what to run tonight**, and it can disagree\n"
+        "sharply with the candidate columns. `confirm_plan` made candidates nearly free -- a plan\n"
+        "testing 4.68 trillion of them finishes in fifty minutes -- so a method can look dreadful per\n"
+        "candidate and still be the best use of an hour. What a contributor spends is time."
     )
 
 

@@ -32,6 +32,8 @@
 382cac8e4b4245a5,amb_billboard_glitch
 5c50c6d256df3c6f,amb_bird_crow
 3285d8aba1889f59,amb_bird_gulls
+65cb68301b4640be,amb_bird_loop_a
+65cb67301b463f0b,amb_bird_loop_b
 739e49483e8fcfc6,amb_birds_random
 431f39e06de1c1e2,amb_blood_splatter
 4dc11f9eb2ce34ec,amb_blustery
@@ -257,6 +259,7 @@ bffe6f3830f9dda,amb_hollowfan_run
 6a2b010c2ff9e1e2,amb_jungle_distant_r
 445d15fd6c86f9d7,amb_jungle_insects
 5b709e0bda2af7e7,amb_lab_bg
+54ad4123974c4e87,amb_lab_din
 40bfcdd85a40d4d0,amb_lake_side_birds_1
 40bfd0d85a40d9e9,amb_lake_side_birds_2
 7de6387994a7fb0e,amb_large_chamber
@@ -400,6 +403,7 @@ b6f1058df5adda2,amb_room_int_low_wide
 5530abcb1f0102b7,amb_sawmill
 50d2203fbc7d7dd9,amb_scafold_creak
 35f706610303e506,amb_sea_bug
+6a50c8b4e51f47b3,amb_sea_st
 43631349fa678e8c,amb_seahorse
 2f4f8f7b45a52020,amb_security_room
 47039994ee2a35bd,amb_serpent_main
@@ -592,6 +596,7 @@ cb198a299a56aa3,amb_wind_open
 279fb1039de68466,amb_wind_turbine
 1b3dcd976e8dc999,amb_wind_turbine_sweet
 506b7532ebb5a2eb,amb_wind_under
+3bfbfac734f413b6,amb_windchime
 5472f93d1cb9857c,amb_windsock_flap
 4ef288254207f50a,amb_wood_creak_small
 6bb0aa3181f8e09f,amb_wood_door_open
@@ -600,6 +605,7 @@ cb198a299a56aa3,amb_wind_open
 fcf4c1fdb4caaeb,amb_xmas_1
 fcf4d1fdb4cac9e,amb_xmas_2
 644ee63458e922f6,amb_zmb_amb
+500f7ff9addef8b5,amb_zmb_astro
 1117a670c60dce8a,amb_zmb_attack
 22aec8f7b0de1f35,amb_zmb_ghost
 36260f65ccfe23d1,aml_dog_bark_collar
@@ -1041,11 +1047,13 @@ b79543fba969874,fly_emote_lamp_drop
 122d94c02045aa46,fly_emote_money
 7139f66b8405c4a,fly_emote_pushups_fly
 10d809ad41ab0e76,fly_emote_pushups_in
+477873911d2791f5,fly_emote_ralph_m
 60650fb574738b5b,fly_emote_raygun_pew
 4879b5e4f0759a42,fly_emote_roman_candle_oneshot
 65016b48d805c39f,fly_emote_roman_candle_oneshot_swt
 7d7be16a0258c10d,fly_emote_shared_g_dance
 77fe4a0bc4b96da0,fly_emote_shared_rave
+639d6403cd544980,fly_emote_shared_salsa
 75fdb0ca5e42cd5c,fly_emote_soccer_f
 75fdbbca5e42e00d,fly_emote_soccer_m
 43bd003e5120f836,fly_emote_sparkler
@@ -2505,6 +2513,7 @@ e1b275fdaaf39da,fly_slide_lt_plr_gravel
 77dfc97cb7510870,fly_slide_lt_plr_water
 269a7a8b6d745324,fly_slide_lt_plr_watershallow
 7b192d50f42615a8,fly_slide_lt_plr_wood
+5809c2350fccf338,fly_smg_capacity_latch
 24afe9cc2a6ed3eb,fly_spectral_shield_first_raise
 21a3f6a21671aae3,fly_spray_paint_npc
 6ec8ffa1f9f4ffbe,fly_spray_paint_plr
@@ -4015,6 +4024,7 @@ eef9355f23e9008,veh_suv_road_asphalt
 5fc8b69fea354aef,veh_suv_road_glass
 49a29ab1d038ba39,veh_suv_road_grass
 3720024e9041036,veh_suv_road_gravel
+2ad0611e99d9ed4a,veh_suv_road_layer
 462e4d0f1022dc10,veh_suv_road_metal
 74c772f914b0d39e,veh_suv_road_metalcar
 425f50d889c9795,veh_suv_road_mud
@@ -4069,6 +4079,7 @@ d51adc396345e77,veh_zodiac_ignition_off
 69204ffb6645d866,vox_alex_callout_assist
 544fa7e2fe9fe0ef,vox_alex_callout_congrat
 25a8a4688e5e7e7d,vox_alex_callout_form_up
+2db4707993ac1aa2,vox_alex_callout_greet
 3150fe0576db7e28,vox_alex_callout_revive
 6b13968767839b0b,vox_alex_callout_taunt
 65aba34b8bbb684b,vox_alex_callout_thank
@@ -4649,6 +4660,7 @@ bc9dc933e489a5b,vox_anme_sd_start
 86b601a47ee53e5,vox_batt_callout_cover
 5040a7d3c3836e83,vox_batt_callout_cover_request
 17ad13311b5f458,vox_batt_callout_form_up
+ef3ec8036b6ef43,vox_batt_callout_greet
 2b7dd55466f697b3,vox_batt_callout_revive
 4ffd56b245bfb51a,vox_batt_callout_taunt
 6d9881e95db5b6e2,vox_batt_callout_thank
@@ -4769,6 +4781,7 @@ fbc0409941945ad,vox_batt_ult_swat_kill
 2d4fe05d016295b0,vox_blac_callout_assist
 2a5e466c2089fcc5,vox_blac_callout_congrat
 ac1c1c00175ac6f,vox_blac_callout_form_up
+5622ccd2be5d271c,vox_blac_callout_greet
 48c809941422c242,vox_blac_callout_revive
 c792895cfe6779,vox_blac_callout_taunt
 2772134ebca8a5d5,vox_blac_callout_thank
@@ -4966,6 +4979,7 @@ af5475c43b591f6,vox_fire_callout_acknow
 2cc277026bf029dc,vox_fire_callout_cover
 7bd560df29c77c1e,vox_fire_callout_cover_request
 143287526952f21,vox_fire_callout_form_up
+512361d1f366c36e,vox_fire_callout_greet
 6f83c9829a6d9fac,vox_fire_callout_revive
 e4c77dfc7109937,vox_fire_callout_taunt
 473544a3c71a2bd7,vox_fire_callout_thank
@@ -5158,6 +5172,7 @@ b08c7a2dbe1fb8d,vox_m_quest_ground_floor_prst_0
 9fb72e5ca3f3d02,vox_marl_callout_assist
 2c6613d071f9962b,vox_marl_callout_congrat
 1ba31c9a68923a61,vox_marl_callout_form_up
+67f4e15219a18bae,vox_marl_callout_greet
 4a33303eab353bec,vox_marl_callout_revive
 7ba2f75b054cb677,vox_marl_callout_taunt
 5aa0c423ea71cb17,vox_marl_callout_thank
@@ -5197,6 +5212,7 @@ b08c7a2dbe1fb8d,vox_m_quest_ground_floor_prst_0
 450e9c70cfa0ae94,vox_matt_callout_assist
 25035fe35a6210f9,vox_matt_callout_congrat
 1199f93df698b16b,vox_matt_callout_form_up
+11e7824f776246f0,vox_matt_callout_greet
 aface23be6a4a3e,vox_matt_callout_revive
 355fbfaf9028393d,vox_matt_callout_taunt
 4841fbafde2ca15e,vox_matt_menu_select
@@ -5264,6 +5280,7 @@ fddd23dd85e5b56,vox_mid_igc_3_plr_4_0
 581a75e703d3aa51,vox_mist_callout_assist
 55fb4f70170fc1f2,vox_mist_callout_congrat
 5d1da116725fbda0,vox_mist_callout_form_up
+4e187c4502deabbb,vox_mist_callout_greet
 54ae331fc1c8996b,vox_mist_callout_revive
 5f08cdc1460415e2,vox_mist_callout_taunt
 5286c8791e0f9a4a,vox_mist_callout_thank
@@ -5363,6 +5380,7 @@ ace5cbb2f05aef9,vox_mta1_ult_tank_ready
 5693052f200f3979,vox_noma_callout_cover
 2a814aecb8e543bf,vox_noma_callout_cover_request
 3ece89baa5c5e9fc,vox_noma_callout_form_up
+2a1d92a95679e6bf,vox_noma_callout_greet
 3209230a04d8e997,vox_noma_callout_revive
 5cb765314e01c026,vox_noma_callout_taunt
 75212fe4b28aeede,vox_noma_callout_thank
@@ -5459,6 +5477,7 @@ adf9d8689af5dfa,vox_noma_ult_swat_request
 4f53221e2a600472,vox_outr_callout_cover
 41bd803265792928,vox_outr_callout_cover_request
 5f7948c4d62143af,vox_outr_callout_form_up
+7b57347ef710f15c,vox_outr_callout_greet
 349ef3386da44682,vox_outr_callout_revive
 7e6ff1da75157fb9,vox_outr_callout_taunt
 2519729fd4be0b15,vox_outr_callout_thank
@@ -5588,6 +5607,7 @@ cc18a9027ba2b2d,vox_plr_12_outro_igc_7_7
 3ac34acd1385e456,vox_plr_1_callout_assist
 4ba5026a31a5657f,vox_plr_1_callout_congrat
 5ecc46719d203ecd,vox_plr_1_callout_form_up
+5b3877ae5c771bb2,vox_plr_1_callout_greet
 10835812d2236f8,vox_plr_1_callout_revive
 191b95491fcb203b,vox_plr_1_callout_taunt
 2c48e20de3e5b57b,vox_plr_1_callout_thank
@@ -5617,6 +5637,7 @@ cc18a9027ba2b2d,vox_plr_12_outro_igc_7_7
 657d82d0abc33171,vox_plr_2_callout_assist
 5ea7eda4f0ce2592,vox_plr_2_callout_congrat
 6332ff4ef8aab380,vox_plr_2_callout_form_up
+5994c1080b16c95b,vox_plr_2_callout_greet
 676537b333fb8f8b,vox_plr_2_callout_revive
 465f0a293082aa82,vox_plr_2_callout_taunt
 39dd04e1088e2eea,vox_plr_2_callout_thank
@@ -5641,6 +5662,7 @@ cc18a9027ba2b2d,vox_plr_12_outro_igc_7_7
 4f7c34154291c214,vox_plr_3_callout_assist
 4e4f8c52aa063379,vox_plr_3_callout_congrat
 3ae625ad463cd3eb,vox_plr_3_callout_form_up
+5370f5b63e902570,vox_plr_3_callout_greet
 156865c8315b5dbe,vox_plr_3_callout_revive
 76e93316575617bd,vox_plr_3_callout_taunt
 427513daf2357959,vox_plr_3_callout_thank
@@ -5670,6 +5692,7 @@ cdd91acf49b405b,vox_plr_3_outro_igc_9_9
 645985f793203197,vox_plr_4_callout_assist
 6bf003c378fe95fc,vox_plr_4_callout_congrat
 21ba8c7a8f577bbe,vox_plr_4_callout_form_up
+46ac74c5f76e62b1,vox_plr_4_callout_greet
 3668457fe901fec1,vox_plr_4_callout_revive
 5427d747bf76f7c4,vox_plr_4_callout_taunt
 1f04ddfab03d8950,vox_plr_4_callout_thank
@@ -5751,6 +5774,7 @@ a783b0e822937dd,vox_plr_7_exert_mant_heavy
 59e7535f769667c4,vox_pric_callout_assist
 470f1035b8d7609,vox_pric_callout_congrat
 11d1f61a0753573b,vox_pric_callout_form_up
+62e98732c2a0cf80,vox_pric_callout_greet
 72a581bee266728e,vox_pric_callout_revive
 5791068a5580e4ed,vox_pric_callout_taunt
 39f4e7533d894489,vox_pric_callout_thank
@@ -5762,6 +5786,7 @@ a783b0e822937dd,vox_plr_7_exert_mant_heavy
 b4a627ff50608dd,vox_prop_callout_cover
 78e9965bc0fe918b,vox_prop_callout_cover_request
 2ed2ecd3f5573870,vox_prop_callout_form_up
+161cc82386dd028b,vox_prop_callout_greet
 60c8f4ccfb8717bb,vox_prop_callout_revive
 27e45345f7169a92,vox_prop_callout_taunt
 5cb84df84a2441ba,vox_prop_callout_thank
@@ -5883,6 +5908,7 @@ dcd27aacb306cea,vox_reap_callout_acknow
 68e6a5fde4bca028,vox_reap_callout_cover
 41df0f95142bc1c2,vox_reap_callout_cover_request
 4e63dd9334e6c53d,vox_reap_callout_form_up
+11fa81d1248d1862,vox_reap_callout_greet
 49e18b5358a44ae8,vox_reap_callout_revive
 25dea7da1065edcb,vox_reap_callout_taunt
 4d58b4a31f81420b,vox_reap_callout_thank
@@ -6063,6 +6089,7 @@ bdf5a7714cfbb1e,vox_rezn_exert_death
 3bd8dddae632dd7a,vox_ruin_callout_cover
 6880ef00979d3b40,vox_ruin_callout_cover_request
 34d6d22f5797bc57,vox_ruin_callout_form_up
+7ccbf0ba55d076f4,vox_ruin_callout_greet
 390600eef2880b9a,vox_ruin_callout_revive
 3cedcdfe80c014a1,vox_ruin_callout_taunt
 3a1fff4bb992e33d,vox_ruin_callout_thank
@@ -6200,6 +6227,7 @@ a77f757f5ce3e2f,vox_russ_1_banter_marl_russ_0
 76f4eb9c5ddbe9eb,vox_russ_callout_assist
 5c9fc4f2401a2f50,vox_russ_callout_congrat
 3d8f61a4fb19edaa,vox_russ_callout_form_up
+5c4ad498fa304645,vox_russ_callout_greet
 3a401220ad55e1ed,vox_russ_callout_revive
 6cc73fcba30b0568,vox_russ_callout_taunt
 227d1f3f1e39e83d,vox_russ_exert_blind
@@ -6277,6 +6305,7 @@ f22c1d447fb1c2d,vox_sera_callout_assist
 34739274c443d911,vox_sera_callout_cover
 1db7f465e389a4a7,vox_sera_callout_cover_request
 716c9d28dd4c32d4,vox_sera_callout_form_up
+2720171053798747,vox_sera_callout_greet
 3fc3218e03696c9f,vox_sera_callout_revive
 169e0780e26bfafe,vox_sera_callout_taunt
 1c72e2bcbe90d6d6,vox_sera_callout_thank
@@ -6395,6 +6424,7 @@ a61052f5936df7f,vox_sera_unlock
 553f55b7e86b014b,vox_spec_callout_cover
 6c506df97cae0345,vox_spec_callout_cover_request
 294cbc2d1ae509ae,vox_spec_callout_form_up
+60ca42260e314661,vox_spec_callout_greet
 7c95beb6562f84f1,vox_spec_callout_revive
 447864c37366db54,vox_spec_callout_taunt
 24846b77012c9f20,vox_spec_callout_thank
@@ -6450,6 +6480,7 @@ c2d1b0c523a9019,vox_spec_exert_mant_light
 6c1b5ae4a5e89911,vox_spec_kill_zero_2
 6c1b59e4a5e8975e,vox_spec_kill_zero_3
 739b1bb6815d5cca,vox_spec_sr_mode_orders
+3798fa32cf9fabf7,vox_spec_sr_mode_rises
 7f7563c17bfb8599,vox_spec_sr_mode_start
 594b93450072fdaf,vox_spec_threat_batt
 16ab8b4b23be9c9b,vox_spec_threat_cras
@@ -6524,6 +6555,7 @@ e69898aa2738ff,vox_spec_ult_rcxd_threat
 6198f8a6bc7693bc,vox_stuh_callout_assist
 4d693fe56bc3bc41,vox_stuh_callout_congrat
 300e56083348fa83,vox_stuh_callout_form_up
+2b7e588761ae7c18,vox_stuh_callout_greet
 267f3e9452d68026,vox_stuh_callout_revive
 d1396d740d2c335,vox_stuh_callout_taunt
 2ec4a82005c68571,vox_stuh_callout_thank
@@ -6567,6 +6599,7 @@ d1396d740d2c335,vox_stuh_callout_taunt
 2d24b08677f5bb5f,vox_swat_callout_cover
 116c2011d66b2a81,vox_swat_callout_cover_request
 12ef0ad6ae2d0022,vox_swat_callout_form_up
+6010f51da62666cd,vox_swat_callout_greet
 ce52b908fe40615,vox_swat_callout_revive
 433446936cebfc40,vox_swat_callout_taunt
 45a21dcf462bf54c,vox_swat_callout_thank
@@ -6716,6 +6749,7 @@ c6f95ab80d13306,vox_tedd_3_banter_marl_tedd_1
 1fdef19e13b3f73,vox_tedd_callout_assist
 2a4c5bf11e0f53f8,vox_tedd_callout_congrat
 4b03688b8c6dce2,vox_tedd_callout_form_up
+5cbb1fff1da868d,vox_tedd_callout_greet
 57ec359ecb8b1ad5,vox_tedd_callout_revive
 6e42fb1f82e38b00,vox_tedd_callout_taunt
 2138071d06d27d9,vox_tedd_doors_close
@@ -6762,6 +6796,7 @@ c6f95ab80d13306,vox_tedd_3_banter_marl_tedd_1
 2628fb1a73e85db3,vox_udem_callout_assist
 4ff680ea5d1dbd38,vox_udem_callout_congrat
 2b886042f3e5422,vox_udem_callout_form_up
+15cc5517cc4b9acd,vox_udem_callout_greet
 7f7d419f611b6215,vox_udem_callout_revive
 78efa68d93113040,vox_udem_callout_taunt
 7b5d7dc96c51294c,vox_udem_callout_thank
@@ -6773,6 +6808,7 @@ c6f95ab80d13306,vox_tedd_3_banter_marl_tedd_1
 2f0d241f354ed907,vox_unik_callout_assist
 2a29451fa9a19d0c,vox_unik_callout_congrat
 78886ce5c084598e,vox_unik_callout_form_up
+4cab47911f5fb501,vox_unik_callout_greet
 2e9775cba1c2e411,vox_unik_callout_revive
 6dd6a299c94ebf4,vox_unik_callout_taunt
 66e970dd2a5aafc0,vox_unik_callout_thank
@@ -6784,6 +6820,7 @@ e19f17e9b1db26b,vox_unik_menu_win
 491bb3c86c500533,vox_uric_callout_assist
 1a0dd087753f5bb8,vox_uric_callout_congrat
 4ccfd5a1475ff2a2,vox_uric_callout_form_up
+7e75cdddef96954d,vox_uric_callout_greet
 226ffa4d59830995,vox_uric_callout_revive
 61991f53b65c2ac0,vox_uric_callout_taunt
 6406f68f8f9c23cc,vox_uric_callout_thank
@@ -6794,6 +6831,7 @@ e19f17e9b1db26b,vox_unik_menu_win
 6936fc611976159,vox_utak_callout_assist
 25ca4767467d85da,vox_utak_callout_congrat
 5e59177bc635a18,vox_utak_callout_form_up
+2796f55be2f17f03,vox_utak_callout_greet
 71f94d175de41773,vox_utak_callout_revive
 366a67df3cd34eda,vox_utak_callout_taunt
 e7931b3facd7a2,vox_utak_callout_thank
@@ -6810,6 +6848,7 @@ e7931b3facd7a2,vox_utak_callout_thank
 68bbac61097e68d4,vox_ward_callout_assist
 47e5351a9341e739,vox_ward_callout_congrat
 66c3f8f281c460ab,vox_ward_callout_form_up
+3d986d3abe141d30,vox_ward_callout_greet
 5633e66f18e4b67e,vox_ward_callout_revive
 3241b2ec2497f57d,vox_ward_callout_taunt
 13393b0c25a8019,vox_ward_callout_thank
@@ -6850,6 +6889,7 @@ bd796c97b1b335f,vox_weav_callout_acknow
 40148e92c5cebeb3,vox_weav_callout_assist
 41a3165d87949038,vox_weav_callout_congrat
 74651b7759b52722,vox_weav_callout_form_up
+46075e42727135cd,vox_weav_callout_greet
 1968d517b301c315,vox_weav_callout_revive
 292aafb83936cb40,vox_weav_callout_taunt
 2b9886f41276c44c,vox_weav_callout_thank
@@ -6891,6 +6931,7 @@ bce1126fb314c41,vox_weav_exert_stabbed
 596892e41baa701d,vox_wood_callout_assist
 73f161ee78b8e51e,vox_wood_callout_congrat
 7b554b323d3b1e24,vox_wood_callout_form_up
+28ff62f4f9bbed97,vox_wood_callout_greet
 5fdd2dab263dfcaf,vox_wood_callout_revive
 1a2e8d0bb67c32ee,vox_wood_callout_taunt
 9fa2846f4e7cc06,vox_wood_callout_thank
@@ -6935,6 +6976,7 @@ ab1698ea2a38164,vox_wood_exert_pain
 4ff7ee72cecf7d5b,vox_yuri_callout_assist
 403c03f0a975c220,vox_yuri_callout_congrat
 30fd57198aaa217a,vox_yuri_callout_form_up
+4aa14848dd362195,vox_yuri_callout_greet
 92284f4184c6b3d,vox_yuri_callout_revive
 72779da43de86d8,vox_yuri_callout_taunt
 76e6008c6fda7204,vox_yuri_callout_thank
@@ -6980,6 +7022,7 @@ f18fb0fb6e68629,vox_yuri_exert_stabbed
 78b3cf669214f582,vox_zero_callout_cover
 7979cdee3ac839f8,vox_zero_callout_cover_request
 27cc2453cc898cbf,vox_zero_callout_form_up
+3e9afa78de08ee6c,vox_zero_callout_greet
 7c7fa22e07502ad2,vox_zero_callout_revive
 148ab9cf864f4be9,vox_zero_callout_taunt
 4dccfa992f854ec5,vox_zero_callout_thank
@@ -7356,6 +7399,7 @@ c160bd6714c8c9a,wpn_ultimate_turret_spool_start
 424f307ee446b55,wpn_zhield_fire_lfe_plr
 48b8785c4ac59202,wpn_zhield_fire_npc
 68f04f5bcc6c59c7,wpn_zhield_fire_plr
+54365a8985bf4da9,wpn_zhield_melee_ignite
 362b542102cd811d,wpn_zhield_melee_impact
 42eeaca5bfc3468,wpn_zhield_melee_impact_plr
 3665f0164645d4de,wpn_zhield_melee_impact_victim

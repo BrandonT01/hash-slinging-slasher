@@ -187,6 +187,7 @@ a9b40237bd6f7a8,amb_gate_start
 646b850a3c4daa31,amb_insects_loop03
 646b860a3c4dabe4,amb_insects_loop04
 6e007068c25089c8,amb_jungle_birds_ravens
+68f558665fc5548d,amb_jungle_dense
 6a2af30c2ff9ca18,amb_jungle_distant_l
 6a2b010c2ff9e1e2,amb_jungle_distant_r
 5d9f349e5ecd507a,amb_jungle_ext_mod
@@ -246,6 +247,7 @@ a9b40237bd6f7a8,amb_gate_start
 32d90eab11e3d481,amb_ocean_l
 32d8f8ab11e3af1f,amb_ocean_r
 4028978c261fe93b,amb_office_phone
+3ba978eaa754bd02,amb_oil_drill
 7c6ee97f356d4d79,amb_oil_flow
 cda9121da180e8b,amb_oil_fryer
 49373ecc137c82bf,amb_oil_pump
@@ -259,6 +261,7 @@ cda9121da180e8b,amb_oil_fryer
 bd3c2158d4ee396,amb_outside_line
 2f561b288abf3626,amb_paintball_int_wind
 638f4af6c24b17bd,amb_panel_creak
+33874c5e6020ff1f,amb_paper_blown
 190a5907d889ddec,amb_paper_gust
 7dffc4f440270e3c,amb_parachute_lp
 47ce9fb7129663b4,amb_parrot
@@ -371,6 +374,7 @@ e08123a1ebc135c,amb_sand_gust
 5b1e5ea9222668d,amb_slums_ext_mod
 29092b9f4d25a050,amb_small_fountain
 14cf0ba121858b0d,amb_sml_fire
+6243f6f70e7821df,amb_sona_1
 26c75ccdfc87dddf,amb_sonar_1
 26c75dcdfc87df92,amb_sonar_2
 13401287f155df30,amb_space_fan
@@ -788,6 +792,7 @@ cc649714ac522a7,emt_forest_edge_03
 543fe81304f630be,emt_soviet_comp_alarm_lp_04
 543fe91304f63271,emt_soviet_comp_alarm_lp_05
 543fe61304f62d58,emt_soviet_comp_alarm_lp_06
+28f4e8415855338e,emt_soviet_comp_beep_morse
 5d344558f2e0c47a,emt_soviet_comp_beep_short
 cdf5472cde7051d,emt_soviet_comp_click
 579fc4fa7a2c4ae0,emt_soviet_comp_hum_lp
@@ -2024,6 +2029,7 @@ fe1844aaf00cef,fly_crossbow_first_raise_end_npc
 41b68aa51472a05f,fly_crossbow_reload_end_npc
 76f5349e424c2f62,fly_crossbow_reload_start
 714024e06d8c6706,fly_crossbow_reload_start_npc
+348c4a242e96c18d,fly_dog_step_claws
 1d5744ecd18403c6,fly_door_locked
 52584b84652c4e58,fly_essence_trap_throw_npc
 35857684e666fff9,fly_essence_trap_throw_plr
@@ -2463,8 +2469,10 @@ d5df24dca33dd37,mpl_veh_arcxd_ignition
 3cdbad029d1c9f65,mpl_zone_contested
 e7cf5b72dcee785,mus_arcade
 14d4974e23564a2f,mus_arena_08_loop_0
+6b40c468a51a5f68,mus_bonusroom_00_loop_0
 411510811822b019,mus_bonusroom_01_loop_0
 211e01a79b047a71,mus_boss_outro_intro
+660020fd3436f31d,mus_bossfight_00_loop_0
 2c8b0aeddd727d4c,mus_bossfight_01_loop_0
 530f93496496f196,mus_bunny_outro_intro
 19b2989fd9babdf6,mus_bunny_stinger
@@ -2999,6 +3007,7 @@ dcffd195d2773d,uin_cuav_static_loop
 628019227fc50520,uin_weapupgrade_menu_close
 3eeb26ec82e35cd8,uin_wz_attach_lasersight_on
 261ccadb1242dae5,uin_wz_attach_silencer_on
+73e95a7c84cdef9f,uin_wz_perk_aware
 4655606030cd4f3b,uin_wz_perk_bloody_tracker
 4c7a6e162e2f26a0,uin_wz_perk_depleted
 498384795417f132,uin_wz_perk_looter
@@ -23296,6 +23305,7 @@ f0bbc59b3d29075,wpn_ar_soviet_ads_killcam_plr
 d3933b80c285e3e,wpn_arav_turret_lfe_npc
 7b86e2b8020731c3,wpn_arav_turret_lfe_plr
 74262cffefad9bdc,wpn_arav_turret_overheat_plr
+239df5cd657f59c7,wpn_arav_turret_steam
 207a30386c039082,wpn_arrow_fire_loop
 470978b5aa6302ba,wpn_attack_helicopter_chaff
 2eae6aa521b71cdf,wpn_attack_helicopter_spin_start_npc
@@ -24537,6 +24547,7 @@ d6fbc11453e1d0a,zmb_vocals_mechz_death
 76d65fb5db0399b5,zmb_vocals_mechz_pain_jetpack
 566edb7eca85b219,zmb_vocals_mechz_stun_intro
 7082287c6b7d8204,zmb_vocals_mimic_ambient
+3b6288db895e9595,zmb_vocals_mimic_chomp
 51c4c90ba842cd9e,zmb_vocals_mimic_death
 42a92e68e88471a9,zmb_vocals_mimic_emerge
 105c10a7c0448a98,zmb_vocals_mimic_roar
