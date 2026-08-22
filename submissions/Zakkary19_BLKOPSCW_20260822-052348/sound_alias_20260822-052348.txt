@@ -1,0 +1,2 @@
+660020fd3436f31d,mus_bossfight_00_loop_0
+6b40c468a51a5f68,mus_bonusroom_00_loop_0
