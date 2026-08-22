@@ -1,0 +1,8 @@
+4a030474e61add8,uin_kls_planemortar
+1052b6155d1244c9,veh_f35_engine_high
+129678d4171a455b,amb_power_thumpy
+1638a96593d3fc2b,uin_cac_perk_tactical_mask
+261ccadb1242dae5,uin_wz_attach_silencer_on
+66dc2a044e26c03d,evt_intro_igc_cia
+74262cffefad9bdc,wpn_arav_turret_overheat_plr
+7743b465748846ec,uin_kls_minigun
