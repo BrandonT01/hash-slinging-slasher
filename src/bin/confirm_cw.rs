@@ -27,7 +27,7 @@ use std::time::{Duration, Instant};
 
 use slasher::fingerprint::Fingerprint;
 use slasher::loader::{loaded_assets, unnamed, wanted_for_search};
-use slasher::search::Meet;
+use slasher::search::{self, Meet};
 use slasher::{
     all_table_names, config, folder_names, hash64, paths, read_list, readiness, recon, table_keys,
     table_names, tables_look_complete, Results, RunNote, pool_label,
@@ -546,6 +546,14 @@ fn main() {
                 .measured("beginnings", prefixes.len())
                 .measured("endings", endings.len())
                 .measured("ids hunted", wanted.len())
+                // Spelled exactly as `confirm_list` spells it, because `methods_report.py` reads
+                // both and ranks them against each other. Until this line existed the general
+                // search could not be compared with any invented method at all: it recorded what
+                // it found and never what it asked, so it was ranked by how long it ran.
+                .measured(
+                    "candidates tested",
+                    search::candidate_space(prefixes.len(), endings.len(), pieces.len(), true),
+                )
                 .measured("matches", found.len())
                 .measured("distinct names reached", distinct.len())
                 .measured("new here", results.added())

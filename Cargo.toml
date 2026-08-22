@@ -45,6 +45,10 @@ path = "src/bin/start.rs"
 name = "confirm_list"
 path = "src/bin/confirm_list.rs"
 
+[[bin]]
+name = "confirm_plan"
+path = "src/bin/confirm_plan.rs"
+
 # The same program as `start`, under the name the older documentation uses. Kept so an assistant
 # working from a stale memory of this repo still gets the full startup rather than a check that
 # no longer exists.

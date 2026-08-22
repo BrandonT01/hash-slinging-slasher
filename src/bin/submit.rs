@@ -16,7 +16,7 @@
 //!
 //! Filenames carry the date and time to the second, so two submissions never collide.
 
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
@@ -39,6 +39,21 @@ const CONTRIBUTED: &str = "contrib";
 
 /// The ledger of run folders already sent, so nothing is submitted twice.
 const LEDGER: &str = ".submitted";
+
+/// The ledger of scripts already carried into a pull request: content digest, then the name the
+/// library holds it under.
+///
+/// `already_in_library` answers "is this script on my disk", and that is the wrong question
+/// within a night of grinding. A script is only on disk under its library name once the pull
+/// request carrying it has been merged *and* pulled back down, which is hours later; four
+/// submissions in the eight minutes before that all see an empty library and each stamp a fresh
+/// copy. Measured on this repository on 2026-08-21: `scripts/contributed/` held 43 files that
+/// were 12 distinct scripts, with `soundxfer` and `aliasswap` carried six times each.
+///
+/// The source comment on `tracked_scripts` calls this unfixable without fetching upstream bytes.
+/// It is not: what a submission needs to know is what *it* has already sent, and that is a purely
+/// local fact this machine has always had and never wrote down.
+const SCRIPT_LEDGER: &str = ".contributed";
 
 /// Where a `_yyyymmdd-hhmmss` stamp starts in a submission's filename, if it has one.
 ///
@@ -1164,6 +1179,53 @@ fn record(outbox: &Path, sent: &[PathBuf]) {
     let _ = fs::write(outbox.join(LEDGER), text);
 }
 
+/// A script's identity for the ledger: its text, ignoring line endings.
+///
+/// The same normalisation `same_text` uses, and for the same reason -- git checks a file out with
+/// CRLF while a script a run just wrote has LF, so raw bytes would call the identical script two
+/// different scripts and the ledger would never match.
+fn script_digest(bytes: &[u8]) -> u64 {
+    let text: Vec<u8> = bytes.iter().copied().filter(|byte| *byte != b'\r').collect();
+    slasher::hash64_raw(&String::from_utf8_lossy(&text))
+}
+
+/// The scripts this machine has already carried into a pull request, by content.
+fn sent_scripts(outbox: &Path) -> HashMap<u64, String> {
+    fs::read_to_string(outbox.join(SCRIPT_LEDGER))
+        .unwrap_or_default()
+        .lines()
+        .filter_map(|line| {
+            let (digest, name) = line.trim().split_once(' ')?;
+            let digest = u64::from_str_radix(digest, 16).ok()?;
+            let name = name.trim();
+            (!name.is_empty()).then(|| (digest, name.to_owned()))
+        })
+        .collect()
+}
+
+/// Notes the scripts as carried. Appended, never rewritten, like the run ledger beside it.
+///
+/// Recorded only after the pull request is open, so a send that fails does not teach this machine
+/// that a script it never sent is already upstream -- which would strand that generator with the
+/// session, and a generator that dies with its session is the thing `contrib/` exists to prevent.
+fn record_scripts(outbox: &Path, carried: &[(u64, String)]) {
+    if carried.is_empty() {
+        return;
+    }
+
+    let _ = fs::create_dir_all(outbox);
+
+    let mut text = fs::read_to_string(outbox.join(SCRIPT_LEDGER)).unwrap_or_default();
+    let known = sent_scripts(outbox);
+    for (digest, name) in carried {
+        if !known.contains_key(digest) {
+            text.push_str(&format!("{digest:016x} {name}\n"));
+        }
+    }
+
+    let _ = fs::write(outbox.join(SCRIPT_LEDGER), text);
+}
+
 fn github_user() -> Option<String> {
     let output = github::command()
         .args(["api", "user", "--jq", ".login"])
@@ -1245,6 +1307,13 @@ fn open_pull_request(
     // beside it -- see `library_name`.
     let mut landed: Vec<String> = Vec::new();
 
+    // What this machine has already sent, which is not the same as what is on its disk. The
+    // outbox is the submission folder's parent; falling back to the configured one keeps this
+    // working if a caller ever hands over a folder from somewhere else.
+    let outbox = folder.parent().map(Path::to_path_buf).unwrap_or_else(paths::submissions);
+    let carried_before = sent_scripts(&outbox);
+    let mut carried_now: Vec<(u64, String)> = Vec::new();
+
     for script in scripts {
         let Some(name) = script.file_name().and_then(|name| name.to_str()) else {
             continue;
@@ -1265,10 +1334,27 @@ fn open_pull_request(
             continue;
         }
 
+        // Not on disk, but this machine has sent it before -- the pull request carrying it has
+        // simply not merged and come back down yet. Sending it again is what filled
+        // `scripts/contributed/` with six copies of one script.
+        // The ledger as it will be, not only as it was: two scripts in one batch can be the same
+        // text under two names, and the second must not go up either.
+        let digest = script_digest(&bytes);
+        let already = carried_before.get(&digest).or_else(|| {
+            carried_now.iter().find(|(seen, _)| *seen == digest).map(|(_, name)| name)
+        });
+
+        if let Some(existing) = already {
+            println!("  {name} has already gone up as {existing}; not sending it again");
+            landed.push(existing.clone());
+            continue;
+        }
+
         let target = library_name(name, &when, &bytes);
         let blob = make_blob(&fork, &bytes)?;
         entries.push((format!("scripts/contributed/{target}"), blob));
-        landed.push(target);
+        landed.push(target.clone());
+        carried_now.push((digest, target));
     }
 
     if entries.is_empty() {
@@ -1356,7 +1442,7 @@ fn open_pull_request(
     // `who:branch` is how GitHub names a branch that lives in somebody else's fork.
     let head = if fork == repo { branch.clone() } else { format!("{who}:{branch}") };
 
-    gh(
+    let opened = gh(
         &[
             "api",
             &format!("repos/{repo}/pulls"),
@@ -1374,7 +1460,15 @@ fn open_pull_request(
             ".html_url",
         ],
         None,
-    )
+    );
+
+    // Only once the pull request exists. A script recorded as carried by a send that failed would
+    // never be sent by this machine again, and the generator would die with the session.
+    if opened.is_ok() {
+        record_scripts(&outbox, &carried_now);
+    }
+
+    opened
 }
 
 /// Every file directly inside the batch folder, in a settled order.
@@ -1821,6 +1915,47 @@ mod tests {
         assert_eq!(per_type(&tie), "- image: 1\n- xmodel: 1\n");
 
         assert_eq!(per_type(&[]), "");
+    }
+
+    /// The script ledger recognises a script this machine has already sent, and does so across
+    /// the line-ending change git makes on the way to disk.
+    ///
+    /// This is what stops four submissions in eight minutes carrying four copies of one
+    /// generator. It has to survive CRLF, because the copy in `contrib/` has LF and any copy that
+    /// has been through a checkout has CRLF; a digest over raw bytes would call those two
+    /// different scripts and the ledger would never match a single time.
+    #[test]
+    fn the_script_ledger_recognises_a_script_already_sent() {
+        let outbox = std::env::temp_dir().join(format!("slasher_ledger_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&outbox);
+        fs::create_dir_all(&outbox).expect("a temporary outbox");
+
+        let script = b"print('hello')\nprint('again')\n";
+        let checked_out = b"print('hello')\r\nprint('again')\r\n";
+        let different = b"print('hello')\nprint('changed')\n";
+
+        assert!(sent_scripts(&outbox).is_empty(), "a fresh outbox has sent nothing");
+
+        let digest = script_digest(script);
+        record_scripts(&outbox, &[(digest, "soundxfer_20260821-085126.py".to_owned())]);
+
+        let ledger = sent_scripts(&outbox);
+        assert_eq!(
+            ledger.get(&script_digest(checked_out)).map(String::as_str),
+            Some("soundxfer_20260821-085126.py"),
+            "line endings must not make one script look like two"
+        );
+        assert!(
+            !ledger.contains_key(&script_digest(different)),
+            "an edited generator is a new script and must still be carried"
+        );
+
+        // Recording the same script twice must not grow the ledger, or a night of submissions
+        // leaves a file with one line per send.
+        record_scripts(&outbox, &[(digest, "soundxfer_20260821-085126.py".to_owned())]);
+        assert_eq!(sent_scripts(&outbox).len(), 1, "the ledger must not accumulate duplicates");
+
+        let _ = fs::remove_dir_all(&outbox);
     }
 
     /// A contributed script is stamped, and re-stamping never compounds.

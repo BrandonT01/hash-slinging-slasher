@@ -1,0 +1,37 @@
+# An example plan. Copy it, point it somewhere, run it.
+#
+#     bin\windows\confirm_plan.exe plans/example.txt --size    what it would cost
+#     bin\windows\confirm_plan.exe plans/example.txt           run it
+#
+# A plan is the three lists the engine multiplies: beginnings, stems, endings. The general search
+# fills all three from the whole corpus, which is why it is the same search for everybody and has
+# been exhausted since the first two days. A plan fills them with what *you* chose, which is the
+# difference between sweeping and aiming.
+#
+# `@path` reads a file, one entry per line, relative to the repository root. A `hash,name` line
+# gives up its name, so a findings file works as a stem list unchanged. Anything without `@` is a
+# literal. `begin`, `stem` and `end` may each appear as many times as you like.
+
+label: example -- weapon cores under the measured beginnings and endings
+describe: the committed beginning and ending lists against a hand-chosen set of weapon cores
+
+# Every beginning the corpus is measured to carry, plus two written here.
+begin: @data/prefixes.txt
+begin: i_
+begin: mc/
+
+# The part worth changing. Point this at the family you are actually hunting: a findings file,
+# the output of a generator, a list you typed. A few hundred well-chosen stems beat a few million
+# arbitrary ones, and the run record is three orders of magnitude clear about that.
+stem: wpn_t9_ak47
+stem: wpn_t9_m16
+stem: wpn_t9_mp5
+
+end: @data/suffixes.txt
+
+# The stem alone, wearing neither a beginning nor an ending, is a candidate in its own right.
+bare: yes
+
+# `no` only for Black Ops 4 SAB sound names, which keep their backslashes and whose ids are the
+# hash of exactly that. Every other pool folds and must leave this alone.
+fold: yes

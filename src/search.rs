@@ -613,6 +613,25 @@ impl Search {
 /// the slower search.
 const PEEL_COST: u64 = 80;
 
+/// How many distinct candidate names a search is asking about.
+///
+/// This is a property of the three lists, not of how the search runs: peeling and hashing
+/// forwards ask exactly the same question, so both cover this many candidates and only differ in
+/// what they cost. `+ 1` on the endings is the stem wearing no ending at all, and `bare` adds the
+/// stem wearing no beginning either.
+///
+/// It exists because a method that does not record this cannot be compared with one that does.
+/// `methods_report.py --efficiency` ranks by candidates per name, which is the figure that
+/// predicts what a pass will return; a search that reports only how many names it found is
+/// ranked by how long it ran, and that is how a blind sweep of 1.35 billion candidates for 402
+/// names came to outrank a derivation that found 1,514 in 596,049.
+pub fn candidate_space(openings: usize, endings: usize, stems: usize, bare: bool) -> u64 {
+    let width = (openings as u64 + u64::from(bare)).max(1);
+    (stems as u64)
+        .saturating_mul(width)
+        .saturating_mul(endings as u64 + 1)
+}
+
 /// Runs a search whichever way round is cheaper, and says which it chose.
 ///
 /// Peeling the endings off the wanted ids turns a product into a sum, but it is not free: each
@@ -634,7 +653,7 @@ pub fn run_best<S: AsRef<str> + Sync>(
 
     let batches = (endings.len() as u64 * peeled).div_ceil(PEELED_BATCH as u64).max(1);
     let meet = batches * breadth + endings.len() as u64 * peeled * PEEL_COST;
-    let plain = breadth * (endings.len() as u64 + 1);
+    let plain = candidate_space(openings.len(), endings.len(), stems.len(), bare);
 
     if meet < plain {
         println!(
@@ -692,6 +711,29 @@ mod tests {
             peel(whole, b"wpn_t9_ak47_barrel_c"),
             hash64("i_mtl_")
         );
+    }
+
+    /// The candidate count is a number that goes into a submission and gets ranked against every
+    /// other method, so it has to be the count the search actually covers rather than an estimate
+    /// near it. Counted here against the shape of the product: every stem, wearing every opening
+    /// or none, wearing every ending or none.
+    #[test]
+    fn the_candidate_space_is_the_whole_product() {
+        // Three stems, two openings, four endings. Dressed: 3 x 2 x 5 = 30. The `+ 1` on endings
+        // is the stem wearing its opening and no ending at all, which is a candidate the search
+        // does ask about.
+        assert_eq!(candidate_space(2, 4, 3, false), 30);
+
+        // Bare adds the opening-less column: 3 x 3 x 5.
+        assert_eq!(candidate_space(2, 4, 3, true), 45);
+
+        // No openings and not bare would multiply by zero and report a search that asks nothing.
+        // The width floor keeps it at the stems themselves, which is what such a search runs.
+        assert_eq!(candidate_space(0, 0, 7, false), 7);
+        assert_eq!(candidate_space(0, 0, 0, true), 0);
+
+        // A real pass: 30.6M pieces, 700 beginnings, 4,800 endings. This must not wrap.
+        assert_eq!(candidate_space(700, 4800, 30_660_024, true), 103_186_341_432_024);
     }
 
     /// The two searches ask the same question and must give the same answer. The faster one is

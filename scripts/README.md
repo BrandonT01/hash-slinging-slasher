@@ -24,9 +24,11 @@ a program that prints names; anything that can print names is a method.
 | script | answers |
 |---|---|
 | `coverage.py` | where the unnamed assets actually are, per pool, per game. **Run this before believing a pool is worth a night.** |
-| `methods_report.py` | what every submission in this repository was, what it cost and what it returned. `--by-method` is the useful view; `--duplicates` shows which submissions returned identical names. |
+| `methods_report.py` | what every submission was, what it cost and what it returned, **credited to the run that found it**. `--by-method` ranks by candidates per name; `--families` folds tuning variants so a method is one row; `--efficiency` shows the decay from a method's best run to its latest; `--unattributed` shows what cannot be credited; `--registry --write` regenerates the computed half of METHODS.md. |
 | `families.py` | the shape of what has been found — directories, leading and trailing tokens, segment counts, numbered families and which members are missing. |
 | `cross_type.py --measure` | how strongly one asset type's names predict another's. Measured, not assumed. |
+| `seams.py` | **every** relation between asset types, not one: each type reduced every way, on each side independently, so a seam needing a different reduction per side is visible. It found the material→image seam at 5× the figure `cross_type` records. Read its note on why `only in A` is not a yield estimate. |
+| `seam_stems.py` | turns a seam `seams.py` measured into the three lists a plan needs, and with `--write-plan` writes the plan itself. The path from "this relation looks real" to "these names are confirmed", without a new generator. |
 | `snapshot.py` | run directly for a one-line summary per game. Used as a library by everything else. |
 | `check_docs.py` | whether the documentation still describes the repository that exists. Runs in CI. |
 | `reach.py` | **what share of known names the lists could rebuild at all.** A ceiling, not a yield: whatever the lists cannot express, no pass can find however long it runs, and nothing in a run says so. `--missing` names the commonest beginnings and endings not carried. |
@@ -35,6 +37,7 @@ a program that prints names; anything that can print names is a method.
 
 | script | builds candidates by |
 |---|---|
+| `derive_closure.py` | not a generator itself — it runs every **derivation** over what has just been confirmed and repeats until nothing new comes. Derivations refill as the corpus grows, so this is worth running after any pass at all. It terminates; it cannot grind bare ground. |
 | `continuations.py` | offering each prefix the tokens measured to follow **that** prefix, rather than the tokens that are globally common. Directory prefixes get the whole vocabulary. |
 | `families.py --gaps` | filling the holes in numbered families — a family with three confirmed members is evidence about a fourth that no global rule can match. |
 | `cross_type.py --from A --to B` | taking cores that exist in one asset type and spelling them the way another type spells things. Check `--measure` first: some pairs have no seam at all. |

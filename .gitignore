@@ -32,3 +32,10 @@ __pycache__/
 
 # Previous-run backups written by derive_lists.py.
 *.prev
+
+# Plans, and the stem lists beside them. `seam_stems.py --write-plan` writes both, and a stem list
+# is six figures of lines that regenerate from the tables in a minute -- so the plan is a local
+# working file, not a thing to carry. `plans/example.txt` is the committed one, and it is
+# committed because it is the format's documentation.
+/plans/*
+!/plans/example.txt

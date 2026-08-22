@@ -335,7 +335,9 @@ later contributor faster.** So:
   library with each script's purpose, precisely so nobody spends an evening re-deriving
   `continuations.py` under a new name. If you skipped that output, get it back with:
   ```
-  python scripts/methods_report.py --by-method     what has been run, and what it returned
+  python scripts/methods_report.py --families      every method, folded, best first
+  python scripts/methods_report.py --efficiency    how far each has decayed from its best
+  python scripts/seams.py                          which relations between types hold
   python scripts/coverage.py --five                where the unnamed assets actually are
   ```
   and read `scripts/README.md`, which says which scripts are reconnaissance and which are methods.
@@ -352,6 +354,43 @@ python scripts/continuations.py | bin\windows\confirm_list.exe - ^
 ```
 
 A method is now a script that prints names. Generate them any way you like.
+
+## But a script that prints names is a thousand times slower than the engine beside it
+
+This is worth knowing before you write one, because it decides what shape your idea should take.
+
+Measured on this machine: Python emits candidate strings at about **2.6M a second** at its
+absolute best, and the run record shows real generators managing 0.1M to 1.4M. Counted off
+`submissions/` on 2026-08-22: **every invented method ever run here has tested 10.2 billion
+candidates between them** -- 166 runs, every contributor, three days. One general pass covers 103
+trillion. The clever half of this project has been running on a ten-thousandth of the machine.
+
+So when your idea is a **cross product** -- some beginnings, some stems, some endings -- do not
+print it. Write it as a **plan** and let the compiled engine multiply it:
+
+```
+bin\windows\confirm_plan.exe plans/mine.txt --size     what it would cost, before you spend it
+bin\windows\confirm_plan.exe plans/mine.txt            run it
+```
+
+A plan is a few lines. `@path` reads a file, anything else is a literal, and `begin`, `stem` and
+`end` may each repeat:
+
+```
+label: zombie character bodies
+begin: @data/prefixes.txt
+begin: i_
+stem:  @contrib/zombie_cores.txt
+end:   @data/suffixes.txt
+```
+
+`plans/example.txt` is a worked one. This is the same `run_best` the general search uses -- same
+hash, same exclusion, same run folder and fingerprint -- **aimed where you point it** instead of
+at the whole corpus. That is the difference between the search everybody runs and a search only
+you are running.
+
+Keep printing names for anything that is *not* a cross product: edits, splices, walks, anything
+where each candidate is computed rather than combined. `confirm_list` is still right for those.
 
 **Always pass `--script`.** It copies your generator into the run, and `submit` puts it in the
 pull request. Without it the method dies with your session -- seven generators are named in past
@@ -453,6 +492,9 @@ resort.
 | `docs/GPU.md` | whether a GPU would help here. Measured, not assumed |
 | `src/lib.rs` | the hash, the filter, the results type, `LOW_VALUE_POOLS` |
 | `src/search.rs` | the peeling engine. Read the comments before changing anything |
+| `src/bin/confirm_plan.rs` | the plan format, and why a cross product should never be printed |
+| `scripts/seams.py` | which relations between asset types hold -- and why a strong one still has to be run |
+| `scripts/derive_closure.py` | the snowball: every derivation re-run over whatever was just confirmed |
 | `src/startup.rs` | what `start` checks and why each check exists |
 | `snapshots/*.pools.txt` | every pool in both games, identified and counted |
 
