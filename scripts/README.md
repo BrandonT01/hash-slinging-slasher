@@ -29,6 +29,7 @@ a program that prints names; anything that can print names is a method.
 | `cross_type.py --measure` | how strongly one asset type's names predict another's. Measured, not assumed. |
 | `seams.py` | **every** relation between asset types, not one: each type reduced every way, on each side independently, so a seam needing a different reduction per side is visible. It found the material→image seam at 5× the figure `cross_type` records. Read its note on why `only in A` is not a yield estimate. |
 | `seam_stems.py` | turns a seam `seams.py` measured into the three lists a plan needs, and with `--write-plan` writes the plan itself. The path from "this relation looks real" to "these names are confirmed", without a new generator. |
+| `collect_names.py` | rebuilds `all_names/` -- every name in every merged submission, as one sorted file per game and asset type. Run by CI on each submission; you want the folder, not this. |
 | `snapshot.py` | run directly for a one-line summary per game. Used as a library by everything else. |
 | `check_docs.py` | whether the documentation still describes the repository that exists. Runs in CI. |
 | `uncarried.py` | the beginnings `data/prefixes.txt` carries **no cut of**, so the general search cannot build a single name starting that way. 208 of them head 12,311 published names, including the whole optics family (`reflex_`, `acog_`, `holo_`). `--write-plan` turns them into a plan. |

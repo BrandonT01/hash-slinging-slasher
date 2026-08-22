@@ -1,0 +1,2 @@
+7c2e84dccf5faaa6,default_laser
+682a1af52cd6e2f1,mini_turret_laser

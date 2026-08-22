@@ -1,0 +1,3 @@
+379b5e7b8398cf32,hardpoint
+2fc33ea98b703187,headicon_dead_wz
+4628a9543d238978,weapon_cache

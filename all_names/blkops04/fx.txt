@@ -1,0 +1,7 @@
+2bb1f5748a596228,weapon/fx8_muz_hero_sig_grapple_3p
+6183b91e068e0dbd,zombie/fx_blood_torso_explo_lg_os_zmb
+a56d13b13eb0e82,zombie/fx_blood_torso_explo_lg_zmb
+1ed91ab364262716,zombie/fx_blood_torso_explo_zmb
+395d7347ff42f2c1,zombie/fx_bul_flesh_head_fatal_zmb
+1ca1e5bf6487fa8c,zombie/fx_bul_flesh_head_nochunks_zmb
+2169fa992c40216a,zombie/fx_bul_flesh_neck_spurt_zmb

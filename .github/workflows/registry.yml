@@ -1,4 +1,5 @@
-# Regenerates the computed method registry in `METHODS.md` whenever a submission lands.
+# Rebuilds everything derived from `submissions/` whenever a submission lands: the computed
+# method registry in `METHODS.md`, and the combined name lists in `all_names/`.
 #
 # The registry is the answer to "has somebody already built this?", and it is the thing an
 # arriving assistant reads before inventing a method. Keeping it by hand is what left it holding
@@ -12,7 +13,7 @@
 #
 # So it is regenerated here, on the one event that can change it. No contributor has to remember,
 # and nobody's clone has to be current for the table in the repository to be right.
-name: method registry
+name: derived files
 
 on:
   push:
@@ -28,7 +29,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: method-registry
+  group: derived-files
   cancel-in-progress: true
 
 jobs:
@@ -51,6 +52,14 @@ jobs:
       - name: regenerate the registry
         run: python scripts/methods_report.py --registry --write
 
+      # Every name the project has recovered, as one sorted file per game and asset type.
+      #
+      # Sorted matters here beyond readability. This is 5 MB rewritten on every submission, and a
+      # sorted list that mostly gains lines deltas down to the lines it gained -- an unsorted one
+      # would store the whole file again each time and the history would grow by gigabytes.
+      - name: rebuild the combined name lists
+        run: python scripts/collect_names.py
+
       # A sanity check on the thing that just wrote into a documentation file. `check_docs.py`
       # verifies that every path and script name the markdown mentions actually exists, so a
       # generator that mangled the file fails here rather than being committed.
@@ -61,14 +70,14 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add METHODS.md
-          git diff --cached --quiet && echo "registry unchanged" && exit 0
-          git commit -m "Regenerate the method registry from ${GITHUB_SHA::7}"
+          git add METHODS.md all_names
+          git diff --cached --quiet && echo "nothing derived changed" && exit 0
+          git commit -m "Rebuild the registry and name lists from ${GITHUB_SHA::7}"
 
           # `main` moves constantly -- both binaries workflows push, and submissions merge in
           # batches -- so a single push loses the race often enough to be worth retrying. The
-          # rebase cannot conflict: nothing else in this repository writes the block between the
-          # generated-registry markers.
+          # rebase cannot conflict: nothing else writes the block between the generated-registry
+          # markers, and nothing else writes `all_names/`.
           for attempt in 1 2 3 4 5; do
             git pull --rebase --quiet origin main && git push && exit 0
             echo "push race on attempt $attempt, retrying"

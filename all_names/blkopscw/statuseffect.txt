@@ -1,0 +1,3 @@
+5b30402b15a8bbf4,default_statuseffect
+2f6ba14f9a6e6cdc,explosive_damage
+19630407a54477f2,shock_concertina_wire

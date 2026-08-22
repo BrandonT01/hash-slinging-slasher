@@ -1,0 +1,12 @@
+392e1913393be8,bat
+1d67e7e14d596701,battle_shield
+13a1a8b276700db9,bowie
+351d4d90e84176e0,cane
+5befa5c99a31b1,crossbow
+2a7b1278efe22bd7,fist
+2d53ae938b49a6fa,knife
+4a690f477c7eb9d1,launcher
+125783191db58e0f,lmg
+ddd96714b2ba3e5,scythe
+7307f05bb0a5b535,shotgun
+3b7947035a3d136,wakizashi

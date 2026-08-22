@@ -1,0 +1,6 @@
+489c5cedc5a1f9c8,ability_dog
+33044a0008901d23,drone_squadron
+34b7eb9fde56bd35,eq_frag_grenade
+3a19c6a9c8caef33,eq_grapple
+68a980198a51e72b,melee_actionfigure_t8
+20e5bae184643ee5,melee_amuletfist_t8

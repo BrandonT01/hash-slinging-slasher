@@ -1,0 +1,6 @@
+582492d6fbb45d10,gegenees
+244de9383904f142,gladiator
+50f4e0eea9f4e4a4,nosferatu
+78754e7e334fcb04,p8_fxanim_gp_pigeon_ragdoll
+52afd0d0e7ac68ba,p8_fxanim_gp_raven_01_ragdoll
+7e64f240f63c5fbc,werewolf

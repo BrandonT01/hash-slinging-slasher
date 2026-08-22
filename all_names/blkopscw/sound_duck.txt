@@ -1,0 +1,11 @@
+6151296e7dfd65a7,cmn_duck_aux_2
+e206b8bc35aa95b,mpl_ac130
+3f294f1ca2756591,mpl_death
+2746b4b805faff01,mpl_dogfight
+5e096ee43651d97b,mpl_final_killcam
+6509e4a9f399013b,mpl_hellstorm
+27ee2bcf54adc028,tear_gas_start
+259976b936dae1a2,wpn_tank_fire
+148ff8b60faea8a,wz_death_circle
+5d056c4cdfcd9138,wz_skydive
+187593a2cde27861,zmb_player_swiped

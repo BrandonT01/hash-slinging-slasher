@@ -1,0 +1,7 @@
+57787d452575f39c,concussion_grenade_mp
+2e76c1db6335c210,damage_mp
+7dc058a0b1a698e8,explosion_zm
+494efb357b43bced,flare_mp
+805554a157db85c,frag_grenade_mp
+160e95f6745dddf3,land_mine_shellshock
+97060ed2111053,pain_zm
