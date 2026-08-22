@@ -135,10 +135,10 @@ table under a name you would not have guessed is the thing you are about to rebu
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
 | images derived from materials | 1 | 10 | 5,310 | 2,296,854,085,248 | 39,600,932,504 | 39,600,932,504 | 39,600,932,504 | 2026-08-19 | 2026-08-22 | untried |
 | tails of length 5 | 1 | 2 | 212 | 9,365,464,347,250 | 44,176,718,619 | 30,017,513,933 | 30,017,513,933 | 2026-08-22 | 2026-08-22 | live |
-| general search | 2 | 56 | 101,576 | 205,395,342,160,170 | 749,618,037,080 | 749,618,037,080 | 749,618,037,080 | 2026-08-19 | 2026-08-22 | untried |
-| sound files and aliases | 1 | 37 | 29,000 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| sound files and aliases | 1 | 38 | 29,420 | 128,259,734,269,856 | 305,380,319,690 | 305,380,319,690 | 305,380,319,690 | 2026-08-19 | 2026-08-22 | untried |
+| general search | 2 | 59 | 101,807 | 612,067,776,398,710 | 1,212,015,398,809 | 749,618,037,080 | 4,626,493,167,918 | 2026-08-19 | 2026-08-22 | cooling |
 | family walking, whole words | 1 | 14 | 4,175 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| not recorded | 1 | 40 | 1,696 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| not recorded | 1 | 42 | 2,126 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -162,7 +162,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-94 distinct methods, run 122 ways between them, across 422 runs. `names` is what each run
+94 distinct methods, run 122 ways between them, across 428 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->

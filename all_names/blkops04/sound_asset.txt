@@ -62,6 +62,7 @@ e48185d6eb06420,fly\weapon\reload\argus\fly_argus_mag_in.ln100.pc.snd
 7fac628ead6829cf,lmg_vox/scripted/zm_operators/bdzr/vox_bdzr_zm_se_kill_mult_streak_10_01.rn75.pc.fj_n000690
 304b18aa60cfcc0d,mc/mtl_mtl_post_woodwcam_
 5a91b1d51a634b32,p8_foliage_/scripted/mpl/anme/vox_anme_sat_link_cap_a_right_dead
+24ca9f615007aa1d,vox\scripted\ping\kngs\vox_geothermal.d3dbsp_s0__terrain_l00_n008273_f
 2d4188036e99c275,vox_blac_w\russian\sound\vox\scripted\zmb\vox_plr_0_build_pickup_d_12.sn50.xenon.snd_n000518
 261680b772f201b6,wpn\turret\arav\lfe\wpn_arav_lfe.ln100.pc.snd
 2121570fa28b5407,wpn\turret\arav\lfe\wpn_arav_loop_lfe.ll100.pc.snd
