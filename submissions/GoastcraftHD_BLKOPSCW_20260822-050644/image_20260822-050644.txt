@@ -1,0 +1,10 @@
+1e857e04153b0c60,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldem
+1e857f04153b0e13,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldel
+1e858604153b19f8,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldee
+1e858804153b1d5e,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldeg
+1e858904153b1f11,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldef
+1e858a04153b20c4,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldea
+1e858b04153b2277,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_folde`
+1e858c04153b242a,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldec
+1e858d04153b25dd,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldeb
+511f71aa9c74ac35,i_c_t9_diving_suit_pants_01_black_white_c
