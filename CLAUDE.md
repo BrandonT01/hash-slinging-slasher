@@ -127,42 +127,55 @@ So thinking with nothing running is simply right when:
   something better*. A method measured at a handful of names is not worth three hours of machine
   you could give to a better one an hour from now.
 
-## Every one of those assumes somebody is coming back. Overnight, none of them hold
+## Every one of those assumes somebody is coming back
 
-**If the session is unattended, idle cores are always worse than a method with a positive measured
-rate, however unimpressive.** There is no better pass an hour from now, because nobody is there to
-start it.
+If you are leaving this unattended, they do not hold: there is no better pass an hour from now,
+because nobody is there to start it.
 
-This is not hypothetical and it is not somebody else's mistake. On 2026-08-22 an agent finished a
-grind at 06:50, reasoned -- correctly by the three bullets above -- that everything cheap was
-exhausted and everything expensive was measured poor, and *stopped*. The machine then sat idle for
-**four hours and fourteen minutes**. `tails` at k=5 was measured at 121 names an hour at the time.
-That decision cost roughly five hundred names, and it was reached by applying this section
-faithfully.
+This happened on 2026-08-22. An agent finished a grind at 06:50, reasoned -- correctly by the
+three bullets above -- that everything cheap was exhausted and everything expensive was measured
+poor, and stopped to write up. The machine sat idle for **four hours and fourteen minutes**, worth
+roughly five hundred names at the rate then measured.
 
-The distinction the three bullets are really drawing is **spent** against **unimpressive**, and
-they are not the same test:
+**The lesson is not "run something anyway", and the first fix attempted here was exactly that.**
+A loop was written that ground a plan forever. It was reverted the same day, and why is worth more
+than the incident:
 
-- **Spent** means a measured rate at or near *zero* -- `splice.py` at 1 name per 13.7 billion
-  candidates, or a fingerprint somebody has already submitted. Running that returns nothing, or
-  returns somebody else's names. Do not.
-- **Unimpressive** means a real positive rate you would rather improve on. 121 an hour is
-  unimpressive. Over eight unattended hours it is a thousand names.
+- **It was a hardcoded hash-finder** -- a prefix list, a suffix list and a name list, combined on a
+  timer. That is precisely the shape of tool this project exists to beat, and those tools have had
+  years and GPUs pointed at these games without recovering these names. Rebuilding one here and
+  calling it the overnight workflow gives away the only advantage there is.
+- **It put it in the worst possible window.** Unattended hours are when there is the most budget to
+  think and the least pressure. Filling them with a rotation guarantees that the stretch of time
+  most likely to produce a method produces none.
+- **It manufactures duplicates.** Its stems come from the published tables, which everybody shares,
+  so two contributors running it overnight burn two nights to produce one night's names.
+- **It amplifies collisions.** A coincidental match is a wrong name that hashes to a real id, and
+  nothing downstream catches it -- CI re-verifies by hash, which it passes. It enters `findings/`
+  and becomes seed material for every later derivation. A loop running trillions of candidates a
+  round runs that lottery all night.
 
-So before you stop for any reason -- to think, to write something up, to tidy the library -- **start
-a pass first**. §2 already says this ("if there is a pass worth running, start it before you settle
-in to think"); what it did not say is that *finishing* is also a stop, and the most expensive one.
+### What to do instead
 
-If you are leaving it unattended, do not choose a pass at all. Run the loop:
+Idle cores are a **symptom**, not the disease. They were idle because the agent had stopped
+thinking, not because it had failed to start a script, and no script fixes that.
 
-```
-bash scripts/overnight.sh          runs until stopped, submitting as it goes
-```
+§2 already says the right thing, and it is easy to read as a scheduling tip: *if there is a pass
+worth running, start it before you settle in to think.* The pass is the **output** of thinking,
+started so the machine works while the thinking continues. A pass whose existence does not depend
+on anybody having had an idea is the thing being replaced.
 
-It closes the corpus under every derivation, then widens a plan's alphabet each round so no round
-asks what the last one did, and submits after every stage. It never exits on its own. Thinking is
-still the work and this does not replace it -- it replaces the *idle*, which is a different thing
-and is never worth anything.
+So, concretely, before you stop for any reason -- to think, to write up, to tidy:
+
+1. **Have you invented something today?** If not, that is the work, and it is worth more than any
+   pass. `final_byte` came out of an hour's thought and returns one name per 18 candidates;
+   `tails` returned 1,151 for twenty-one seconds of machine. Either is worth more than a night of
+   grinding, and unlike a night of grinding they keep paying.
+2. **Start what you invented, then write up.** Finishing a pass is a stop too, and the most
+   expensive one -- that is what cost the four hours above.
+3. **If you genuinely have nothing to start, the honest answer is that the machine idles.** That is
+   information: it means every relation anybody has measured is closed and the corpus is waiting on
+   an idea. Manufacturing activity hides that, which is worse than the idle.
 
 **Signs you are on a wild goose chase**, all of which happened here on 2026-08-20:
 
