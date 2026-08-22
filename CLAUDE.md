@@ -123,8 +123,46 @@ So thinking with nothing running is simply right when:
   work. There is nothing to run, and a spent pass would return somebody else's names.
 - **A short measurement decides which pass to run.** Minutes that stop three hours going at the
   wrong pool or the wrong game are the best trade available -- take them before starting anything.
-- **The only thing you could run is known low-yield.** A method measured at a handful of names is
-  not worth three hours of machine you could give to a better one an hour from now.
+- **The only thing you could run is known low-yield** *and you are going to be here to start
+  something better*. A method measured at a handful of names is not worth three hours of machine
+  you could give to a better one an hour from now.
+
+## Every one of those assumes somebody is coming back. Overnight, none of them hold
+
+**If the session is unattended, idle cores are always worse than a method with a positive measured
+rate, however unimpressive.** There is no better pass an hour from now, because nobody is there to
+start it.
+
+This is not hypothetical and it is not somebody else's mistake. On 2026-08-22 an agent finished a
+grind at 06:50, reasoned -- correctly by the three bullets above -- that everything cheap was
+exhausted and everything expensive was measured poor, and *stopped*. The machine then sat idle for
+**four hours and fourteen minutes**. `tails` at k=5 was measured at 121 names an hour at the time.
+That decision cost roughly five hundred names, and it was reached by applying this section
+faithfully.
+
+The distinction the three bullets are really drawing is **spent** against **unimpressive**, and
+they are not the same test:
+
+- **Spent** means a measured rate at or near *zero* -- `splice.py` at 1 name per 13.7 billion
+  candidates, or a fingerprint somebody has already submitted. Running that returns nothing, or
+  returns somebody else's names. Do not.
+- **Unimpressive** means a real positive rate you would rather improve on. 121 an hour is
+  unimpressive. Over eight unattended hours it is a thousand names.
+
+So before you stop for any reason -- to think, to write something up, to tidy the library -- **start
+a pass first**. §2 already says this ("if there is a pass worth running, start it before you settle
+in to think"); what it did not say is that *finishing* is also a stop, and the most expensive one.
+
+If you are leaving it unattended, do not choose a pass at all. Run the loop:
+
+```
+bash scripts/overnight.sh          runs until stopped, submitting as it goes
+```
+
+It closes the corpus under every derivation, then widens a plan's alphabet each round so no round
+asks what the last one did, and submits after every stage. It never exits on its own. Thinking is
+still the work and this does not replace it -- it replaces the *idle*, which is a different thing
+and is never worth anything.
 
 **Signs you are on a wild goose chase**, all of which happened here on 2026-08-20:
 

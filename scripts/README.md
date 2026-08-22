@@ -42,6 +42,7 @@ a program that prints names; anything that can print names is a method.
 | script | builds candidates by |
 |---|---|
 | `final_byte.py` | **solves** rather than searches: the hash inverts for a name's final character, so an unnamed id gives its own last byte back. One name per 18 candidates, the best measured here. `--targets` shows what it answered. |
+| `overnight.sh` | **run this if you are leaving it unattended.** Closes the corpus under every derivation, then widens a plan each round so no round repeats the last, submitting as it goes. Never exits on its own. Idle cores are always worse than a positive measured rate. |
 | `derive_closure.py` | not a generator itself — it runs every **derivation** over what has just been confirmed and repeats until nothing new comes. Derivations refill as the corpus grows, so this is worth running after any pass at all. It terminates; it cannot grind bare ground. |
 | `continuations.py` | offering each prefix the tokens measured to follow **that** prefix, rather than the tokens that are globally common. Directory prefixes get the whole vocabulary. |
 | `families.py --gaps` | filling the holes in numbered families — a family with three confirmed members is evidence about a fourth that no global rule can match. |
