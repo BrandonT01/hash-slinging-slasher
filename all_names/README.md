@@ -37,15 +37,15 @@ rather than dropped.
 
 ## Contents
 
-### `blkops04/` -- 57,194 names in 98 file(s)
+### `blkops04/` -- 57,266 names in 98 file(s)
 
 | asset type | names |
 |---|---:|
-| `material` | 19,714 |
-| `image` | 13,784 |
-| `sound_alias` | 7,328 |
-| `xmodel` | 6,276 |
-| `xanim` | 2,750 |
+| `material` | 19,750 |
+| `image` | 13,791 |
+| `sound_alias` | 7,329 |
+| `xmodel` | 6,303 |
+| `xanim` | 2,751 |
 | `technique_set` | 1,673 |
 | `dynmodel` | 1,098 |
 | `attachment` | 1,069 |
@@ -140,15 +140,15 @@ rather than dropped.
 | `weaponblueprint` | 1 |
 | `xcam` | 1 |
 
-### `blkopscw/` -- 39,547 names in 40 file(s)
+### `blkopscw/` -- 39,549 names in 40 file(s)
 
 | asset type | names |
 |---|---:|
 | `sound_alias` | 24,509 |
 | `scriptbundle` | 6,478 |
 | `material` | 3,666 |
-| `xanim` | 1,815 |
-| `image` | 1,503 |
+| `xanim` | 1,816 |
+| `image` | 1,504 |
 | `xmodel` | 920 |
 | `attachment` | 178 |
 | `sound_asset` | 144 |
