@@ -625,8 +625,14 @@ const PEEL_COST: u64 = 80;
 /// predicts what a pass will return; a search that reports only how many names it found is
 /// ranked by how long it ran, and that is how a blind sweep of 1.35 billion candidates for 402
 /// names came to outrank a derivation that found 1,514 in 596,049.
+/// **Zero when there are no beginnings and the bare stem is excluded**, because that is what the
+/// search does: `Meet` and `Search` both take their opening count as `openings.len() + bare`, so
+/// with neither there is no column to iterate and nothing is tested. This used to floor the width
+/// at one, which made a plan with no `begin:` lines and `bare: no` report 31,747,647,770
+/// candidates, scan none of them, and exit reporting success. `confirm_plan` refuses such a plan
+/// outright now, and this agrees with the engine rather than flattering it.
 pub fn candidate_space(openings: usize, endings: usize, stems: usize, bare: bool) -> u64 {
-    let width = (openings as u64 + u64::from(bare)).max(1);
+    let width = openings as u64 + u64::from(bare);
     (stems as u64)
         .saturating_mul(width)
         .saturating_mul(endings as u64 + 1)
@@ -727,10 +733,16 @@ mod tests {
         // Bare adds the opening-less column: 3 x 3 x 5.
         assert_eq!(candidate_space(2, 4, 3, true), 45);
 
-        // No openings and not bare would multiply by zero and report a search that asks nothing.
-        // The width floor keeps it at the stems themselves, which is what such a search runs.
-        assert_eq!(candidate_space(0, 0, 7, false), 7);
+        // No openings and not bare is a search that asks nothing, and this has to say so. The
+        // engine takes its opening count as `openings.len() + bare`; with neither there is no
+        // column and nothing is tested. Reporting a stem count here instead is what let a plan
+        // claim 31.7 billion candidates, scan none, and exit successfully.
+        assert_eq!(candidate_space(0, 0, 7, false), 0);
+        assert_eq!(candidate_space(0, 4, 7, false), 0);
         assert_eq!(candidate_space(0, 0, 0, true), 0);
+
+        // With no openings but the bare column kept, the stem wears each ending and nothing else.
+        assert_eq!(candidate_space(0, 4, 7, true), 35);
 
         // A real pass: 30.6M pieces, 700 beginnings, 4,800 endings. This must not wrap.
         assert_eq!(candidate_space(700, 4800, 30_660_024, true), 103_186_341_432_024);

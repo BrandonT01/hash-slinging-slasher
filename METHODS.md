@@ -33,6 +33,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 14 | token insertion and deletion | names one token **longer or shorter** than a known name | `scripts/token_edits.py` → `confirm_list` | 700 BO4, 384 CW across all four types. The only method that changes a name's length |
 | 15 | affix sweep | affixes used **once** in the game, which no measured list can hold | `scripts/affix_sweep.py` → `confirm_list` | **targeted only.** Blind: 1 name per 532 M candidates. Aimed at a family you suspect: the only thing that reaches it |
 | 16 | final byte solved backwards | any name one **final character** from a known one, at any of 256 bytes | `scripts/final_byte.py` → `confirm_list` | **1 name per 18 candidates — the best measured here.** In `derive_closure`, so it re-runs free after any pass |
+| 17 | tails of length k | any name that is a known one with its **last k characters** replaced | `scripts/tails.py` → `confirm_plan` | k=3: **1,151 in 21s a game.** Subsumes k=1 and 2; `--length 4` for more |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -121,6 +122,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | keyword sweep: zombie models | 1 | 1 | 4 | 100,074,665 | 25,018,666 | 25,018,666 | 25,018,666 | 2026-08-21 | 2026-08-21 | untried |
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
+| tails of length 3 | 1 | 2 | 1,151 | 63,495,295,540 | 55,165,330 | 35,873,048 | 35,873,048 | 2026-08-22 | 2026-08-22 | live |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
 | black ops 3 build vocabulary | 1 | 1 | 235 | 3,679,074,149,610 | 15,655,634,679 | 15,655,634,679 | 15,655,634,679 | 2026-08-22 | 2026-08-22 | untried |
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
@@ -153,7 +155,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-86 distinct methods, run 114 ways between them, across 374 runs. `names` is what each run
+87 distinct methods, run 115 ways between them, across 376 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
@@ -883,6 +885,37 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | loader string pool, all pools | 23,301 of 1,480,510 ids (1.6%), 18,691 unnamed — but `scriptbundle` is 17,304 of them | free names, wrong pools |
 | material→image with a **different reduction each side** (`no head` / `no ends`) | **75,964 shared — 59.98% of image**, 5× the row above; 181,466 cores only in material | **relation real, ground dead** — see below |
 | material→xmodel, same treatment (`no ends` / `no tail`) | **15,270 shared — 15.57% of xmodel**, 5× the "too weak to pass" row above | **relation real, ground dead** — see below |
+
+### How far the final-byte solve extends: two characters, and no further — 2026-08-22
+
+The obvious follow-up to the solve below is to extend it to longer tails. It does not extend, and
+this is the measurement so nobody spends an evening finding that out.
+
+Shared leading hex digits between the hashes of two names differing in their last *k* characters,
+against **0.03** for two entirely unrelated names:
+
+| k | 1 | 2 | 3 | 4 |
+|---|---|---|---|---|
+| mean shared leading digits | **4.26** | 1.41 | 0.11 | 0.07 |
+
+One character is strongly visible in the hash. Two is faint. **From three the pair is
+indistinguishable from any two unrelated names** — XOR does not commute with the multiply, so each
+further step scatters what the last one left. There is no proximity to filter on and no solve to
+generalise.
+
+**What works instead is not proximity but peeling**, which the engine already does. "Is this id a
+known name with its last *k* characters replaced" is a plan: stems are known names cut short by
+*k*, endings are every *k*-character string over the measured alphabet. `scripts/tails.py` writes
+it. Sizes against 922k names and the 37 characters names end in:
+
+| k | endings | candidates | time |
+|---|---|---|---|
+| 2 | 1,369 | 1.3 B | seconds |
+| 3 | 50,653 | 31.7 B | **21 seconds** |
+| 4 | 1.87 M | 1.14 T | ~15 minutes |
+
+Each k subsumes the ones below it. **k=3 returned 266 on Cold War and 885 on Black Ops 4, in
+twenty-one seconds each.**
 
 ### The hash runs backwards for the final byte, and that is a method — 2026-08-22
 

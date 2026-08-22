@@ -258,6 +258,23 @@ fn main() {
         candidate_space(plan.beginnings.len(), plan.endings.len(), plan.stems.len(), plan.bare);
     println!("  candidates: {candidates}");
 
+    // A plan that asks nothing, refused before it looks like a spent method.
+    //
+    // The engine takes its opening count as `beginnings + bare`, so a plan with neither has no
+    // column to iterate and tests not one candidate. It does not fail: it runs, finds nothing,
+    // writes a note, and reads exactly like ground somebody has already cleared. That happened --
+    // a 31,747,647,770-candidate plan scanned zero in six seconds and exited reporting success.
+    if candidates == 0 {
+        eprintln!(
+            "\nThis plan would test nothing, so it has not been run.\n\n\
+             It has no `begin:` lines and `bare: no`, and the search builds its candidates as\n\
+             beginning + stem + ending -- with no beginning and the bare stem excluded there is\n\
+             nothing left to build. Either add a beginning, or set `bare: yes`, which is the\n\
+             empty beginning and is what a stem-and-ending plan wants."
+        );
+        std::process::exit(2);
+    }
+
     if !plan.fold {
         println!("  hashing without folding backslashes (Black Ops 4 SAB sound names)");
     }
