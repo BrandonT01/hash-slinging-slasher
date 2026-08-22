@@ -79,6 +79,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | paired-token-blocks-anim-deterministic | 1 | 9 | 104 | 3,708,652 | 35,660 | 15,884 | 206,784 | 2026-08-20 | 2026-08-20 | spent |
 | continuations | 1 | 1 | 776 | 39,892,300 | 51,407 | 51,407 | 51,407 | 2026-08-20 | 2026-08-20 | untried |
 | older-title vocabulary | 1 | 2 | 59 | 3,144,542 | 53,297 | 34,939 | 112,305 | 2026-08-21 | 2026-08-21 | cooling |
+| black ops 3 build names, respelled | 1 | 1 | 1 | 54,358 | 54,358 | 54,358 | 54,358 | 2026-08-22 | 2026-08-22 | untried |
 | alias slot substitution, left context only | 3 | 6 | 1,934 | 109,332,515 | 56,531 | 8,885 | 2,932,361 | 2026-08-20 | 2026-08-20 | spent |
 | edits anim | 2 | 5 | 208 | 12,868,629 | 61,868 | 15,318 | 15,318 | 2026-08-20 | 2026-08-20 | live |
 | adjacent-token-order-anim | 1 | 1 | 2 | 136,243 | 68,121 | 68,121 | 68,121 | 2026-08-20 | 2026-08-20 | untried |
@@ -122,7 +123,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | family walking, whole words | 1 | 14 | 4,175 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | family walking, numbers in place | 1 | 11 | 1,136 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| not recorded | 1 | 24 | 1,089 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| not recorded | 1 | 25 | 1,090 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
 | sound dotted tails | 1 | 1 | 42 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
@@ -145,7 +146,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-79 distinct methods, run 107 ways between them, across 357 runs. `names` is what each run
+80 distinct methods, run 108 ways between them, across 359 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
