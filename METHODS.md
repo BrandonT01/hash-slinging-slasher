@@ -102,6 +102,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | sibling token substitution | 4 | 7 | 2,477 | 2,261,286,760 | 912,913 | 206,904 | 1,381,969 | 2026-08-19 | 2026-08-21 | cooling |
 | edits material | 2 | 5 | 139 | 150,302,473 | 1,081,312 | 439,383 | 1,589,712 | 2026-08-20 | 2026-08-20 | cooling |
 | sibling token substitution, right context only | 1 | 1 | 369 | 461,529,482 | 1,250,757 | 1,250,757 | 1,250,757 | 2026-08-19 | 2026-08-19 | untried |
+| sound alias slot substitution | 1 | 2 | 3 | 4,119,600 | 1,373,200 | 1,028,660 | 2,062,280 | 2026-08-21 | 2026-08-22 | live |
 | family column cross product | 3 | 7 | 341 | 605,093,509 | 1,774,467 | 456,163 | 59,308,685 | 2026-08-19 | 2026-08-21 | spent |
 | sibling token substitution, left context only | 2 | 3 | 1,401 | 3,216,420,428 | 2,295,803 | 769,926 | 3,368,815 | 2026-08-19 | 2026-08-20 | cooling |
 | cold war sound stems, black ops 4 spelling | 1 | 1 | 3 | 12,257,370 | 4,085,790 | 4,085,790 | 4,085,790 | 2026-08-21 | 2026-08-21 | untried |
@@ -112,15 +113,20 @@ table under a name you would not have guessed is the thing you are about to rebu
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
-| general search | 2 | 49 | 84,534 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| sound files and aliases | 1 | 31 | 28,831 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
+| uncarried beginnings, optics and prefixed families | 1 | 1 | 5 | 135,737,598,880 | 27,147,519,776 | 27,147,519,776 | 27,147,519,776 | 2026-08-22 | 2026-08-22 | untried |
+| general search | 2 | 54 | 101,285 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
+| sound files and aliases | 1 | 36 | 28,997 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
+| images derived from materials | 1 | 9 | 5,252 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
+| family walking, whole words | 1 | 14 | 4,175 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
+| bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
+| family walking, numbers in place | 1 | 11 | 1,136 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
+| not recorded | 1 | 23 | 1,087 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
+| sound dotted tails | 1 | 1 | 42 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
+| sound token swaps | 1 | 1 | 6 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | stream-key grammar sweep | 1 | 7 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | stream-tree zone peel | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
-| images derived from materials | 1 | 9 | 0 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| family walking, numbers in place | 1 | 11 | 0 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| sound dotted tails | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
-| family walking, whole words | 1 | 14 | 0 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
 | map name reconstruction and stream key templating, transferred from cold war | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | materials to images | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | attachment and weapon unfolding | 1 | 2 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
@@ -135,13 +141,9 @@ table under a name you would not have guessed is the thing you are about to rebu
 | map name reconstruction + stream key templating | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | sound dotted tails as a cross product | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
-| cutting at underscores and recombining | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
-| not recorded | 1 | 20 | 0 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| sound token swaps | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
-| bo3 techset tag sweep | 1 | 2 | 0 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 
-75 distinct methods, run 103 ways between them, across 337 runs. `names` is what each run
+77 distinct methods, run 105 ways between them, across 353 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
