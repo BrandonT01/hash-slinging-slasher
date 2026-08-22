@@ -67,10 +67,10 @@ table under a name you would not have guessed is the thing you are about to rebu
 
 | method | ways | runs | names | candidates | 1 name per | best | latest | first | last | state |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
-| final byte solved backwards | 1 | 4 | 218 | 36,335 | 166 | 18 | 370 | 2026-08-22 | 2026-08-22 | spent |
+| final byte solved backwards | 1 | 5 | 337 | 48,103 | 142 | 18 | 98 | 2026-08-22 | 2026-08-22 | cooling |
 | gaps | 2 | 4 | 374 | 246,361 | 658 | 190 | 6,554 | 2026-08-20 | 2026-08-20 | spent |
 | black ops 1 build names, verbatim | 1 | 2 | 271 | 651,912 | 2,405 | 1,940 | 3,164 | 2026-08-22 | 2026-08-22 | live |
-| image siblings of confirmed materials | 1 | 8 | 2,843 | 6,901,503 | 2,427 | 393 | 25,928 | 2026-08-19 | 2026-08-22 | spent |
+| image siblings of confirmed materials | 1 | 9 | 2,970 | 7,974,570 | 2,685 | 393 | 8,449 | 2026-08-19 | 2026-08-22 | spent |
 | black ops 3 build names, respelled, full harvest | 1 | 2 | 148 | 473,642 | 3,200 | 1,691 | 29,602 | 2026-08-22 | 2026-08-22 | spent |
 | image siblings | 3 | 5 | 529 | 4,621,863 | 8,736 | 1,734 | 68,329 | 2026-08-20 | 2026-08-21 | spent |
 | channels | 2 | 4 | 916 | 9,598,953 | 10,479 | 2,732 | 602,442 | 2026-08-20 | 2026-08-20 | spent |
@@ -80,7 +80,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | rare-token-compound-splice-anim | 1 | 3 | 30 | 521,194 | 17,373 | 10,849 | 17,385 | 2026-08-20 | 2026-08-20 | live |
 | black ops 3 build names, verbatim | 1 | 1 | 4 | 73,303 | 18,325 | 18,325 | 18,325 | 2026-08-22 | 2026-08-22 | untried |
 | bo3 mod tools asset file list | 1 | 1 | 3 | 65,355 | 21,785 | 21,785 | 21,785 | 2026-08-22 | 2026-08-22 | untried |
-| image channel completion | 1 | 6 | 585 | 14,398,007 | 24,611 | 5,159 | 93,294 | 2026-08-20 | 2026-08-22 | spent |
+| image channel completion | 1 | 7 | 622 | 16,824,576 | 27,049 | 5,159 | 65,582 | 2026-08-20 | 2026-08-22 | spent |
 | bo3 mod tools gdt asset names | 1 | 2 | 3 | 84,078 | 28,026 | 21,019 | 42,039 | 2026-08-22 | 2026-08-22 | live |
 | paired-token-blocks-alias-deterministic | 1 | 2 | 14 | 481,544 | 34,396 | 24,067 | 60,216 | 2026-08-20 | 2026-08-20 | live |
 | paired-token-blocks-anim-deterministic | 1 | 9 | 104 | 3,708,652 | 35,660 | 15,884 | 206,784 | 2026-08-20 | 2026-08-20 | spent |
@@ -125,11 +125,12 @@ table under a name you would not have guessed is the thing you are about to rebu
 | keyword sweep: zombie models | 1 | 1 | 4 | 100,074,665 | 25,018,666 | 25,018,666 | 25,018,666 | 2026-08-21 | 2026-08-21 | untried |
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
-| tails of length 3 | 1 | 2 | 1,151 | 63,495,295,540 | 55,165,330 | 35,873,048 | 35,873,048 | 2026-08-22 | 2026-08-22 | live |
+| tails of length 3 | 1 | 3 | 1,154 | 95,294,306,466 | 82,577,388 | 35,873,048 | 10,599,670,308 | 2026-08-22 | 2026-08-22 | spent |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
 | family walking, numbers in place | 1 | 12 | 1,139 | 10,340,483,443 | 3,446,827,814 | 3,446,827,814 | 3,446,827,814 | 2026-08-19 | 2026-08-22 | untried |
 | tails of length 4 | 1 | 2 | 289 | 2,284,577,239,732 | 7,905,111,556 | 5,032,108,457 | 5,032,108,457 | 2026-08-22 | 2026-08-22 | live |
 | black ops 1 build vocabulary | 1 | 2 | 204 | 2,038,307,570,080 | 9,991,703,774 | 6,575,185,709 | 20,799,056,837 | 2026-08-22 | 2026-08-22 | cooling |
+| head of one name, tail of another | 1 | 2 | 7 | 96,000,800,000 | 13,714,400,000 | 8,000,066,666 | 8,000,066,666 | 2026-08-22 | 2026-08-22 | live |
 | black ops 3 build vocabulary | 1 | 2 | 293 | 7,358,148,299,220 | 25,113,134,127 | 15,655,634,679 | 63,432,312,924 | 2026-08-22 | 2026-08-22 | cooling |
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
 | images derived from materials | 1 | 10 | 5,310 | 2,296,854,085,248 | 39,600,932,504 | 39,600,932,504 | 39,600,932,504 | 2026-08-19 | 2026-08-22 | untried |
@@ -161,7 +162,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-93 distinct methods, run 121 ways between them, across 416 runs. `names` is what each run
+94 distinct methods, run 122 ways between them, across 422 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
@@ -891,6 +892,40 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | loader string pool, all pools | 23,301 of 1,480,510 ids (1.6%), 18,691 unnamed — but `scriptbundle` is 17,304 of them | free names, wrong pools |
 | material→image with a **different reduction each side** (`no head` / `no ends`) | **75,964 shared — 59.98% of image**, 5× the row above; 181,466 cores only in material | **relation real, ground dead** — see below |
 | material→xmodel, same treatment (`no ends` / `no tail`) | **15,270 shared — 15.57% of xmodel**, 5× the "too weak to pass" row above | **relation real, ground dead** — see below |
+
+### Recombining *across* names is dead; varying *within* one is not — 2026-08-22
+
+Three independent measurements now say the same thing, and together they are the most useful
+generalisation this file has.
+
+**Dead — pieces taken from different names and recombined:**
+
+| what | measured |
+|---|---|
+| cross-type core seams (material→image, material→xmodel), the two strongest ever found here | **0 matched ids** in 190 M candidates, both games |
+| head of one name + tail of another, cut at underscores (`scripts/splice.py`) | **7 names in 96 B candidates** — 1 per 13.7 billion |
+
+**Live — one name varied in place:**
+
+| what | measured |
+|---|---|
+| `final_byte` — last character solved | **1 per 18** |
+| `image siblings` / `image channels` — a name respelled for its sibling asset | 1 per 394 / 1 per 5,160 |
+| `tails` — last three characters replaced | 1,151 names, **free** (21 s) |
+| `gaps`, `variants` — a number moved in place | 1 per 377 |
+
+The reading is that asset names are **not freely recombinable**. A head constrains its tail
+semantically, so a head and a tail that never appeared together mostly never will. What is
+productive is taking one real name and moving one thing about it.
+
+`splice.py` was listed under *Candidates worth building* from the beginning and never built,
+because as a generator it is 4.2e13 candidates and a Python generator emits a million a second.
+It is a plan now, it ran in under two minutes a game, and it is dead. **That is the point of the
+plan engine** — an idea that sat unbuilt for want of a year and a half of generator time got
+settled in four minutes, and the answer is written down instead of waiting for somebody else to
+have the same idea.
+
+Before building anything that joins pieces of different names, weigh it against these numbers.
 
 ### How far the final-byte solve extends: two characters, and no further — 2026-08-22
 
