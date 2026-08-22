@@ -1,0 +1,5 @@
+df9311b908f2e92,wc/decal_favela_laundry_02
+df9321b908f3045,wc/decal_favela_laundry_03
+37b6f70a1bb2a77b,mc/t9_rm_pai_dirt_grass
+381ac3cf95b657fb,wc/decal_favela_laundry
+566cd16df84dd716,zombietron_raw/portuguese/sound/vox/scripted/zmb/vox_plr_0_build_sw_take_d_0.sn50_s
