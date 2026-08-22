@@ -31,6 +31,7 @@ a program that prints names; anything that can print names is a method.
 | `seam_stems.py` | turns a seam `seams.py` measured into the three lists a plan needs, and with `--write-plan` writes the plan itself. The path from "this relation looks real" to "these names are confirmed", without a new generator. |
 | `collect_names.py` | rebuilds `all_names/` -- every name in every merged submission, as one sorted file per game and asset type. Run by CI on each submission; you want the folder, not this. |
 | `snapshot.py` | run directly for a one-line summary per game. Used as a library by everything else. |
+| `dedupe_contributed.py` | removes byte-identical copies from `scripts/contributed/`, keeping the earliest. Run by CI on each submission, because `submit`'s ledger only stops duplicates from clients that have pulled it. |
 | `check_docs.py` | whether the documentation still describes the repository that exists. Runs in CI. |
 | `uncarried.py` | the beginnings `data/prefixes.txt` carries **no cut of**, so the general search cannot build a single name starting that way. 208 of them head 12,311 published names, including the whole optics family (`reflex_`, `acog_`, `holo_`). `--write-plan` turns them into a plan. |
 | `overlap.py` | how much ground a plan shares with searches other people have already run. The fingerprint answers "identical or not" and is blind to a plan sharing nine tenths of its stems with last night's; this estimates that from the sketches runs now record. Advice, never a gate. |

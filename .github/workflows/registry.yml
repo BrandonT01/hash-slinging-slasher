@@ -1,5 +1,7 @@
 # Rebuilds everything derived from `submissions/` whenever a submission lands: the computed
-# method registry in `METHODS.md`, and the combined name lists in `all_names/`.
+# method registry in `METHODS.md`, and the combined name lists in `all_names/`. It also sweeps
+# byte-identical duplicates out of `scripts/contributed/`, which arrive from clients that have
+# not yet pulled the fix that stops them being sent.
 #
 # The registry is the answer to "has somebody already built this?", and it is the thing an
 # arriving assistant reads before inventing a method. Keeping it by hand is what left it holding
@@ -60,6 +62,13 @@ jobs:
       - name: rebuild the combined name lists
         run: python scripts/collect_names.py
 
+      # `submit` stops a client re-sending an unchanged generator, but only a client that has the
+      # fix -- and clients update when their owner runs `start`. Until then the library keeps
+      # gaining copies: one contributor's evening added 40 redundant files across eight groups
+      # while their client was a few commits behind. Swept from this side too, by content.
+      - name: remove byte-identical copies from the contributed library
+        run: python scripts/dedupe_contributed.py --remove
+
       # A sanity check on the thing that just wrote into a documentation file. `check_docs.py`
       # verifies that every path and script name the markdown mentions actually exists, so a
       # generator that mangled the file fails here rather than being committed.
@@ -70,7 +79,7 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add METHODS.md all_names
+          git add -A METHODS.md all_names scripts/contributed
           git diff --cached --quiet && echo "nothing derived changed" && exit 0
           git commit -m "Rebuild the registry and name lists from ${GITHUB_SHA::7}"
 
