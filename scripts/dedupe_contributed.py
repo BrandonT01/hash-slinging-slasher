@@ -34,8 +34,10 @@ every genuinely edited version of an evolving generator.
 """
 import argparse
 import collections
+import glob
 import hashlib
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -62,9 +64,75 @@ def groups():
     return found
 
 
+def referenced():
+    """Stamped filenames the documentation pins by name, which must never be removed.
+
+    `check_docs.py` fails on a path the markdown mentions and the repository does not have, so
+    removing one would break the build -- but relying on that means finding out afterwards. Two
+    are pinned today: METHODS.md names `slotswap_20260819-225818.py` and
+    `templates_20260819-220821.py` as the way to run methods 10 and 11.
+    """
+    pinned = set()
+    roots = (
+        glob.glob(os.path.join(snapshot.ROOT, "*.md"))
+        + glob.glob(os.path.join(snapshot.ROOT, "docs", "*.md"))
+        + glob.glob(os.path.join(snapshot.ROOT, "scripts", "*.py"))
+    )
+    for path in roots:
+        with open(path, encoding="utf-8", errors="replace") as handle:
+            pinned.update(re.findall(r"scripts/contributed/([A-Za-z0-9_.-]+)", handle.read()))
+    return pinned
+
+
+def base_of(name):
+    """`aliasswap_20260821-085126.py` -> `aliasswap.py`, so versions of one script group."""
+    return re.sub(r"_\d{8}-\d{6}(?=\.)", "", name)
+
+
+def superseded(pinned):
+    """Copies worth removing that are not byte-identical to anything.
+
+    Two kinds, both of which leave somebody holding several files and no way to tell which to run:
+
+      - **Promoted.** A generator that earns its place moves into `scripts/` proper. The copy left
+        behind in `contributed/` is then the same method twice.
+      - **Outgrown.** Several stamped versions of one generator. Git holds every version; the
+        library only needs the one somebody should actually run, which is the newest.
+
+    Anything the documentation pins by name is kept regardless -- see `referenced`.
+    """
+    promoted = {
+        name
+        for name in os.listdir(os.path.join(snapshot.ROOT, "scripts"))
+        if os.path.isfile(os.path.join(snapshot.ROOT, "scripts", name))
+    }
+
+    versions = collections.defaultdict(list)
+    if os.path.isdir(FOLDER):
+        for name in sorted(os.listdir(FOLDER)):
+            if os.path.isfile(os.path.join(FOLDER, name)) and not name.startswith("."):
+                versions[base_of(name)].append(name)
+
+    stale = []
+    for base, names in versions.items():
+        names = sorted(names)
+        if base in promoted:
+            stale += [n for n in names if n not in pinned]
+            continue
+        # Newest last, so everything before it is an outgrown version.
+        stale += [n for n in names[:-1] if n not in pinned]
+
+    return stale
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--remove", action="store_true", help="delete the redundant copies")
+    parser.add_argument(
+        "--versions",
+        action="store_true",
+        help="also drop outgrown versions and copies of scripts since promoted",
+    )
     options = parser.parse_args(argv)
 
     found = groups()
@@ -78,10 +146,6 @@ def main(argv):
         # keeps working.
         redundant += sorted(names)[1:]
 
-    if not redundant:
-        print("%d file(s), all distinct." % sum(len(v) for v in found.values()))
-        return 0
-
     print(
         "%d file(s) in the library are %d distinct scripts; %d are byte-identical copies.\n"
         % (sum(len(v) for v in found.values()), len(found), len(redundant))
@@ -92,6 +156,23 @@ def main(argv):
             print("  keeping %s" % kept)
             for name in sorted(names)[1:]:
                 print("     removing %s" % name)
+
+    if options.versions:
+        pinned = referenced()
+        outgrown = [name for name in superseded(pinned) if name not in redundant]
+        if outgrown:
+            print("\nOutgrown -- a newer version or a promoted copy exists:")
+            for name in outgrown:
+                print("     removing %s" % name)
+            redundant += outgrown
+        if pinned:
+            print("\nKept, because the documentation names them:")
+            for name in sorted(pinned):
+                print("     %s" % name)
+
+    if not redundant:
+        print("nothing redundant.")
+        return 0
 
     if not options.remove:
         print("\nNothing was removed. Pass --remove to do it.")

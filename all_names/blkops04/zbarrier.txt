@@ -1,6 +1,0 @@
-6c06e63cd3ebb569,zm_koala_debris_01
-6c06e33cd3ebb050,zm_koala_debris_02
-6c06e43cd3ebb203,zm_koala_debris_03
-e400ceda59ff1c5,zm_office_debris
-696cb96c276cbcf8,zm_office_debris_groom_lake_medium
-3aa798483d82d856,zm_office_debris_roll_door

@@ -1,44 +1,55 @@
-"""Every name this project has ever recovered, as one sorted file per game and asset type.
+"""The names this project has recovered, as one sorted file per game and asset type.
 
     python scripts/collect_names.py            rebuild all_names/ from submissions/
     python scripts/collect_names.py --check    say what would change, write nothing
 
-Run by `.github/workflows/all-names.yml` whenever a submission lands, so `all_names/` in the
-repository root is always current. Running it by hand is only useful for checking it.
+Run by `.github/workflows/registry.yml` -- the `derived files` workflow -- whenever a submission
+lands, so `all_names/` in the repository root is always current. Running it by hand is only useful
+for checking it.
 
 ## What it is for
 
 `submissions/` is the record of *who found what, when, and how* -- one folder per batch, and by
-2026-08-22 there were 269 of them holding 94,283 rows between them. That shape is right for
-provenance and wrong for every other purpose. Anybody who wants "the names" -- to seed a
-generator, to hand a batch upstream, to check whether something is already known -- has to walk
-several hundred folders and merge them, and everybody has written that loop separately.
+2026-08-22 there were 280 of them. That shape is right for provenance and wrong for every other
+purpose. Anybody who wants "the names" -- to seed a generator, to hand a batch upstream, to check
+whether something is already known -- has to walk several hundred folders and merge them, and
+everybody has written that loop separately. So it is written once, here, and the answer committed.
 
-So it is written once, here, and the answer is committed.
+## Only the five types worth searching
+
+Submissions carry names for 105 asset types, because a general pass files whatever it lands on:
+`craftbackground`, `uimodeldatastruct`, `winddef`, one row each. Those are real names and they
+stay in `submissions/`, which is the record. They are not what anybody comes here for, and 99
+files holding a hundred rows between them would bury the six that matter. See `WANTED`.
 
 ## Why it is split by game
 
 `AGENTS.md` §4 is blunt about this and it is not tidiness. The two games number their asset types
 differently -- `xmodel` is pool 6 in Cold War and 4 in Black Ops 4 -- so a file mixing them
-mislabels every row in it. The evidence is already in the submissions: both `clipmap` and
+mislabels every row in it. The evidence is in the submissions themselves: both `clipmap` and
 `clip_map` appear, and both `localizeentry` and `localize_entry`, because those are the two games'
-own names for one pool. Merging them into one `clipmap.txt` would quietly assert they are the
-same thing.
+own names for one pool.
 
-The same name can therefore appear under both games, and that is correct rather than duplication:
-Cold War carries a great deal of Black Ops 4's content, and a name confirmed against both games'
-ids is a fact about both.
+The same name appearing under both games is correct rather than duplication: Cold War carries a
+great deal of Black Ops 4's content, so a name confirmed against both games' ids is a fact about
+both.
 
-The 23 submissions from before the game went into the folder name -- 24,212 names, a quarter of
-the corpus -- are placed by asking the snapshots which game holds an asset under that hash. That
-is the same question that made the name a find, asked again, so it is authoritative rather than a
-guess. `unplaced/` holds anything neither snapshot carries.
+## The submissions that never said which game they were
+
+Twenty-three of them, from before the game went into the folder name, and they are not a rounding
+error -- 19,286 of the rows in the five wanted types. There is exactly one way to place them, and
+it is the way `games_holding` does it: **hash the name and ask each game's `.ids` snapshot whether
+it holds an asset under it.** That is the same question that made the name a find in the first
+place, asked again, so it is authoritative rather than a guess -- and a name both snapshots hold
+is filed under both, because it is genuinely a fact about both.
+
+`unplaced/` would hold anything neither snapshot carries. Nothing currently lands there.
 
 ## The format
 
 `hash,name`, exactly as the submissions store it, sorted by name. Sorted for two reasons: it makes
-the file a diff that git can delta down to the few lines that changed rather than storing 4 MB
-again on every regeneration, and it makes a name findable by eye.
+each rebuild a diff git can delta down to the lines that changed rather than storing 4 MB again,
+and it makes a name findable by eye.
 """
 import argparse
 import collections
@@ -57,10 +68,25 @@ FOLDER = "all_names"
 # into the name.
 STAMPED = re.compile(r"^(?P<who>.+?)_(?:(?P<game>[A-Z0-9]+)_)?(?P<when>\d{8}-\d{6})$")
 
-# The pools `submit` refuses to send and `confirm_list` refuses to file. They cannot appear in a
-# submission, so finding one here means something upstream changed and is worth saying rather
-# than quietly writing a file nobody wants. See LOW_VALUE_POOLS in src/lib.rs.
-UNWANTED = ("streamkey", "xmodelmesh")
+# The only asset types worth publishing, and the same five `AGENTS.md` §5 says to search.
+#
+# An allowlist rather than a blocklist, deliberately. Submissions carry names for 105 different
+# types -- `craftbackground`, `uimodeldatastruct`, `winddef`, one row each -- because a general
+# pass files whatever it lands on. Those are real names and they stay in `submissions/`, which is
+# the record; they are not what anybody comes here for, and a folder of 105 files where 99 hold
+# fewer than a hundred rows between them buries the six that matter.
+#
+# Both spellings of each, because the two games name their pools differently: Cold War writes
+# `localize_entry` where Black Ops 4 writes `localizeentry`, and the same split runs through the
+# map pools. Where a type has one spelling in both, one entry covers it.
+WANTED = (
+    "xmodel",
+    "material",
+    "image",
+    "xanim",
+    "sound_asset",
+    "sound_alias",
+)
 
 
 def game_of(folder, files):
@@ -113,6 +139,7 @@ def games_holding(row, held):
 def collect():
     """{(game, type): {row}} across every submission on disk."""
     gathered = collections.defaultdict(set)
+    skipped = collections.Counter()
     held = snapshots_by_game()
     resolved = unresolved = 0
 
@@ -128,8 +155,8 @@ def collect():
                 continue
 
             kind = re.sub(r"_\d{8}-\d{6}$", "", os.path.splitext(os.path.basename(path))[0])
-            if kind in UNWANTED:
-                print("  skipping %s in %s: not a pool worth publishing" % (kind, os.path.basename(folder)))
+            if kind not in WANTED:
+                skipped[kind] += 1
                 continue
 
             with open(path, encoding="utf-8", errors="replace") as handle:
@@ -159,6 +186,12 @@ def collect():
                         # dropped -- results only ever grow.
                         gathered[("unplaced", kind)].add(line)
                         unresolved += 1
+
+    if skipped:
+        print(
+            "  %d file(s) across %d other asset type(s) left in submissions/ only; %s holds the "
+            "five that matter." % (sum(skipped.values()), len(skipped), FOLDER)
+        )
 
     if resolved or unresolved:
         print(
@@ -246,12 +279,13 @@ def write_index(written, check):
         "A name appearing under both games is not duplication. Cold War carries a great deal of Black",
         "Ops 4's content, and a name confirmed against both games' ids is a fact about both.",
         "",
-        "The 23 early submissions that predate the game going into the folder name are placed by",
-        "asking the snapshots which game holds an asset under that hash -- the same question that",
-        "made the name a find in the first place. A name both games hold is filed under both, which",
-        "is the right answer rather than a duplicate. `unplaced/` holds the remainder, which neither",
-        "snapshot carries -- almost certainly pools the snapshots do not cover, kept and labelled",
-        "rather than dropped.",
+        "Twenty-three submissions predate the game going into the folder name. They are placed by",
+        "hashing each name and asking each game's `.ids` snapshot whether it holds an asset under it",
+        "-- the same question that made the name a find. A name both snapshots hold is filed under",
+        "both, because it is genuinely a fact about both.",
+        "",
+        "Only the five asset types worth searching are here. Submissions carry names for 105 types;",
+        "the rest stay in `submissions/`, which is the record.",
         "",
         "## Contents",
         "",

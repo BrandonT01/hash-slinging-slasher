@@ -1,4 +1,0 @@
-2d4a3979b37f865f,p9_rm_vlg_stairs_wood_board_02
-2d4a3879b37f84ac,p9_rm_vlg_stairs_wood_board_03
-2d4a3779b37f82f9,p9_rm_vlg_stairs_wood_board_04
-2d4a3679b37f8146,p9_rm_vlg_stairs_wood_board_05

@@ -1,5 +1,0 @@
-428c6cab9076a611,exit_objective
-5be0e04f4aaed8a6,fav_drop
-56c11247a60bfd3c,gunfight_flag
-6c390072e4031697,tank_drop
-15a1818903f1a11c,truck_drop

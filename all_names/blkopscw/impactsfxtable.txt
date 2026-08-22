@@ -1,7 +1,0 @@
-178c9fd82af3ed99,bullet_chopper_gunner
-410092704f4a03c,crossbow_enter
-69050d7b3430366e,grenade_exit
-480a3191309d3449,grenade_explosion
-db8906417cda1de,rocket_bounce
-732fd0b76ec30328,shotgun_enter
-16e6f5bf4a293426,shotgun_exit

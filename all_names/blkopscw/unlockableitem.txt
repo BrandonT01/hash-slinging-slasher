@@ -1,9 +1,0 @@
-7958a864777a5c5b,ammomod_brainrot
-11000effaf032a0,ammomod_cryofreeze
-61fcc1f817072249,ammomod_deadwire
-25ff17bb722aaaf5,ar_soviet_t9
-6bb8d088aa5d2df5,hero_annihilator
-124a1419cdca6cf2,melee_bowie
-4f802136d7ccd11,napalm_strike_zm
-3de3d523512f7cbc,remote_missile_zm
-7a9d35a0f888b881,smg_flechette_t9

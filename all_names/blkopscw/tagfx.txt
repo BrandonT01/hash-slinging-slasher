@@ -1,6 +1,0 @@
-28a14655acf44c34,jammer_landmine
-646c3fa8533e5fb2,jammer_listening_device
-180fbb33748e2059,jammer_missile_turret
-66dfc9b5ae5bf520,jammer_nightingale
-7fcbbf36c3c22691,jammer_sentry
-594e0216811ac028,jammer_trophy
