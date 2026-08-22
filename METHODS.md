@@ -888,11 +888,59 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | loader string pool as candidates | **0** of the 159,170 ids a Cold War pass hunts | dead |
 | Black Ops 4 SAB paths, recombined from Black Ops 4 names only | **2 new** of 240,000; tail swap **0 new** of 63,165 | dead |
 | Cold War sound paths, recombined -- with a corpus **8x denser** | **0 new** of 400,000; tail swap **0 new** of 36,679 | dead |
-| Black Ops 4 SAB paths, seeded with **BO2/BO3 SAB directories** | BO3 shares **9.18%** of stems, BO2 1.35% | live -- see `sabpaths` |
+| Black Ops 4 SAB paths, seeded with **BO2/BO3 SAB directories** | BO3 shares **9.18%** of stems, BO2 1.35% | ~~live~~ **dead** -- the overlap is real and the yield is not; see below |
 | Names published for the **newer titles** (`_v2` tables) hashed against our games | **0** of 1,175,524 names, against 336,505 unnamed ids in the two games | dead |
 | loader string pool, all pools | 23,301 of 1,480,510 ids (1.6%), 18,691 unnamed — but `scriptbundle` is 17,304 of them | free names, wrong pools |
 | material→image with a **different reduction each side** (`no head` / `no ends`) | **75,964 shared — 59.98% of image**, 5× the row above; 181,466 cores only in material | **relation real, ground dead** — see below |
 | material→xmodel, same treatment (`no ends` / `no tail`) | **15,270 shared — 15.57% of xmodel**, 5× the "too weak to pass" row above | **relation real, ground dead** — see below |
+
+### Structural overlap has now failed to predict yield three times — 2026-08-22
+
+Every time this project has measured that two name sets *share structure* and concluded a method
+was worth building, the method has returned approximately nothing. Three for three:
+
+| what was measured | what it predicted | what it returned |
+|---|---|---|
+| material↔image cores, 75,964 shared, 59.98% of image | a strong seam | **0 matched** in 190 M candidates |
+| BO3 shares 9.18% of Black Ops 4's SAB stems | `sabpaths` rated **live** | **0** in 187 B candidates |
+| 2,394,179 newer-title cores absent from our corpus | fresh vocabulary | 61 in 34.5 T -- 1 per 565 billion |
+
+**Overlap says two things are made of similar pieces. It says nothing about whether the pieces
+recombine into names that exist.** Treat any "N% shared" figure as a reason to *test*, never as a
+result, and put the test result in this file rather than the overlap.
+
+The SAB one is worth spelling out because it was carefully controlled. `scripts/sab_plan.py` asks
+`sabpaths`' whole vocabulary product -- 13,311 directories x 93,092 basenames x 150 tails,
+187,111,289,412 candidates, unfolded -- against a pool with **70,878 unnamed of 79,263**, the
+largest unnamed ground in either game. It returned 0. And the positive control passed: **387 of
+391** known Black Ops 4 SAB names *are* reproducible from those three lists, so the plan covered
+the right space and the space is empty. The vocabulary of Black Ops 2 and 3 does not carry into
+Black Ops 4's sound tree, whatever the stem overlap says.
+
+Older-title corpora hashed **verbatim** were tested at the same time -- `bo2_sab`, `bo3_sab`,
+`bo2_ipak`, `cod_constants`, `cod_semantics`, `cod_techsets`, `fnv1a_strings`, 944,345 names: **0
+matched folded on either game, 2 matched unfolded on Black Ops 4.**
+
+### The closure multiplies a method's yield, and nothing measures that — 2026-08-22
+
+`cross_era` returned **61** names for 34.5 trillion candidates, which by every column in
+`methods_report.py` is among the worst methods ever run here.
+
+Then `derive_closure` ran over what it had confirmed and found **416 more** -- `final_byte` +235,
+`tails` +96, image siblings +75, channels +10 -- and round 2 correctly returned 0. Those 61 seeds
+became 477 names.
+
+**A method's worth is its own yield plus whatever the closure extracts from its seeds, and the
+report can only see the first.** The closure's names are credited to the derivations, which is
+correct provenance and misleading economics: it makes seeding methods look worthless and
+derivations look better than they are.
+
+Two consequences worth acting on:
+
+- **Run the closure after everything**, including after a method you are about to write off. It is
+  free and it has now multiplied one pass by 6.8x.
+- **Do not retire a method on its direct yield alone** if it adds names in families nothing else
+  reaches. `cross_era` is not worth its machine time twice, but its 61 names were not the point.
 
 ### Recombining *across* names is dead; varying *within* one is not — 2026-08-22
 
