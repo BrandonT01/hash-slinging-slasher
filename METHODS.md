@@ -896,12 +896,39 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | material→image with a **different reduction each side** (`no head` / `no ends`) | **75,964 shared — 59.98% of image**, 5× the row above; 181,466 cores only in material | **relation real, ground dead** — see below |
 | material→xmodel, same treatment (`no ends` / `no tail`) | **15,270 shared — 15.57% of xmodel**, 5× the "too weak to pass" row above | **relation real, ground dead** — see below |
 
+### Timings measured on 2026-08-22 between 11:19 and 18:55 are not trustworthy — 2026-08-22
+
+A background loop was left running for seven and a half hours without anybody realising, competing
+for all sixteen cores with every pass launched in that window. It was believed killed at 11:20:
+the `confirm_plan` **child** was killed and the shell was not, so the loop simply started its next
+stage. `pkill -f` had matched nothing under Git Bash on Windows and exited quietly, and the absence
+of an error was read as success.
+
+**Name counts from that window are unaffected** -- each run writes its own folder and its own
+`new` count, and nothing about a hash depends on how busy the machine was. So `692` for heads k=3,
+`61` for `cross_era` and the rest all stand.
+
+**Wall-clock figures from that window do not.** Anything quoting how long a pass took, and every
+`names/hr` the report derives from `ran for` for a run stamped in it, was measured on a machine
+sharing itself with a hidden loop. Do not compare them against a figure measured on an idle one,
+and re-measure before quoting any of them as a method's cost.
+
+Figures from **before 11:19 are clean** -- the k=1 to k=5 tails sizings, the overnight run, and the
+1-per-18 for `final_byte` were all taken on an idle machine.
+
+Two habits worth keeping:
+
+- **Kill the parent, then check the parent is gone.** Verifying that the current pass died says
+  nothing about the loop that will start the next one.
+- **`python scripts/running.py`** answers "is anything grinding right now?" -- worth running before
+  timing anything, and before assuming the machine is idle.
+
 ### A long unattended runner gets silently blocked at twelve hours — 2026-08-22
 
 Worth knowing before writing one. `readiness::require` refuses to search if `start` last passed
 more than twelve hours ago, which is right: the tables move and other people submit.
 
-Inside a multi-stage script it does not read as a refusal. A three-hour stage ran, the next stage
+Inside a multi-stage script it does not read as a refusal. A long stage ran, the next stage
 was blocked, printed its message into its own log, exited, and **the runner carried on to the
 following stage as though it had searched.** The blocked pass reported nothing, found nothing, and
 looked exactly like an exhausted method. It was noticed only by reading the log by hand.
