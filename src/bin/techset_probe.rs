@@ -18,7 +18,7 @@ use std::sync::Mutex;
 use std::time::Instant;
 
 use slasher::loader::{loaded_assets, unnamed_in};
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::{config, expected_by_chance, feed, hash64, paths, pool_index, pool_label, read_list, readiness, recon, table_keys, Filter, ID_MASK, Results, RunNote};
 
 const HEX: [u8; 16] = *b"0123456789abcdef";
@@ -184,6 +184,9 @@ fn main() {
                     began.elapsed(),
                 )
                 .measured("game", config::game())
+                // The bases it swept tags against -- the only list that decides what this
+                // probe can reach, so it is what `scripts/overlap.py` compares.
+                .measured("sketch stems", Sketch::of(&bases))
                 .fingerprint(&fingerprint),
             );
         }

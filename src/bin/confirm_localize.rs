@@ -17,7 +17,7 @@ use std::collections::{HashMap, HashSet};
 
 use slasher::loader::{loaded_assets, unnamed_in};
 use slasher::search::run_best;
-use slasher::fingerprint::Fingerprint;
+use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::{all_table_names, config, folder_names, paths, pool_index, pool_label, read_list, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
 
 /// How many times to go round before calling it saturated. It stops on its own when a round
@@ -222,10 +222,10 @@ fn main() {
         eprintln!(
             "{}
 
-This is not a warning about priorities. It ran once for twenty minutes and              confirmed 8,667
-names, every one of them useless. Nothing here should spend a              night on it.
+This is not a warning about priorities. It ran once for twenty minutes and confirmed 8,667 names,
+every one of them useless. Nothing here should spend a night on it.
 
-Run a method from METHODS.md instead. If you genuinely need this              pool, pass {ANYWAY}.",
+Run a method from METHODS.md instead. If you genuinely need this pool, pass {ANYWAY}.",
             slasher::low_value_reason("localizeentry").unwrap_or_default()
         );
         std::process::exit(2);
@@ -418,6 +418,11 @@ round {round} added nothing; saturated");
                     began.elapsed(),
                 )
                 .measured("game", config::game())
+                // The two lists that decide what this can reach. Recorded even though the
+                // pool is worthless: consistency costs nothing, and an exception is how the
+                // sketch came to be missing from six binaries in the first place.
+                .measured("sketch stems", Sketch::of(&keys))
+                .measured("sketch beginnings", Sketch::of(&possible_categories))
                 .fingerprint(&fingerprint),
             );
         }
