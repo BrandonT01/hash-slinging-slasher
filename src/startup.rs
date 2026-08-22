@@ -593,7 +593,36 @@ fn suggest(game: &str) {
         ),
     ];
 
-    println!("suggested next, given what this clone has already run:\n");
+    // Said before the ladder, because the ladder is the weaker instrument and putting it first
+    // is how a contributor came to spend fourteen submissions on the one method that was spent.
+    //
+    // The two halves are deliberately different in kind. A *ranking* is safe to broadcast when it
+    // is used to rule things out -- "do not spend your night on that" cannot cause a collision.
+    // Used the other way it is a ladder with extra steps: it is deterministic and global, so
+    // everybody who runs its top row generates the same candidates and `submit` drops them all.
+    // And it can only rank methods that already exist, so leaning on it steers away from the one
+    // thing this project is for.
+    //
+    // What diverges naturally is the negative space: where the unnamed assets are, which relations
+    // nothing has mined, what the lists structurally cannot express. Two people reading those pick
+    // different ground.
+    println!("before choosing, and this order matters:
+");
+    println!("  python scripts/methods_report.py --efficiency");
+    println!("      what is spent. Use a ranking to rule methods OUT -- that is what it is good for.
+");
+    println!("  python scripts/coverage.py --five");
+    println!("  python scripts/seams.py");
+    println!("  python scripts/reach.py --missing");
+    println!("      where nothing reaches yet. This is where a new method comes from, and unlike");
+    println!("      the ranking it points different people at different ground.
+");
+    println!("  Run the top of the ranking *because* it is the top and you will collide with");
+    println!("  everybody else who did. What follows is a floor, not a plan.
+");
+
+    println!("suggested next, given what this clone has already run:
+");
 
     let mut offered = 0;
 

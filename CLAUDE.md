@@ -409,6 +409,34 @@ later contributor faster.** So:
   ```
   and read `scripts/README.md`, which says which scripts are reconnaissance and which are methods.
 
+## A ranking is for ruling things out, not for choosing
+
+`methods_report.py --efficiency` says what is **spent**, and that is safe for everybody to read:
+"do not spend your night on that" cannot cause a collision.
+
+Used the other way it is a ladder with extra steps. It is deterministic and global, so everybody
+who runs its top row builds the same candidates and `submit` drops them all as claimed -- the
+five-contributors-one-batch failure, re-created, and the fingerprint will not catch it because
+their corpora differ slightly. It also **cannot rank a method nobody has written**, so leaning on
+it steers away from the one thing this project is for.
+
+What diverges naturally is the negative space:
+
+```
+python scripts/coverage.py --five      where the unnamed assets actually are
+python scripts/seams.py                relations nothing has mined
+python scripts/reach.py --missing      what the lists structurally cannot express
+python scripts/uncarried.py            beginnings no cut of which is carried
+```
+
+Two people reading those pick different ground. Two people reading a ranking pick the same row.
+
+The evidence is in the day this was written. `heads` -- 692 names, the best single pass -- did not
+come from the ranking; it came from asking *why* `tails` pointed at the end of a name and never the
+front. `uncarried` came from `reach.py` printing a signal nobody had acted on for days. Neither was
+the top row of anything.
+
+
 ## Inventing a method is now cheap — this is the important part
 
 You do not have to write Rust to try an idea. `confirm_list` takes candidate names on standard
