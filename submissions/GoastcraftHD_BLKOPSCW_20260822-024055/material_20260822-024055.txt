@@ -1,0 +1,2 @@
+2da85fe81a9fbaf,mc/mtl_p9_rm_pai_can_light_screw_01
+25281fd6705b6551,mc/mtl_p9_rm_pai_scoreboard_emissive_red
