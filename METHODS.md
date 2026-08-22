@@ -32,6 +32,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 13 | image channel completion | the other channels of an image we hold one channel of | `scripts/image_channels.py` → `confirm_list` | 456 BO4, 59 CW. Compounds with method 3, which seeds from the other side |
 | 14 | token insertion and deletion | names one token **longer or shorter** than a known name | `scripts/token_edits.py` → `confirm_list` | 700 BO4, 384 CW across all four types. The only method that changes a name's length |
 | 15 | affix sweep | affixes used **once** in the game, which no measured list can hold | `scripts/affix_sweep.py` → `confirm_list` | **targeted only.** Blind: 1 name per 532 M candidates. Aimed at a family you suspect: the only thing that reaches it |
+| 16 | final byte solved backwards | any name one **final character** from a known one, at any of 256 bytes | `scripts/final_byte.py` → `confirm_list` | **1 name per 18 candidates — the best measured here.** In `derive_closure`, so it re-runs free after any pass |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -65,6 +66,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 
 | method | ways | runs | names | candidates | 1 name per | best | latest | first | last | state |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
+| final byte solved backwards | 1 | 2 | 150 | 13,526 | 90 | 18 | 18 | 2026-08-22 | 2026-08-22 | live |
 | image siblings of confirmed materials | 1 | 3 | 2,756 | 1,625,136 | 589 | 393 | 1,100 | 2026-08-19 | 2026-08-20 | live |
 | gaps | 2 | 4 | 374 | 246,361 | 658 | 190 | 6,554 | 2026-08-20 | 2026-08-20 | spent |
 | image siblings | 3 | 5 | 529 | 4,621,863 | 8,736 | 1,734 | 68,329 | 2026-08-20 | 2026-08-21 | spent |
@@ -99,6 +101,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | cross-game sound stem transfer | 1 | 1 | 27 | 11,737,632 | 434,727 | 434,727 | 434,727 | 2026-08-20 | 2026-08-20 | untried |
 | materials from image cores | 1 | 2 | 17 | 9,136,704 | 537,453 | 456,835 | 456,835 | 2026-08-20 | 2026-08-20 | live |
 | templates | 2 | 4 | 379 | 211,107,756 | 557,012 | 286,113 | 2,523,120 | 2026-08-20 | 2026-08-20 | cooling |
+| final byte substitution | 1 | 2 | 121 | 70,135,764 | 579,634 | 467,581 | 467,581 | 2026-08-22 | 2026-08-22 | live |
 | correlated-token-blocks-material-image-wide | 1 | 6 | 563 | 425,162,272 | 755,172 | 270,359 | 5,907,185 | 2026-08-20 | 2026-08-20 | spent |
 | paired-token-blocks-model-lengths2-4 | 1 | 2 | 21 | 18,272,811 | 870,133 | 702,844 | 702,844 | 2026-08-20 | 2026-08-20 | live |
 | sibling token substitution | 4 | 7 | 2,477 | 2,261,286,760 | 912,913 | 206,904 | 1,381,969 | 2026-08-19 | 2026-08-21 | cooling |
@@ -146,7 +149,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-80 distinct methods, run 108 ways between them, across 359 runs. `names` is what each run
+82 distinct methods, run 110 ways between them, across 363 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
@@ -876,6 +879,46 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | loader string pool, all pools | 23,301 of 1,480,510 ids (1.6%), 18,691 unnamed — but `scriptbundle` is 17,304 of them | free names, wrong pools |
 | material→image with a **different reduction each side** (`no head` / `no ends`) | **75,964 shared — 59.98% of image**, 5× the row above; 181,466 cores only in material | **relation real, ground dead** — see below |
 | material→xmodel, same treatment (`no ends` / `no tail`) | **15,270 shared — 15.57% of xmodel**, 5× the "too weak to pass" row above | **relation real, ground dead** — see below |
+
+### The hash runs backwards for the final byte, and that is a method — 2026-08-22
+
+Contributed as an observation: `p9_example_model_name_1` and `..._2` hash to nearly the same
+number. They do, and the reason is exact rather than approximate.
+
+FNV-1a is `h = (h ^ byte) * prime`. For two names differing only in their **last** character the
+XOR touches only the low eight bits, so
+
+    h(A) - h(B) = ((h_prefix ^ a) - (h_prefix ^ b)) * prime
+
+and that first term is an integer in [-255, 255]. The difference between the two hashes is always
+an exact small multiple of the prime — `_2` is -3x, `_3` is -2x, `_a` is -80x. A few times 1.1e12
+apart in a space of 1.8e19, which is what "nearly the same hash" is.
+
+**It holds for the final byte and no other.** One position further in, the difference is carried
+through another XOR, XOR does not commute with the multiply, and the multiplier is already 7.1e18
+— random. Do not try to generalise it; that is measured, not assumed.
+
+**The relation inverts, so this is a solve rather than a search.** The prime is odd, so
+
+    u = (h(prefix) ^ byte) * prime   =>   byte = (u * prime_inverse) ^ h(prefix)
+
+Take every known name's prefix, ask whether `u * prime_inverse` differs from one of them in the
+low eight bits only, and the answer *is* the character. 256 lookups per unnamed id, no strings
+built, no candidates hashed.
+
+**Measured, Black Ops 4: 2,523 candidates, 138 confirmed — one name per 18.** The next best method
+in this file is image siblings at one per 394. Sweeping the same ground the obvious way took
+35,068,642 candidates for 75 names, so solving backwards is ~14,000x cheaper *and* covers more,
+because it tests all 256 bytes rather than the 39 a measured alphabet would carry.
+
+Two traps, both paid for:
+
+- **Hash the solved name back.** The solve gives the byte the hash wants; the game hashes a
+  *normalised* name. A solved byte that is uppercase or a backslash cannot survive normalisation
+  and will never hash to that id. Without the check it reported 11,003 solutions where 63 were
+  real, and `confirm_list` matched 0.6% of what it was handed.
+- **Its 138 landed as 3.** A brute sweep of the same ground an hour earlier had already claimed
+  them. That is `found` against `landed` in `methods_report.py`, and it is the normal case.
 
 ### Cross-type core seams are stronger than recorded and yield nothing — 2026-08-22
 

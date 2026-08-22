@@ -32,7 +32,8 @@ Two consequences, and they are why this loops rather than being a list somebody 
 These are the highest yield-per-candidate methods in the project by three orders of magnitude,
 and it is not close. Measured from the run record on 2026-08-22:
 
-    image siblings of confirmed materials     596,049 candidates ->  1,514 names   1 per 394
+    final byte solved backwards                   2,523 candidates ->    138 names   1 per 18
+    image siblings of confirmed materials       596,049 candidates ->  1,514 names   1 per 394
     image channel completion                2,352,722 candidates ->    456 names   1 per 5,160
     sibling token substitution          1,354,263,677 candidates ->    402 names   1 per 3,370,000
 
@@ -80,6 +81,12 @@ DERIVATIONS = [
         "script": "scripts/image_channels.py",
         "args": [],
         "why": "an image we hold one channel of implies the channels beside it",
+    },
+    {
+        "label": "final byte solved backwards",
+        "script": "scripts/final_byte.py",
+        "args": [],
+        "why": "one name per 18 candidates, the best measured here -- solved, not swept",
     },
     {
         "label": "family gap filling",
