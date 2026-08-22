@@ -542,16 +542,34 @@ fn suggest(game: &str) {
 
     // In the order METHODS.md ranks them, with what each reaches, so the choice is informed
     // rather than obeyed.
+    // Ordered by what the **run record** measures, not by age. This list used to offer the general
+    // search first, described as "the thing to run first in a fresh clone", and every method on it
+    // was a built-in binary. The consequence was measurable on a contributor's account: fourteen
+    // submissions, six of them the general search, and the last of those tested 101,782,194,076,950
+    // candidates for **20 new names** -- one per five trillion. They were not doing anything wrong.
+    // They were doing what this list told them to.
+    //
+    // Anything added here must carry its measured figure, so a reader can disagree with the order.
     let ladder: &[(&str, &str, &str)] = &[
         (
-            "all",
-            "confirm_cw",
-            "the general search -- the widest net, and the thing to run first in a fresh clone",
+            "closure",
+            "python scripts/derive_closure.py",
+            "free, and it multiplies everything else: 61 seeds from one pass became 477 names. Run it after any pass at all, including one you are about to write off",
+        ),
+        (
+            "plan",
+            "python scripts/tails.py --head --length 3 --write-plan plans/heads3.txt && confirm_plan plans/heads3.txt",
+            "replaces a known name's first three characters -- 692 names on Cold War in one pass, on ground nothing had ever asked about",
+        ),
+        (
+            "plan",
+            "python scripts/tails.py --length 3 --write-plan plans/tails3.txt && confirm_plan plans/tails3.txt",
+            "the same for the last three characters: 1,151 names in twenty-one seconds, which the report calls free",
         ),
         (
             "list",
-            "python scripts/continuations.py --depth 2 --cap 24 | confirm_list - --label \"per-prefix continuations\"",
-            "offers each prefix the tokens measured to follow *that* prefix, rather than the globally commonest words",
+            "python scripts/final_byte.py | confirm_list - --label \"final byte solved backwards\"",
+            "solves rather than searches -- the hash inverts for a name's final character. One name per 18 candidates, the best measured here",
         ),
         (
             "images",
@@ -569,9 +587,9 @@ fn suggest(game: &str) {
             "everything past the first dot, which nothing else can put back on",
         ),
         (
-            "seeds",
-            "confirm_cw seeds",
-            "the general search over confirmed names only -- minutes, and picks up siblings of whatever the last pass found",
+            "all",
+            "confirm_cw",
+            "the general search. Widest net and the right first pass in a *fresh* clone -- but measured at 1 name per 5 trillion candidates once the corpus is picked over, so it is last here on purpose",
         ),
     ];
 
