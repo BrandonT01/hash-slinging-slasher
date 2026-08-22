@@ -37,6 +37,14 @@ const DEFAULT_REPO: &str = "KingslayerKyle/hash-slinging-slasher";
 /// names only makes the tables bigger. So anything dropped in this folder rides along.
 const CONTRIBUTED: &str = "contrib";
 
+/// The largest a contributed file may be before it is treated as working data rather than a
+/// method.
+///
+/// Generous on purpose -- a long generator with a long docstring is a good thing and must not trip
+/// this. What it stops is a stem list, a core dump, a scraped corpus: the inputs a method was
+/// built from, which regenerate in a minute and would otherwise sit in everybody's clone for ever.
+const BIGGEST_SCRIPT: u64 = 256 * 1024;
+
 /// The ledger of run folders already sent, so nothing is submitted twice.
 const LEDGER: &str = ".submitted";
 
@@ -834,11 +842,31 @@ fn scripts_in(folders: &[PathBuf]) -> Vec<PathBuf> {
                 Some("py" | "rs" | "sh" | "ps1" | "md" | "txt" | "toml" | "json")
             );
 
-            let has_content = entry.metadata().map(|data| data.len() > 0).unwrap_or(false);
+            let size = entry.metadata().map(|data| data.len()).unwrap_or(0);
+            let has_content = size > 0;
+
+            // A file this large is data, not a method, and carrying it is a permanent cost to
+            // everybody's clone. Measured the day this guard went in: a plan's stem list, 140,947
+            // lines and 4.27 MB, rode into a pull request beside the two files of names it had
+            // helped find -- because it was a `.txt` in `contrib/` and nothing looked at its size.
+            //
+            // The rule is the same one `contrib/` exists for: carry the thing that *finds* names,
+            // not the working data it was built from. A stem list regenerates from the tables in
+            // a minute; the script that writes it is what the next contributor actually needs.
+            let is_data = size > BIGGEST_SCRIPT;
 
             let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
                 continue;
             };
+
+            if is_data {
+                println!(
+                    "  {name} is {:.1} MB, so it is working data rather than a method and is not                      being carried.
+    Contribute the script that regenerates it instead.",
+                    size as f64 / (1024.0 * 1024.0)
+                );
+                continue;
+            }
 
             if sensible && has_content && seen.insert(name.to_owned()) {
                 found.push(path);
@@ -1915,6 +1943,44 @@ mod tests {
         assert_eq!(per_type(&tie), "- image: 1\n- xmodel: 1\n");
 
         assert_eq!(per_type(&[]), "");
+    }
+
+    /// Working data is not a method, and is not carried into a pull request.
+    ///
+    /// A stem list of 140,947 lines rode into one because it was a `.txt` in `contrib/` and
+    /// nothing looked at its size. Everything a contributor writes lands in that folder, so the
+    /// only thing separating a generator from the corpus it was built from is this.
+    #[test]
+    fn working_data_is_not_carried_as_a_method() {
+        let folder = std::env::temp_dir().join(format!("slasher_big_{}", std::process::id()));
+        let _ = fs::remove_dir_all(&folder);
+        fs::create_dir_all(&folder).expect("a temporary contrib folder");
+
+        let generator = folder.join("generator.py");
+        fs::write(&generator, "print('names')
+").expect("a small script");
+
+        let corpus = folder.join("stems.txt");
+        fs::write(&corpus, vec![b'x'; (BIGGEST_SCRIPT + 1) as usize]).expect("a big list");
+
+        // A list right at the limit is still a method: the cutoff must not punish a long
+        // generator with a long docstring, which is the shape this repository wants.
+        let wordy = folder.join("wordy.py");
+        fs::write(&wordy, vec![b'y'; BIGGEST_SCRIPT as usize]).expect("a long script");
+
+        let carried: Vec<String> = scripts_in(&[folder.clone()])
+            .iter()
+            .filter_map(|path| Some(path.file_name()?.to_str()?.to_owned()))
+            .collect();
+
+        assert!(carried.contains(&"generator.py".to_owned()), "a generator must be carried");
+        assert!(carried.contains(&"wordy.py".to_owned()), "a long generator is still a generator");
+        assert!(
+            !carried.contains(&"stems.txt".to_owned()),
+            "working data must not ride along: {carried:?}"
+        );
+
+        let _ = fs::remove_dir_all(&folder);
     }
 
     /// The script ledger recognises a script this machine has already sent, and does so across

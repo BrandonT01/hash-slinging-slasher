@@ -31,6 +31,7 @@ a program that prints names; anything that can print names is a method.
 | `seam_stems.py` | turns a seam `seams.py` measured into the three lists a plan needs, and with `--write-plan` writes the plan itself. The path from "this relation looks real" to "these names are confirmed", without a new generator. |
 | `snapshot.py` | run directly for a one-line summary per game. Used as a library by everything else. |
 | `check_docs.py` | whether the documentation still describes the repository that exists. Runs in CI. |
+| `uncarried.py` | the beginnings `data/prefixes.txt` carries **no cut of**, so the general search cannot build a single name starting that way. 208 of them head 12,311 published names, including the whole optics family (`reflex_`, `acog_`, `holo_`). `--write-plan` turns them into a plan. |
 | `reach.py` | **what share of known names the lists could rebuild at all.** A ceiling, not a yield: whatever the lists cannot express, no pass can find however long it runs, and nothing in a run says so. `--missing` names the commonest beginnings and endings not carried. |
 
 ## Generators
