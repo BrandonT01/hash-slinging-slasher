@@ -38,24 +38,24 @@ the rest stay in `submissions/`, which is the record.
 
 ## Contents
 
-### `blkops04/` -- 51,579 names in 6 file(s)
+### `blkops04/` -- 51,589 names in 6 file(s)
 
 | asset type | names |
 |---|---:|
-| `material` | 20,043 |
-| `image` | 14,139 |
-| `sound_alias` | 7,990 |
+| `material` | 20,046 |
+| `image` | 14,144 |
+| `sound_alias` | 7,992 |
 | `xmodel` | 6,432 |
 | `xanim` | 2,803 |
 | `sound_asset` | 172 |
 
-### `blkopscw/` -- 33,147 names in 6 file(s)
+### `blkopscw/` -- 33,334 names in 6 file(s)
 
 | asset type | names |
 |---|---:|
-| `sound_alias` | 24,576 |
-| `material` | 3,897 |
-| `xanim` | 1,857 |
-| `image` | 1,653 |
-| `xmodel` | 1,020 |
+| `sound_alias` | 24,724 |
+| `material` | 3,905 |
+| `xanim` | 1,858 |
+| `image` | 1,681 |
+| `xmodel` | 1,022 |
 | `sound_asset` | 144 |

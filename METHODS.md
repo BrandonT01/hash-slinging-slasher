@@ -67,10 +67,10 @@ table under a name you would not have guessed is the thing you are about to rebu
 
 | method | ways | runs | names | candidates | 1 name per | best | latest | first | last | state |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
-| final byte solved backwards | 1 | 5 | 337 | 48,103 | 142 | 18 | 98 | 2026-08-22 | 2026-08-22 | cooling |
+| final byte solved backwards | 1 | 6 | 397 | 60,020 | 151 | 18 | 198 | 2026-08-22 | 2026-08-22 | spent |
 | gaps | 2 | 4 | 374 | 246,361 | 658 | 190 | 6,554 | 2026-08-20 | 2026-08-20 | spent |
 | black ops 1 build names, verbatim | 1 | 2 | 271 | 651,912 | 2,405 | 1,940 | 3,164 | 2026-08-22 | 2026-08-22 | live |
-| image siblings of confirmed materials | 1 | 9 | 2,970 | 7,974,570 | 2,685 | 393 | 8,449 | 2026-08-19 | 2026-08-22 | spent |
+| image siblings of confirmed materials | 1 | 10 | 2,998 | 9,049,749 | 3,018 | 393 | 38,399 | 2026-08-19 | 2026-08-22 | spent |
 | black ops 3 build names, respelled, full harvest | 1 | 2 | 148 | 473,642 | 3,200 | 1,691 | 29,602 | 2026-08-22 | 2026-08-22 | spent |
 | image siblings | 3 | 5 | 529 | 4,621,863 | 8,736 | 1,734 | 68,329 | 2026-08-20 | 2026-08-21 | spent |
 | channels | 2 | 4 | 916 | 9,598,953 | 10,479 | 2,732 | 602,442 | 2026-08-20 | 2026-08-20 | spent |
@@ -80,8 +80,8 @@ table under a name you would not have guessed is the thing you are about to rebu
 | rare-token-compound-splice-anim | 1 | 3 | 30 | 521,194 | 17,373 | 10,849 | 17,385 | 2026-08-20 | 2026-08-20 | live |
 | black ops 3 build names, verbatim | 1 | 1 | 4 | 73,303 | 18,325 | 18,325 | 18,325 | 2026-08-22 | 2026-08-22 | untried |
 | bo3 mod tools asset file list | 1 | 1 | 3 | 65,355 | 21,785 | 21,785 | 21,785 | 2026-08-22 | 2026-08-22 | untried |
-| image channel completion | 1 | 7 | 622 | 16,824,576 | 27,049 | 5,159 | 65,582 | 2026-08-20 | 2026-08-22 | spent |
 | bo3 mod tools gdt asset names | 1 | 2 | 3 | 84,078 | 28,026 | 21,019 | 42,039 | 2026-08-22 | 2026-08-22 | live |
+| image channel completion | 1 | 8 | 632 | 19,251,523 | 30,461 | 5,159 | 242,694 | 2026-08-20 | 2026-08-22 | spent |
 | paired-token-blocks-alias-deterministic | 1 | 2 | 14 | 481,544 | 34,396 | 24,067 | 60,216 | 2026-08-20 | 2026-08-20 | live |
 | paired-token-blocks-anim-deterministic | 1 | 9 | 104 | 3,708,652 | 35,660 | 15,884 | 206,784 | 2026-08-20 | 2026-08-20 | spent |
 | continuations | 1 | 1 | 776 | 39,892,300 | 51,407 | 51,407 | 51,407 | 2026-08-20 | 2026-08-20 | untried |
@@ -125,7 +125,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | keyword sweep: zombie models | 1 | 1 | 4 | 100,074,665 | 25,018,666 | 25,018,666 | 25,018,666 | 2026-08-21 | 2026-08-21 | untried |
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
-| tails of length 3 | 1 | 3 | 1,154 | 95,294,306,466 | 82,577,388 | 35,873,048 | 10,599,670,308 | 2026-08-22 | 2026-08-22 | spent |
+| tails of length 3 | 1 | 4 | 1,250 | 127,116,263,654 | 101,693,010 | 35,873,048 | 331,478,720 | 2026-08-22 | 2026-08-22 | cooling |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
 | family walking, numbers in place | 1 | 12 | 1,139 | 10,340,483,443 | 3,446,827,814 | 3,446,827,814 | 3,446,827,814 | 2026-08-19 | 2026-08-22 | untried |
 | tails of length 4 | 1 | 2 | 289 | 2,284,577,239,732 | 7,905,111,556 | 5,032,108,457 | 5,032,108,457 | 2026-08-22 | 2026-08-22 | live |
@@ -136,9 +136,10 @@ table under a name you would not have guessed is the thing you are about to rebu
 | images derived from materials | 1 | 10 | 5,310 | 2,296,854,085,248 | 39,600,932,504 | 39,600,932,504 | 39,600,932,504 | 2026-08-19 | 2026-08-22 | untried |
 | tails of length 5 | 1 | 2 | 212 | 9,365,464,347,250 | 44,176,718,619 | 30,017,513,933 | 30,017,513,933 | 2026-08-22 | 2026-08-22 | live |
 | sound files and aliases | 1 | 38 | 29,420 | 128,259,734,269,856 | 305,380,319,690 | 305,380,319,690 | 305,380,319,690 | 2026-08-19 | 2026-08-22 | untried |
+| newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | general search | 2 | 59 | 101,807 | 612,067,776,398,710 | 1,212,015,398,809 | 749,618,037,080 | 4,626,493,167,918 | 2026-08-19 | 2026-08-22 | cooling |
 | family walking, whole words | 1 | 14 | 4,175 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| not recorded | 1 | 42 | 2,126 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| not recorded | 1 | 44 | 2,131 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -162,7 +163,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-94 distinct methods, run 122 ways between them, across 428 runs. `names` is what each run
+95 distinct methods, run 123 ways between them, across 436 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
