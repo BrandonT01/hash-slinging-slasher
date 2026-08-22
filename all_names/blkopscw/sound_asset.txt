@@ -134,6 +134,10 @@ df5334158b4df09,vox/scripted/mpl/anme/vox_anme_stk_hub_offline_01.rn75.pc.en.snd
 4918d34a8b07fd4c,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_04.rn75.pc.en.snd
 74b36fa584493bf1,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_05.rn75.pc.en.snd
 6b58b9f6bf22c7cf,wc/t8_aut_zt8_exd_05_window_frame_wood_m_success
+68a898d583122f52,wpn/zmb/mega_barrel/reload/fly_mega_barrel_blazer_first_start.ln75.pc.all.snd
+43cb225f4a89c9fd,wpn/zmb/mega_barrel/reload/fly_mega_barrel_copycat_first_start.ln75.pc.all.snd
+3b1ba9dec21b5059,wpn/zmb/mega_barrel/reload/fly_mega_barrel_diffusion_first_start.ln75.pc.all.snd
+64d258d7f1f5777a,wpn/zmb/mega_barrel/reload/fly_mega_barrel_missile_first_start.ln75.pc.all.snd
 3355869560dc6ffc,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_00.rn75.pc.all.snd
 395ccd1f74390fc7,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_01.rn75.pc.all.snd
 4e15c90e65ad35d6,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_02.rn75.pc.all.snd
