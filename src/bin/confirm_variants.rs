@@ -28,7 +28,7 @@ use std::time::{Duration, Instant};
 
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::fingerprint::{Fingerprint, Sketch};
-use slasher::{config, expected_by_chance, hash64, paths, pool_label, readiness, recon, table_keys, tables_look_complete, Filter, ID_MASK, Results, RunNote};
+use slasher::{futility, config, expected_by_chance, hash64, paths, pool_label, readiness, recon, table_keys, tables_look_complete, Filter, ID_MASK, Results, RunNote};
 
 /// How far a family is counted. Most stop in the low tens; a few run to the hundreds.
 const HIGHEST: u32 = 256;
@@ -200,6 +200,7 @@ fn swaps(name: &str, tokens: &[String], mut visit: impl FnMut(&str)) {
 
 fn main() {
     readiness::require();
+    futility::require();
 
     let began = Instant::now();
     let (assets, strings) = match loaded_assets() {
@@ -379,6 +380,11 @@ fn main() {
     }
 
     println!("this run added {}", results.added());
+
+    // Recorded whatever the outcome, including nothing: a run that finds nothing is a
+    // real result, and three of them in a row is a loop. See `futility`.
+    futility::record(results.added());
+
     results.write(paths::findings()).expect("the results");
 
     match results.write_run(paths::findings(), if swapping { "swaps" } else { "variants" }) {

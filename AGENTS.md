@@ -177,6 +177,22 @@ So, concretely, before you stop for any reason -- to think, to write up, to tidy
    information: it means every relation anybody has measured is closed and the corpus is waiting on
    an idea. Manufacturing activity hides that, which is worse than the idle.
 
+### And the tools now refuse to spin
+
+Documentation did not prevent this. `AGENTS.md` already said not to write a rotation, in the
+section immediately above -- and the same session wrote one anyway, reverted it with a long commit
+explaining why, and left a second one of its own running for seven and a half hours. From its
+fourth round on it produced **nothing at all**: ten empty rounds in eight minutes.
+
+So the tools stop cooperating. **Three consecutive confirming runs that add nothing, and the next
+one refuses to start** -- see `src/futility.rs`. One empty pass is a real result and worth having;
+three in a row means whatever is choosing the passes has stopped reacting to what they return, and
+that is true whether the thing choosing is a shell loop or a person.
+
+It refuses rather than warning, because a warning is read by whoever is at the keyboard and the
+case this exists for is precisely the one where nobody is. `--anyway` overrides it, and any run
+that confirms a single name clears it, so a productive grind never sees it.
+
 **Signs you are on a wild goose chase**, all of which happened here on 2026-08-20:
 
 - the measurement keeps being *nearly* good enough, so you refine it again

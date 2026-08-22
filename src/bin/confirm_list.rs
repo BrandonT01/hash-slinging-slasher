@@ -29,7 +29,7 @@ use std::time::{Duration, Instant};
 
 use slasher::fingerprint::{Fingerprint, SketchStream};
 use slasher::loader::{loaded_assets, wanted_for_search};
-use slasher::{
+use slasher::{futility, 
     config, feed, feed_raw, low_value_reason, paths, pool_label, readiness, recon, table_keys,
     tables_look_complete, Filter, Results, RunNote, BASIS, ID_MASK,
 };
@@ -54,6 +54,7 @@ const SAVE_EVERY: Duration = Duration::from_secs(60);
 
 fn main() {
     readiness::require();
+    futility::require();
 
     let began = Instant::now();
 
@@ -265,6 +266,11 @@ fn main() {
     );
 
     results.write(paths::findings()).expect("the results");
+
+    // Recorded whatever the outcome, including nothing: a run that finds nothing is a
+    // real result, and three of them in a row is a loop. See `futility`.
+    futility::record(results.added());
+
 
     // Only knowable now: a list run is defined by the candidates it was given, and they arrive on
     // a pipe. Said even when nothing was found, because "somebody already ran this and it also

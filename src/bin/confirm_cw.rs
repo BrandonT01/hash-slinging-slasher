@@ -28,7 +28,7 @@ use std::time::{Duration, Instant};
 use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::loader::{loaded_assets, unnamed, wanted_for_search};
 use slasher::search::{self, Meet};
-use slasher::{
+use slasher::{futility, 
     all_table_names, config, folder_names, hash64, paths, read_list, readiness, recon, table_keys,
     table_names, tables_look_complete, Results, RunNote, pool_label,
 };
@@ -185,6 +185,7 @@ fn main() {
     // other people already have in flight. This is the whole of the duplicate problem, and it is
     // enforced here rather than requested in a document because requesting it did not work.
     readiness::require();
+    futility::require();
 
     let began = Instant::now();
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -515,6 +516,11 @@ fn main() {
     );
 
     results.write(paths::findings()).expect("the results");
+
+    // Recorded whatever the outcome, including nothing: a run that finds nothing is a
+    // real result, and three of them in a row is a loop. See `futility`.
+    futility::record(results.added());
+
 
     // Sealed below, once written: until then `submit` treats the folder as a live run and
     // leaves it alone. See `Results::write_run_as`.

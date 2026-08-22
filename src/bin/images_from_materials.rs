@@ -15,7 +15,7 @@
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::search::{candidate_space, run_best};
 use slasher::fingerprint::{Fingerprint, Sketch};
-use slasher::{config, endings_of, paths, pool_label, readiness, recon, stamp, table_keys, table_names, tables_look_complete, Results, RunNote};
+use slasher::{futility, config, endings_of, paths, pool_label, readiness, recon, stamp, table_keys, table_names, tables_look_complete, Results, RunNote};
 
 /// The tables the stems and the endings come from.
 const MATERIALS: &str = "fnv1a_xmaterials";
@@ -89,6 +89,7 @@ const SLICES: usize = 16;
 
 fn main() {
     readiness::require();
+    futility::require();
 
     let began = std::time::Instant::now();
     let (assets, _) = match loaded_assets() {
@@ -213,6 +214,11 @@ fn main() {
     }
 
     println!("this run added {}", results.added());
+
+    // Recorded whatever the outcome, including nothing: a run that finds nothing is a
+    // real result, and three of them in a row is a loop. See `futility`.
+    futility::record(results.added());
+
     // Not `expect`. The loop above tolerates this write failing, and then the identical call
     // here panicked on it -- skipping `write_run_as`, `note_run` and `seal_run`, so the folder
     // kept its `.incomplete` marker for ever and the names came back later as an anonymous

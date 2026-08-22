@@ -29,6 +29,7 @@ pub mod search;
 // a bad method, so freshness is enforced by a program rather than asked for in prose.
 pub mod update;
 pub mod recon;
+pub mod futility;
 pub mod readiness;
 pub mod startup;
 pub mod fingerprint;

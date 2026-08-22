@@ -54,7 +54,7 @@ use std::time::Instant;
 use slasher::fingerprint::{Fingerprint, Sketch};
 use slasher::loader::{loaded_assets, wanted_for_search};
 use slasher::search::{candidate_space, run_best};
-use slasher::{
+use slasher::{futility, 
     config, paths, pool_label, readiness, recon, stamp, table_keys, tables_look_complete, Results,
     RunNote,
 };
@@ -184,6 +184,7 @@ fn read_plan(path: &Path) -> Result<Plan, String> {
 
 fn main() {
     readiness::require();
+    futility::require();
     let began = Instant::now();
 
     let arguments: Vec<String> = std::env::args().skip(1).collect();
@@ -362,6 +363,11 @@ fn main() {
     }
 
     println!("\nthis run added {}", results.added());
+
+    // Recorded whatever the outcome, including nothing: a run that finds nothing is a
+    // real result, and three of them in a row is a loop. See `futility`.
+    futility::record(results.added());
+
 
     if let Err(error) = results.write(paths::findings()) {
         eprintln!("the aggregate files could not be written: {error}");

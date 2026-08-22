@@ -20,7 +20,7 @@ use std::collections::HashSet;
 use slasher::loader::{loaded_assets, unnamed_in};
 use slasher::search::{candidate_space, Meet};
 use slasher::fingerprint::{Fingerprint, Sketch};
-use slasher::{all_table_names, config, folder_names, paths, pool_index, pool_label, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
+use slasher::{futility, all_table_names, config, folder_names, paths, pool_index, pool_label, readiness, recon, table_keys, tables_look_complete, Results, RunNote};
 
 /// What marks the end of a sound name's own part and the start of the tail.
 const TAIL: char = '.';
@@ -92,6 +92,7 @@ fn stems(names: &[String]) -> Vec<String> {
 
 fn main() {
     readiness::require();
+    futility::require();
 
     let began = std::time::Instant::now();
     let searched: Vec<usize> = POOLS_SEARCHED.iter().filter_map(|kind| pool_index(kind)).collect();
@@ -153,6 +154,11 @@ fn main() {
     }
 
     println!("this run added {}", results.added());
+
+    // Recorded whatever the outcome, including nothing: a run that finds nothing is a
+    // real result, and three of them in a row is a loop. See `futility`.
+    futility::record(results.added());
+
     results.write(paths::findings()).expect("the results");
 
     match results.write_run(paths::findings(), "sounds") {
