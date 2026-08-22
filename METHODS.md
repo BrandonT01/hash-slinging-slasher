@@ -34,6 +34,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 15 | affix sweep | affixes used **once** in the game, which no measured list can hold | `scripts/affix_sweep.py` → `confirm_list` | **targeted only.** Blind: 1 name per 532 M candidates. Aimed at a family you suspect: the only thing that reaches it |
 | 16 | final byte solved backwards | any name one **final character** from a known one, at any of 256 bytes | `scripts/final_byte.py` → `confirm_list` | **1 name per 18 candidates — the best measured here.** In `derive_closure`, so it re-runs free after any pass |
 | 17 | tails of length k | any name that is a known one with its **last k characters** replaced | `scripts/tails.py` → `confirm_plan` | k=3: **1,151 in 21s a game.** Subsumes k=1 and 2; `--length 4` for more |
+| 18 | heads of length k | any name that is a known one with its **first k characters** replaced | `scripts/tails.py --head` → `confirm_plan` | **692 on Cold War in one pass.** The mirror of 17, untried until 2026-08-22 |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -125,6 +126,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | keyword sweep: zombie models | 1 | 1 | 4 | 100,074,665 | 25,018,666 | 25,018,666 | 25,018,666 | 2026-08-21 | 2026-08-21 | untried |
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
+| heads of length 3 | 1 | 1 | 692 | 46,352,610,953 | 66,983,541 | 66,983,541 | 66,983,541 | 2026-08-22 | 2026-08-22 | untried |
 | tails of length 3 | 1 | 4 | 1,250 | 127,116,263,654 | 101,693,010 | 35,873,048 | 331,478,720 | 2026-08-22 | 2026-08-22 | cooling |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
 | family walking, numbers in place | 1 | 12 | 1,139 | 10,340,483,443 | 3,446,827,814 | 3,446,827,814 | 3,446,827,814 | 2026-08-19 | 2026-08-22 | untried |
@@ -139,7 +141,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | general search | 2 | 59 | 101,807 | 612,067,776,398,710 | 1,212,015,398,809 | 749,618,037,080 | 4,626,493,167,918 | 2026-08-19 | 2026-08-22 | cooling |
 | family walking, whole words | 1 | 14 | 4,175 | - | - | - | - | 2026-08-19 | 2026-08-21 | unmeasured |
-| not recorded | 1 | 44 | 2,131 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
+| not recorded | 1 | 45 | 2,137 | - | - | - | - | 2026-08-19 | 2026-08-22 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -163,7 +165,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-95 distinct methods, run 123 ways between them, across 436 runs. `names` is what each run
+96 distinct methods, run 124 ways between them, across 438 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
@@ -893,6 +895,30 @@ And note that **pool size does not predict yield**: Black Ops 4 `sound_asset` ha
 | loader string pool, all pools | 23,301 of 1,480,510 ids (1.6%), 18,691 unnamed — but `scriptbundle` is 17,304 of them | free names, wrong pools |
 | material→image with a **different reduction each side** (`no head` / `no ends`) | **75,964 shared — 59.98% of image**, 5× the row above; 181,466 cores only in material | **relation real, ground dead** — see below |
 | material→xmodel, same treatment (`no ends` / `no tail`) | **15,270 shared — 15.57% of xmodel**, 5× the "too weak to pass" row above | **relation real, ground dead** — see below |
+
+### Nobody had ever replaced the *front* of a name — 2026-08-22
+
+`tails.py` replaces a known name's last *k* characters and works. It exists in that direction for
+a historical reason and not a principled one: the end is where the hash keeps a resemblance, which
+is what let `final_byte` solve one character, so attention went there and stayed.
+
+The front had never been tried. It is the same cross product with the lists swapped -- stems are
+known names with their heads cut off, the k-character strings become the *beginnings* -- and it
+costs the same 46 billion candidates.
+
+**692 new names on Cold War in a single pass, none dropped as already claimed.** The best single
+pass of the day, from ground nothing had ever asked about.
+
+Two things worth taking from it beyond the names:
+
+- **Check the mirror of anything that works.** The asymmetry here was an accident of how the
+  hash's invertibility drew attention, and it left half the space unexamined for the life of the
+  project. `--head` is nine lines.
+- **`bare` flips meaning between the two.** Replacing tails there is no `begin:` line, so
+  `bare: yes` supplies the only opening column and the pass tests nothing without it. Replacing
+  heads the k-character strings *are* the beginnings, so `bare` would instead add the headless
+  stem alone -- a truncation, which is a different method. Getting this wrong does not fail; it
+  reports billions of candidates and scans none.
 
 ### Structural overlap has now failed to predict yield three times — 2026-08-22
 

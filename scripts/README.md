@@ -43,6 +43,7 @@ a program that prints names; anything that can print names is a method.
 |---|---|
 | `final_byte.py` | **solves** rather than searches: the hash inverts for a name's final character, so an unnamed id gives its own last byte back. One name per 18 candidates, the best measured here. `--targets` shows what it answered. |
 | `tails.py` | writes a plan asking "is this a known name with its last *k* characters replaced". The generalisation of `final_byte.py` past the one character that can be solved -- by peeling, since the hash keeps no resemblance past two. k=3 is **free** and returned 1,151. |
+| `tails.py --head` | the same with the lists swapped: replaces a known name's **first** k characters. Untried until 2026-08-22 and returned **692 on Cold War in one pass** -- check the mirror of anything that works. |
 | `sab_plan.py` | `sabpaths`' vocabulary asked as a whole product rather than sampled -- 187 B candidates, unfolded, at the largest unnamed pool in either game. **Measured dead, with a 387/391 positive control.** |
 | `cross_era.py` | the newer titles' (`_v2`) names reduced to cores and respelled our way. Those tables are recorded dead *hashed verbatim*; this asks the different question, and brings in 2,394,179 cores our corpus does not have. |
 | `splice.py` | head of one real name joined to the tail of another. **Measured dead** -- 1 per 13.7 billion -- and kept as the measurement. Read its note before building anything that recombines across names. |

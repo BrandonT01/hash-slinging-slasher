@@ -98,7 +98,12 @@ def alphabet_of(names, size):
 
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--length", type=int, default=2, help="how many final characters to replace")
+    parser.add_argument("--length", type=int, default=2, help="how many characters to replace")
+    parser.add_argument(
+        "--head",
+        action="store_true",
+        help="replace the FIRST k characters instead of the last -- the untried mirror",
+    )
     parser.add_argument("--alphabet", type=int, default=ALPHABET)
     parser.add_argument("--write-plan", metavar="PATH", required=True)
     options = parser.parse_args(argv)
@@ -116,9 +121,19 @@ def main(argv):
     alphabet = alphabet_of(names, options.alphabet)
     endings = ["".join(pair) for pair in itertools.product(alphabet, repeat=options.length)]
 
-    stems = sorted(
-        {name[: -options.length] for name in names if len(name) - options.length >= SHORTEST_STEM}
-    )
+    # The mirror. `tails` replaces the end because the end is where the hash keeps a resemblance
+    # and where `final_byte` could solve; nothing has ever replaced the *beginning*, and there is
+    # no reason beyond that history. A head is a beginning in the engine's terms, so the same
+    # cross product runs with the lists swapped: stems are names with their heads cut off, and the
+    # beginnings are every k-character string.
+    if options.head:
+        stems = sorted(
+            {name[options.length :] for name in names if len(name) - options.length >= SHORTEST_STEM}
+        )
+    else:
+        stems = sorted(
+            {name[: -options.length] for name in names if len(name) - options.length >= SHORTEST_STEM}
+        )
 
     print(
         "alphabet (%d): %s\nstems: %s   endings: %s"
@@ -154,21 +169,31 @@ def main(argv):
                 options.length,
             )
         )
-        handle.write("label: tails of length %d\n" % options.length)
+        handle.write(
+            "label: %s of length %d\n" % ("heads" if options.head else "tails", options.length)
+        )
         handle.write(
             "describe: every known name cut short by %d character(s), against every %d-character "
             "ending over the %d characters names are measured to end in\n\n"
             % (options.length, options.length, len(alphabet))
         )
         handle.write("stem: @%s\n\n" % relative(stems_path))
-        handle.write("end: @%s\n\n" % relative(endings_path))
-        # No beginnings, and the bare stem is not a candidate: a known name cut short is a
-        # truncation, which is a different method and one this must not be credited with.
-        # `bare: yes` **is** the empty beginning, and this plan needs it. The engine takes its
-        # opening count as `beginnings + bare`, so with no `begin:` lines and `bare: no` there is
-        # no column to iterate and the pass tests nothing at all -- it cost a 31.7-billion-candidate
-        # run that scanned zero and exited reporting success. `confirm_plan` refuses such a plan now.
-        handle.write("bare: yes\nfold: yes\n")
+        handle.write(
+            "%s: @%s\n\n" % ("begin" if options.head else "end", relative(endings_path))
+        )
+
+        # `bare` is the **empty beginning**, and which way this goes depends on the mode.
+        #
+        # Replacing tails, the k-character strings are endings and there is no `begin:` line at
+        # all -- so `bare: yes` is what supplies the single opening column. Without it the engine's
+        # opening count is `beginnings + bare` = 0, there is no column to iterate, and the pass
+        # tests nothing while reporting billions. That cost a 31.7-billion-candidate run that
+        # scanned zero and exited reporting success; `confirm_plan` refuses such a plan now.
+        #
+        # Replacing heads, those same strings *are* the beginnings, so the column exists. `bare`
+        # would then add the headless stem on its own -- a truncation, which is a different method
+        # and not one this should be credited with.
+        handle.write("bare: %s\nfold: yes\n" % ("no" if options.head else "yes"))
 
     print(
         "\nwrote %s\n      %s (%s stems)\n      %s (%s endings)\n\n"
