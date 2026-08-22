@@ -1,0 +1,5 @@
+2b88f8aa58bac8b0,i_decal_favela_laundry_03_c
+2b8905aa58badec7,i_decal_favela_laundry_03_n
+32d80caa5c7cacac,i_decal_favela_laundry_02_n
+32d811aa5c7cb52b,i_decal_favela_laundry_02_c
+7d070d09c00e7830,i_decal_favela_laundry_c
