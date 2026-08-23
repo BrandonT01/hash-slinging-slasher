@@ -1,0 +1,5 @@
+2948df5d8da9d310,mpl/intros/mp_moscow/mp_moscow_van_door_v5.ln75.pc.all.snd
+4633f58ec7952668,wpn/assault/british/dist/wpn_ar_british_loop_dist.ll75.pc.all.snd
+4f31339c9d6ac5bd,evt/cp_rus_kgb/obj_frame/evt_use_computer_power_on.ln75.pc.all.snd
+5d5266424d43fafb,evt/cp_rus_kgb/obj_frame/evt_use_computer_power_off.ln75.pc.all.snd
+72c0915480ac1b91,mpl/intros/mp_moscow/mp_moscow_van_foley_v12.ln75.pc.all.snd
