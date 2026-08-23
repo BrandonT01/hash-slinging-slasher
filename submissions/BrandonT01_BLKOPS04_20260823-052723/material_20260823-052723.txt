@@ -1,0 +1,3 @@
+107c52b81db686a2,mc/sky_fiberglass_reflect_blue_hull_dlc1_wz
+35e911033e91cccd,mc/mtl_veh_t8_civ_truck_pickup_engine_decals_dirty
+45d2a2015e13b32c,mc/mtl_veh_t8_civ_truck_pickup_engine_decals_clean
