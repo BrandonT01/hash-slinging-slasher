@@ -1,0 +1,3 @@
+3497a555e89df15a,microsoft_stick_turn
+387b437af1f617f2,$black_diffuse_hdr
+742b29a826d8899a,microsoft_stick_move_look
