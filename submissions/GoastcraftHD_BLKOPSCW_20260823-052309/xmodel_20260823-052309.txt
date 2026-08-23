@@ -1,0 +1,3 @@
+2b3e4951eb8ff724,wpn_t9_melee_sais_rainbow_jewel_frontend_prop
+2f0d9991ceb28246,wpn_t9_loot_shotgun_fullauto_cyber_popup_tall
+5db0813ce5f30bd6,wpn_t9_melee_sais_ninja_frontend_prop
