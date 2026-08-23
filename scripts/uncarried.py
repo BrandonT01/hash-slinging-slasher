@@ -2,6 +2,7 @@
 
     python scripts/uncarried.py                 report which beginnings are unreachable
     python scripts/uncarried.py --write-plan plans/uncarried.txt
+    python scripts/uncarried.py --least 5 --most 9 --write-plan plans/uncarried-5-9.txt
 
 Writes lists and a plan; `confirm_plan` runs it. Not a generator that prints names -- the whole
 point is that this shape is a cross product, and a cross product belongs in the engine rather than
@@ -37,6 +38,14 @@ in about two and a half minutes each. Thin per candidate, and it is ground nothi
 repository reaches at all -- which is the only reason it is worth anything. It reopens whenever
 `derive_lists.py` changes what the beginning list carries, and whenever the published tables gain
 a family the list has no cut of.
+
+Lowering `--least` from 20 to 10 on the same date exposed 321 beginnings and 149,219 stems:
+**3 new Cold War images, 0 on Black Ops 4** across 221,773,754,370 candidates a side. The extra
+10--19-member families are live ground in Cold War and measured dead in Black Ops 4.
+
+The disjoint 5--9-member band then tested 140 beginnings and 135,778 stems against Cold War:
+**0 matches across 88,011,299,600 candidates**. Do not lower the family floor further; the
+evidence gets weaker while each beginning still pays the full stems-by-endings cross product.
 """
 import argparse
 import collections
@@ -105,8 +114,11 @@ def uncarried(names, carried):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--least", type=int, default=LEAST_NAMES, help="fewest names a beginning must head")
+    parser.add_argument("--most", type=int, help="most names a beginning may head (for a disjoint band)")
     parser.add_argument("--write-plan", metavar="PATH", help="write the lists and a confirm_plan plan")
     options = parser.parse_args(argv)
+    if options.most is not None and options.most < options.least:
+        parser.error("--most must be at least --least")
 
     carried = carried_beginnings()
     print("beginnings the list carries: %s" % format(len(carried), ","), file=sys.stderr)
@@ -115,7 +127,11 @@ def main(argv):
     print("published names measured: %s" % format(len(names), ","), file=sys.stderr)
 
     counted = uncarried(names, carried)
-    wanted = [head for head, count in counted.most_common() if count >= options.least]
+    wanted = [
+        head
+        for head, count in counted.most_common()
+        if count >= options.least and (options.most is None or count <= options.most)
+    ]
     covered = sum(counted[head] for head in wanted)
 
     print(
