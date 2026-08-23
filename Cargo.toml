@@ -94,6 +94,13 @@ name = "verify_against_loader"
 path = "src/bin/verify_against_loader.rs"
 required-features = ["cordycep"]
 
+# Captures a title's asset names in plain text, for a game that does not hash them (MODWAR19).
+# The sibling of `snapshot`, which captures ids because Black Ops 4 and Cold War hash theirs.
+[[bin]]
+name = "snapshot_names"
+path = "src/bin/snapshot_names.rs"
+required-features = ["cordycep"]
+
 # Reads the loader's entry.id and the asset header's own first field side by side, to settle
 # whether a captured id is the name's hash or a pointer that was dereferenced wrongly.
 [[bin]]
