@@ -611,6 +611,12 @@ fn suggest(game: &str) {
     println!("  python scripts/methods_report.py --efficiency");
     println!("      what is spent. Use a ranking to rule methods OUT -- that is what it is good for.
 ");
+    println!("  python scripts/unnamed_profile.py");
+    println!("      what the UNNAMED names look like, read off the ones already recovered. Every");
+    println!("      list here is measured on what is known, and the two are not the same shape:");
+    println!("      `vox_` is 42.72% of everything this project has ever found and 0.02% of the");
+    println!("      published tables. `--grid` ranks the families that are grids rather than text.
+");
     println!("  python scripts/coverage.py --five");
     println!("  python scripts/seams.py");
     println!("  python scripts/reach.py --missing");
