@@ -1,0 +1,8 @@
+fd6e4bb250cdc6,vox_plr_8_outro_igc_1_1
+73980e24fd373ad,vox_plr_5_outro_igc_0_0
+35105f543de4dade,vox_plr_4_outro_igc_7_7
+3712c354878dbfca,vox_plr_4_outro_igc_8_8
+3c5ef75441a5ec26,vox_plr_4_outro_igc_6_6
+4d894b544b538422,vox_plr_4_outro_igc_4_4
+606697545672a306,vox_plr_4_outro_igc_2_2
+760f94e246268c69,vox_plr_5_outro_igc_2_2
