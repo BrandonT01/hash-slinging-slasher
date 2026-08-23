@@ -49,12 +49,12 @@ the rest stay in `submissions/`, which is the record.
 | `xanim` | 3,502 |
 | `sound_asset` | 178 |
 
-### `blkopscw/` -- 50,623 names in 6 file(s)
+### `blkopscw/` -- 50,627 names in 6 file(s)
 
 | asset type | names |
 |---|---:|
 | `sound_alias` | 25,660 |
-| `material` | 13,946 |
+| `material` | 13,950 |
 | `image` | 5,622 |
 | `xanim` | 2,624 |
 | `xmodel` | 2,596 |
