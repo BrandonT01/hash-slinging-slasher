@@ -1533,20 +1533,34 @@ not this one.
 
 Two things were learned the hard way on 2026-08-23 and are cheap for everybody after.
 
-### A ceiling under about 2% has never returned anything
+### What a ceiling does and does not predict
 
 `--reach` measures what fraction of *known* target-game names a method could express at all. It
-costs a minute. Measured against what each method then returned:
+costs a minute and it is worth taking, but it was first written up here as a simple threshold and
+that was wrong twice over. The corrected form:
 
-    MW19 all-boundary cores x uncarried endings     1.00%   ->   0 names
-    MW19 material bodies x Cold War directories     1.28%   ->   0 names
-    MW19 middles x Cold War affixes                 7.96%   -> 256 names
+**1. Measure it held out, or it is circular.** A ceiling built by cutting up the same corpus you
+then measure against is asking whether a method can reproduce its own input. Cold War item bodies
+crossed with Cold War variant tokens measured **61.96%** that way; split the corpus in half and
+build the vocabulary from one half only, and the honest figure is **22.62%**.
 
-The two that could express one name in a hundred returned nothing at all, over 184 and 19.7
-billion candidates. **Measure the ceiling before spending the machine, and treat anything under
-about 2% as a negative already.** A ceiling is not a yield -- most expressible names are already
-published, which is why 7.96% buys hundreds rather than thousands -- but it separates a method
-that can reach the ground from one that cannot, and it does it in a minute rather than an hour.
+**2. Even an honest ceiling predicts nothing on its own**, because it measures reach over *named*
+names. That 22.62% method returned **0**. The reason is the thing that actually matters:
+
+> **Recombining a corpus with itself is bounded by that corpus.** Every name Cold War's own
+> bodies and Cold War's own variants can compose lies inside the region Cold War's vocabulary
+> already covers -- and that region is, by definition, the named one. The unnamed assets are
+> unnamed *because* they are outside it.
+
+That is why the Modern Warfare 2019 methods pay and this one does not. MW19 is **outside**: it
+supplies morphemes Cold War's corpus cannot compose, which is what §8 means by different ground
+and §7 by new material. A ceiling is useful for ruling a cross-source method out -- MW19 cores at
+1.00% and MW19 material bodies at 1.28% both returned 0, against middles at 7.96% returning 256 --
+and useless for ranking a same-source one, which is bounded whatever it measures.
+
+**So the question to ask of a method is not "how high is its ceiling" but "where is its vocabulary
+from".** If both halves come from the corpus you are searching, expect nothing, whatever the
+measurement says.
 
 ### If a filter is discarding a tenth of the data, look at what it is discarding
 
@@ -1605,6 +1619,7 @@ Do not spend a night rediscovering these. Each cost real time.
 | The animation transition grid, composed rather than observed | `xanim` is the least-named type in both games and has a real grammar: 6,149 published names match `<core>_<from>_to_<to>` over 1,446 cores, 101 from-states and 129 to-states. That grid is 18.8 M combinations and the tables hold 0.03% of it, so composing the two state vocabularies looked like free ground. 50k cores x 13,029 composed transitions: **1 name a game**. The unobserved pairings are unobserved because they do not exist -- a weapon has the transitions its state machine allows and no others. |
 | Materials from image cores through the thirteenth directory | `mcdp/` swept against every published material core returned 2,846, so asking the same directory from the image side looked like the other half of the seam. **0 both games.** The material-core sweep had already taken it; image cores add nothing `mcdp/` did not already reach. |
 | Modern Warfare 2019 material bodies under Cold War's directories | The exact analogue of the channel swap, and it looked as good: MW19 material names are paths under its own directories (`twc4/` 134,344, `m2o/`, `mo/`, `tm/`), Cold War uses its own thirteen, and the directory names the title while the body names the asset. 243,206 bodies x 13 directories x 5,791 endings, 19.7 billion candidates: **0**. The ceiling explains it -- see *what a ceiling predicts* below. |
+| Cold War item bodies crossed with Cold War variant tokens | The shape is real -- a character's materials share a skin token (`mtl_c_t9_usa_canteen_02_woods`, `mtl_c_t9_rus_chopper_pilot_vest_woods`) while the item varies, so swapping the token looked obvious. 4,650 bodies x 67 variants, 311,550 candidates: **0**. Its measured ceiling was 61.96%, which is the highest recorded here and entirely circular -- both lists were cut from the corpus being measured. Held out it is 22.62%, still high, and it still returns nothing: **a corpus recombined with itself cannot leave the region it already covers**, and that region is the named one. |
 | Modern Warfare 2019 names used verbatim | The corpus was taken into cod-name-db verbatim about three years ago, so every name the titles share identically is already published. Measured 2026-08-23: **0 in the five wanted types** against both games -- 2,107 Cold War ids of which 2,027 are `localizeentry`, and 1,106 Black Ops 4 ids of which 1,049 are `localize_entry`. 66,842 of the names are already in the tables. There is nothing left in a verbatim pass and there never will be. Use the middles -- method 26. |
 | Modern Warfare 2019 names recombined as all-boundary cores | 1.84 M cores from the corpus against the 100,000 uncarried endings, **0 in 184 billion candidates**. A core is only ever a *prefix*, so this can only decorate the front, and the endings that followed an MW19 core in real Cold War names were 3,886 near-unique tails -- commonest appearing three times, including `otgun_leveraction`, a cut through the middle of "shotgun". Coincidental character boundaries, not vocabulary. Cutting at segment boundaries on **both** ends is what makes a middle a morpheme, and that shape returns 256. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
