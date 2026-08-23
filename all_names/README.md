@@ -5,15 +5,15 @@
 
 <table>
 <tr><th align="left"><code>blkops04/</code></th>
-<th align="right" colspan="1">67,049 names in 6 file(s)</th>
+<th align="right" colspan="1">67,662 names in 6 file(s)</th>
 </tr>
 <tr><th align="left">asset type</th><th align="right">names</th>
 </tr>
-<tr><td><code>material</code></td><td align="right">26,671</td></tr>
-<tr><td><code>image</code></td><td align="right">18,797</td></tr>
+<tr><td><code>material</code></td><td align="right">26,988</td></tr>
+<tr><td><code>image</code></td><td align="right">19,023</td></tr>
 <tr><td><code>sound_alias</code></td><td align="right">9,522</td></tr>
-<tr><td><code>xmodel</code></td><td align="right">8,379</td></tr>
-<tr><td><code>xanim</code></td><td align="right">3,502</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">8,423</td></tr>
+<tr><td><code>xanim</code></td><td align="right">3,528</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">178</td></tr>
 </table>
 
