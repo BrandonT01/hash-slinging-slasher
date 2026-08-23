@@ -1,11 +1,17 @@
 103a3b782cf289b9,amb/cp_rus_amerika/control_room/emt_soviet_comp_hum_click_lp.rr75.pc.all.snd
+2c41026701063c70,amb/domestic/payphone/payphone_ring.rn75.pc.all.snd
 4ad547d398de6cee,amb/electronics/computer/loops/reel/reel.rr75.pc.all.snd
 dcb65ad80fa5b76,amb/environment/water/sprinkler/small/sprinkler_sml_00.rr75.pc.all.snd
 1b046c9a0aec0207,amb/industrial/cement_mixer/cement_mixer_lp.rr75.pc.all.snd
+51744f8a77fd9128,chr/health/2k20/critical_health_enter.ln75.pc.all.snd
 4397133371b70e94,evt/cp_rus_amerika/elevator/evt_tower_elevator_lp_lfe.rl75.pc.all.snd
+5d5266424d43fafb,evt/cp_rus_kgb/obj_frame/evt_use_computer_power_off.ln75.pc.all.snd
+4f31339c9d6ac5bd,evt/cp_rus_kgb/obj_frame/evt_use_computer_power_on.ln75.pc.all.snd
 ddfa4b388a668e5,mc/mlt_p8_1forest5_0.sn55.pc_inspect.ln75.pc.all.snd
 ec0151ea605d6b6,mpl/executions/exec_136/exec_136_prone.ln75.pc.all.snd
 64f0592507621850,mpl/executions/exec_136/exec_136_stand.ln75.pc.all.snd
+2948df5d8da9d310,mpl/intros/mp_moscow/mp_moscow_van_door_v5.ln75.pc.all.snd
+72c0915480ac1b91,mpl/intros/mp_moscow/mp_moscow_van_foley_v12.ln75.pc.all.snd
 3cb4818d15ce1ea2,mus/cp/rus_amerika/3.0_caught/mus_amerika_caught_v1.1_live_edit.sn75.pc.all.snd
 47370e49aa78862a,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_00.rn75.pc.en.snd
 192ed62bd28eb707,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_01.rn75.pc.en.snd
@@ -17,6 +23,8 @@ ec0151ea605d6b6,mpl/executions/exec_136/exec_136_prone.ln75.pc.all.snd
 77f346b70a34b007,vox/scripted/mpl/abnd/vox_abnd_prop_hunt_mission_order_attack_01.rn75.pc.en.snd
 244b58a2a709ef0a,vox/scripted/mpl/abnd/vox_abnd_prop_hunt_mission_order_defend_00.rn75.pc.en.snd
 3681bffacafc4c67,vox/scripted/mpl/abnd/vox_abnd_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+487d176d8c82996b,vox/scripted/mpl/abnd/vox_abnd_stk_hub_move_mult_00.rn75.pc.en.snd
+47690c3ca5091f8e,vox/scripted/mpl/abnd/vox_abnd_stk_hub_move_mult_01.rn75.pc.en.snd
 310644fa180d784,vox/scripted/mpl/abnd/vox_abnd_stk_hub_moved_00.rn75.pc.en.snd
 3e25ee5831b7e949,vox/scripted/mpl/abnd/vox_abnd_stk_hub_moved_01.rn75.pc.en.snd
 d1c747baede27bc,vox/scripted/mpl/abnd/vox_abnd_stk_hub_offline_00.rn75.pc.en.snd
@@ -37,6 +45,8 @@ d1c747baede27bc,vox/scripted/mpl/abnd/vox_abnd_stk_hub_offline_00.rn75.pc.en.snd
 655328b3fc0fba07,vox/scripted/mpl/adgi/vox_adgi_prop_hunt_mission_order_attack_01.rn75.pc.en.snd
 11ab3a9f98e4f90a,vox/scripted/mpl/adgi/vox_adgi_prop_hunt_mission_order_defend_00.rn75.pc.en.snd
 23e1a1f7bcd75667,vox/scripted/mpl/adgi/vox_adgi_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+2702fd2c7162c76b,vox/scripted/mpl/adgi/vox_adgi_stk_hub_move_mult_00.rn75.pc.en.snd
+25eef1fb89e94d8e,vox/scripted/mpl/adgi/vox_adgi_stk_hub_move_mult_01.rn75.pc.en.snd
 2ed77aec362d2584,vox/scripted/mpl/adgi/vox_adgi_stk_hub_moved_00.rn75.pc.en.snd
 69ed04f4c6643749,vox/scripted/mpl/adgi/vox_adgi_stk_hub_moved_01.rn75.pc.en.snd
 575914bce3a0a5bc,vox/scripted/mpl/adgi/vox_adgi_stk_hub_offline_00.rn75.pc.en.snd
@@ -57,6 +67,8 @@ e933c787a3c9332,vox/scripted/mpl/adgi/vox_adgi_stk_hub_offline_mult_01.rn75.pc.e
 5800ff9a56f8e52d,vox/scripted/mpl/ahva/vox_ahva_prop_hunt_mission_order_attack_01.rn75.pc.en.snd
 1695d03538d23170,vox/scripted/mpl/ahva/vox_ahva_prop_hunt_mission_order_defend_00.rn75.pc.en.snd
 6221485027dadd95,vox/scripted/mpl/ahva/vox_ahva_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+4c30eb07fa96d6c5,vox/scripted/mpl/ahva/vox_ahva_stk_hub_move_mult_00.rn75.pc.en.snd
+63e261f796642c60,vox/scripted/mpl/ahva/vox_ahva_stk_hub_move_mult_01.rn75.pc.en.snd
 3665b7a8c7357a7a,vox/scripted/mpl/ahva/vox_ahva_stk_hub_moved_00.rn75.pc.en.snd
 2bf57d4a3b6d7617,vox/scripted/mpl/ahva/vox_ahva_stk_hub_moved_01.rn75.pc.en.snd
 77163e2d81078212,vox/scripted/mpl/ahva/vox_ahva_stk_hub_offline_00.rn75.pc.en.snd
@@ -77,6 +89,8 @@ d63aebf45b7a7e4,vox/scripted/mpl/ahva/vox_ahva_stk_hub_online_00.rn75.pc.en.snd
 44a449ac0fcaf3c7,vox/scripted/mpl/ami6/vox_ami6_prop_hunt_mission_order_attack_01.rn75.pc.en.snd
 52df9a04925f02ca,vox/scripted/mpl/ami6/vox_ami6_prop_hunt_mission_order_defend_00.rn75.pc.en.snd
 bf02748cebfa827,vox/scripted/mpl/ami6/vox_ami6_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+d6beaa56beec62b,vox/scripted/mpl/ami6/vox_ami6_stk_hub_move_mult_00.rn75.pc.en.snd
+272e59c5d6ca6d4e,vox/scripted/mpl/ami6/vox_ami6_stk_hub_move_mult_01.rn75.pc.en.snd
 1dfbcf08eb30cd44,vox/scripted/mpl/ami6/vox_ami6_stk_hub_moved_00.rn75.pc.en.snd
 6d9863519fd5c509,vox/scripted/mpl/ami6/vox_ami6_stk_hub_moved_01.rn75.pc.en.snd
 6810f0413841617c,vox/scripted/mpl/ami6/vox_ami6_stk_hub_offline_00.rn75.pc.en.snd
@@ -97,6 +111,8 @@ bf02748cebfa827,vox/scripted/mpl/ami6/vox_ami6_prop_hunt_mission_order_defend_01
 4862c1ff6cd8eced,vox/scripted/mpl/anbo/vox_anbo_prop_hunt_mission_order_attack_01.rn75.pc.en.snd
 12f87731f6786830,vox/scripted/mpl/anbo/vox_anbo_prop_hunt_mission_order_defend_00.rn75.pc.en.snd
 cd4e120ae370555,vox/scripted/mpl/anbo/vox_anbo_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+3cfc9aeced161f85,vox/scripted/mpl/anbo/vox_anbo_stk_hub_move_mult_00.rn75.pc.en.snd
+a5413087aaf9020,vox/scripted/mpl/anbo/vox_anbo_stk_hub_move_mult_01.rn75.pc.en.snd
 2e7e956faa7a5d3a,vox/scripted/mpl/anbo/vox_anbo_stk_hub_moved_00.rn75.pc.en.snd
 20a85b111bcf2fd7,vox/scripted/mpl/anbo/vox_anbo_stk_hub_moved_01.rn75.pc.en.snd
 625a9a493d89e4d2,vox/scripted/mpl/anbo/vox_anbo_stk_hub_offline_00.rn75.pc.en.snd
@@ -117,6 +133,8 @@ cd4e120ae370555,vox/scripted/mpl/anbo/vox_anbo_prop_hunt_mission_order_defend_01
 18637fbb706b7f7f,vox/scripted/mpl/anme/vox_anme_prop_hunt_mission_order_attack_01.rn75.pc.en.snd
 6b8ebb28db6f1782,vox/scripted/mpl/anme/vox_anme_prop_hunt_mission_order_defend_00.rn75.pc.en.snd
 6b0bf012bbeebe3f,vox/scripted/mpl/anme/vox_anme_prop_hunt_mission_order_defend_01.rn75.pc.en.snd
+431474d6a6428283,vox/scripted/mpl/anme/vox_anme_stk_hub_move_mult_00.rn75.pc.en.snd
+1a9f9f73420a4266,vox/scripted/mpl/anme/vox_anme_stk_hub_move_mult_01.rn75.pc.en.snd
 d3b85c0de92da4c,vox/scripted/mpl/anme/vox_anme_stk_hub_moved_00.rn75.pc.en.snd
 38d6221bd7d418f1,vox/scripted/mpl/anme/vox_anme_stk_hub_moved_01.rn75.pc.en.snd
 3e589ef8a40fe744,vox/scripted/mpl/anme/vox_anme_stk_hub_offline_00.rn75.pc.en.snd
@@ -137,11 +155,14 @@ df5334158b4df09,vox/scripted/mpl/anme/vox_anme_stk_hub_offline_01.rn75.pc.en.snd
 4918d34a8b07fd4c,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_04.rn75.pc.en.snd
 74b36fa584493bf1,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_05.rn75.pc.en.snd
 6b58b9f6bf22c7cf,wc/t8_aut_zt8_exd_05_window_frame_wood_m_success
+4633f58ec7952668,wpn/assault/british/dist/wpn_ar_british_loop_dist.ll75.pc.all.snd
+5a472864f28f81fd,wpn/assault/slowfire_t9/lfe/wpn_ar_slowfire_lfe_empty.ln75.pc.all.snd
 75601e975adaf926,wpn/melee/battleaxe/battleaxe_first_raise.ln75.pc.all.snd
 68a898d583122f52,wpn/zmb/mega_barrel/reload/fly_mega_barrel_blazer_first_start.ln75.pc.all.snd
 43cb225f4a89c9fd,wpn/zmb/mega_barrel/reload/fly_mega_barrel_copycat_first_start.ln75.pc.all.snd
 3b1ba9dec21b5059,wpn/zmb/mega_barrel/reload/fly_mega_barrel_diffusion_first_start.ln75.pc.all.snd
 64d258d7f1f5777a,wpn/zmb/mega_barrel/reload/fly_mega_barrel_missile_first_start.ln75.pc.all.snd
+37ceb3c7702b289d,zmb/ai/avogadro_t9/loops/avo_tr_aware_21.rn75.pc.all.snd
 3355869560dc6ffc,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_00.rn75.pc.all.snd
 395ccd1f74390fc7,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_01.rn75.pc.all.snd
 4e15c90e65ad35d6,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_02.rn75.pc.all.snd
@@ -150,3 +171,5 @@ df5334158b4df09,vox/scripted/mpl/anme/vox_anme_stk_hub_offline_01.rn75.pc.en.snd
 54da0544ed4ac5b3,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_05.rn75.pc.all.snd
 31e8326c3fbb7892,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_06.rn75.pc.all.snd
 8c3009c954a64dd,zmb/ai/hellhounds/movement/game_assets/zmb_hellhound_vocals_movement_07.rn75.pc.all.snd
+fcd135253ece34,zmb/armor/armor_break_swt.ln75.pc.all.snd
+539580b1b81ed5e6,zmb/machines/ammochest/ammo_close.rn75.pc.all.snd
