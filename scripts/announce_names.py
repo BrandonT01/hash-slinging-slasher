@@ -38,7 +38,12 @@ SUMMARY = ROOT / "all_names" / "summary.json"
 REPO = "https://github.com/KingslayerKyle/hash-slinging-slasher"
 
 # The folder names are how the files are filed; these are what people call them.
-NICE = {"blkops04": "Black Ops 4", "blkopscw": "Black Ops Cold War"}
+#
+# Kept short on purpose. These become the heading of an inline embed field, which is about half
+# the card's width, and a heading that wraps to a second line pushes that column's rows down --
+# so the two games stop lining up with each other. "Black Ops Cold War" wrapped; "Cold War" does
+# not. Check the card after changing one.
+NICE = {"blkops04": "Black Ops 4", "blkopscw": "Cold War"}
 
 # GitHub green, so the card reads as a repository update rather than an alert.
 COLOUR = 0x2EA043
