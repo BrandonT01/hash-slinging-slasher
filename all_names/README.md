@@ -9,12 +9,12 @@
 </tr>
 <tr><th align="left">asset type</th><th align="right">names</th><th align="right">% found</th>
 </tr>
+<tr><td><code>xmodel</code></td><td align="right">8,423</td><td align="right">79.4%</td></tr>
 <tr><td><code>material</code></td><td align="right">26,988</td><td align="right">80.7%</td></tr>
 <tr><td><code>image</code></td><td align="right">19,023</td><td align="right">75.3%</td></tr>
-<tr><td><code>sound_alias</code></td><td align="right">9,522</td><td align="right">71.9%</td></tr>
-<tr><td><code>xmodel</code></td><td align="right">8,423</td><td align="right">79.4%</td></tr>
 <tr><td><code>xanim</code></td><td align="right">3,528</td><td align="right">70.5%</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">178</td><td align="right">10.8%</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">9,522</td><td align="right">71.9%</td></tr>
 </table>
 
 </td>
@@ -26,12 +26,12 @@
 </tr>
 <tr><th align="left">asset type</th><th align="right">names</th><th align="right">% found</th>
 </tr>
-<tr><td><code>sound_alias</code></td><td align="right">25,661</td><td align="right">67.0%</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">2,604</td><td align="right">78.3%</td></tr>
 <tr><td><code>material</code></td><td align="right">13,971</td><td align="right">84.9%</td></tr>
 <tr><td><code>image</code></td><td align="right">5,806</td><td align="right">83.5%</td></tr>
 <tr><td><code>xanim</code></td><td align="right">2,666</td><td align="right">66.7%</td></tr>
-<tr><td><code>xmodel</code></td><td align="right">2,604</td><td align="right">78.3%</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">175</td><td align="right">80.3%</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">25,661</td><td align="right">67.0%</td></tr>
 </table>
 
 </td>

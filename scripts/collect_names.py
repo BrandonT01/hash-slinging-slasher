@@ -65,6 +65,21 @@ import snapshot
 ROOT = snapshot.ROOT
 FOLDER = "all_names"
 
+# The order asset types are listed in, everywhere they are listed: the README and the Discord
+# announcement both take it from here, so the two cannot drift apart. Sorting by count instead
+# reorders the rows whenever a pass lands, which makes two readings of the same page hard to
+# compare -- and puts the same type in a different place for each game.
+#
+# Model, material, image, anim, then the two sound pools: roughly the order an asset is built in,
+# and the order `AGENTS.md` §5 lists them. Anything not named here sorts after, alphabetically.
+DISPLAY_ORDER = ["xmodel", "material", "image", "xanim", "sound_asset", "sound_alias"]
+
+
+def in_display_order(pairs):
+    """`[(kind, count)]` in DISPLAY_ORDER, with anything unrecognised after it."""
+    rank = {kind: index for index, kind in enumerate(DISPLAY_ORDER)}
+    return sorted(pairs, key=lambda pair: (rank.get(pair[0], len(rank)), pair[0]))
+
 # `Who_GAME_20260822-020208`, and the older `Who_20260819-022655` which predates the game going
 # into the name.
 STAMPED = re.compile(r"^(?P<who>.+?)_(?:(?P<game>[A-Z0-9]+)_)?(?P<when>\d{8}-\d{6})$")
@@ -350,7 +365,7 @@ def write_index(written, check):
     # they pushed every word of explanation below two screens of whitespace.
     lines += ["<table><tr>"]
     for game in games:
-        rows = sorted(by_game[game], key=lambda pair: -pair[1])
+        rows = in_display_order(by_game[game])
         lines.append('<td valign="top">')
         lines.append("")
         lines += game_table(game, rows, coverage)
@@ -461,7 +476,7 @@ def write_summary(written, check):
     for game in sorted(by_game):
         counts = coverage.get(game, {})
         types = {}
-        for kind, count in sorted(by_game[game], key=lambda pair: -pair[1]):
+        for kind, count in in_display_order(by_game[game]):
             named, total = counts.get(kind, (0, 0))
             types[kind] = {
                 "names": count,
@@ -474,6 +489,8 @@ def write_summary(written, check):
         out["games"][game] = {"names": game_total, "files": len(by_game[game]), "types": types}
 
     out["totals"] = {"names": grand, "games": len(by_game)}
+    # So anything reading this file lists the types the same way the README does.
+    out["order"] = list(DISPLAY_ORDER)
 
     body = json.dumps(out, indent=2, sort_keys=True) + chr(10)
     path = os.path.join(ROOT, FOLDER, "summary.json")

@@ -85,6 +85,14 @@
       }
     }
   },
+  "order": [
+    "xmodel",
+    "material",
+    "image",
+    "xanim",
+    "sound_asset",
+    "sound_alias"
+  ],
   "totals": {
     "games": 2,
     "names": 118545

@@ -46,9 +46,17 @@ COLOUR = 0x2EA043
 
 def embed(summary):
     """One card: a column per game, a row per asset type, the total in the footer."""
+    # The order comes from the file rather than from here, so the card and the README always
+    # list the types the same way. `collect_names.py` writes it; anything missing sorts after.
+    order = summary.get("order") or []
+    rank = {kind: index for index, kind in enumerate(order)}
+
     fields = []
     for game, data in sorted(summary["games"].items()):
-        rows = sorted(data["types"].items(), key=lambda pair: -pair[1]["names"])
+        rows = sorted(
+            data["types"].items(),
+            key=lambda pair: (rank.get(pair[0], len(rank)), pair[0]),
+        )
         lines = []
         for kind, counts in rows:
             found = counts.get("found_pct")
