@@ -1,0 +1,6 @@
+fcd135253ece34,zmb/armor/armor_break_swt.ln75.pc.all.snd
+2c41026701063c70,amb/domestic/payphone/payphone_ring.rn75.pc.all.snd
+37ceb3c7702b289d,zmb/ai/avogadro_t9/loops/avo_tr_aware_21.rn75.pc.all.snd
+51744f8a77fd9128,chr/health/2k20/critical_health_enter.ln75.pc.all.snd
+539580b1b81ed5e6,zmb/machines/ammochest/ammo_close.rn75.pc.all.snd
+5a472864f28f81fd,wpn/assault/slowfire_t9/lfe/wpn_ar_slowfire_lfe_empty.ln75.pc.all.snd
