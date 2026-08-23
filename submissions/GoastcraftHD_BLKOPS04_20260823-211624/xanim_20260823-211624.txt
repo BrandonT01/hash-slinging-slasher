@@ -1,0 +1,2 @@
+6dab78d2048d0cff,bo3_pb_death_headshot_r
+79817b534ec3558f,bo3_pb_death_crouch_clutchchest
