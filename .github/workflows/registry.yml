@@ -62,6 +62,19 @@ jobs:
       - name: rebuild the combined name lists
         run: python scripts/collect_names.py
 
+      # Whether the headline figures actually moved. Checked before the commit stages anything,
+      # because afterwards there is nothing left to compare against. `registry.yml` fires on every
+      # push touching `submissions/` -- forty-odd on a busy night -- and almost all of those change
+      # nothing a reader would notice. Announcing each one would train people to ignore it.
+      - name: did the recovered-name figures change?
+        id: figures
+        run: |
+          if git diff --quiet HEAD -- all_names/summary.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # `submit` stops a client re-sending an unchanged generator, but only a client that has the
       # fix -- and clients update when their owner runs `start`. Until then the library keeps
       # gaining copies: one contributor's evening added 40 redundant files across eight groups
@@ -94,3 +107,15 @@ jobs:
           done
           echo "could not push after five attempts"
           exit 1
+
+      # Said last, and only if the numbers moved: the announcement points at `all_names/`, so the
+      # commit has to be pushed before anybody follows the link. It reads `summary.json` rather
+      # than the README, which is HTML and would break the moment the layout changed.
+      #
+      # No secret and it exits quietly -- a fork runs these workflows too and must not fail on a
+      # secret it was never meant to have.
+      - name: announce the new figures
+        if: steps.figures.outputs.changed == 'true'
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+        run: python scripts/announce_names.py

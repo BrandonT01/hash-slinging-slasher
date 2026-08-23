@@ -54,6 +54,7 @@ and it makes a name findable by eye.
 import argparse
 import collections
 import glob
+import json
 import os
 import re
 import sys
@@ -242,15 +243,119 @@ def write(gathered, check):
     return changed, written
 
 
+def pool_coverage():
+    """{game: {asset type: (named, total)}} -- how much of each pool the tables can name.
+
+    Read off the `.ids` snapshots and whatever `cod-name-db` tables this clone currently holds,
+    so the percentages are about the *game*, not about this folder: `image` at 82% means four
+    image names in five are known to somebody, not that this project found them. That is the
+    figure worth showing next to a count, because a count alone says nothing about how much is
+    left.
+
+    Returns an empty mapping when the tables are missing, and the README then omits the column
+    rather than printing a percentage of nothing.
+    """
+    try:
+        known = snapshot.known_hashes()
+    except Exception:
+        return {}
+
+    if not known:
+        return {}
+
+    out = {}
+    for path in snapshot.snapshots():
+        game = os.path.basename(path).replace(".ids", "").lower()
+        try:
+            snap = snapshot.read(path)
+        except SystemExit:
+            continue
+        by_pool = snap.by_pool()
+        counts = {}
+        for kind, ids in by_pool.items():
+            named = sum(1 for i in ids if i in known or (i & snapshot.ID_MASK) in known)
+            counts[kind] = (named, len(ids))
+        out[game] = counts
+    return out
+
+
+def game_table(game, rows, coverage):
+    """One game's table as HTML, so two of them can sit side by side.
+
+    Markdown cannot span a header across columns or place two tables next to each other, and
+    stacked tables made this page mostly whitespace. GitHub renders HTML in markdown, so the
+    tables are HTML and everything else on the page stays markdown.
+    """
+    total = sum(count for _, count in rows)
+    counts = coverage.get(game, {})
+    show_percent = any(kind in counts for kind, _ in rows)
+
+    span = 3 if show_percent else 2
+    out = [
+        "<table>",
+        "<tr>"
+        '<th align="left"><code>%s/</code></th>' % game,
+        '<th align="right" colspan="%d">%s names in %d file(s)</th>' % (span - 1, format(total, ","), len(rows)),
+        "</tr>",
+        "<tr>"
+        '<th align="left">asset type</th>'
+        '<th align="right">names</th>'
+        + ('<th align="right">% found</th>' if show_percent else ""),
+        "</tr>",
+    ]
+
+    for kind, count in rows:
+        cells = [
+            "<td><code>%s</code></td>" % kind,
+            '<td align="right">%s</td>' % format(count, ","),
+        ]
+        if show_percent:
+            named, pool_total = counts.get(kind, (0, 0))
+            cells.append(
+                '<td align="right">%s</td>' % ("%.1f%%" % (100.0 * named / pool_total) if pool_total else "--")
+            )
+        out.append("<tr>" + "".join(cells) + "</tr>")
+
+    out.append("</table>")
+    return out
+
+
 def write_index(written, check):
     """A README in the folder, so somebody who lands in it knows what they are looking at."""
     by_game = collections.defaultdict(list)
     for game, kind, count in written:
         by_game[game].append((kind, count))
 
+    coverage = pool_coverage()
+    games = sorted(by_game)
+
     lines = [
         "# Every name this project has recovered",
         "",
+    ]
+
+    # The tables first and side by side. They are the reason anybody opens this file, and stacked
+    # they pushed every word of explanation below two screens of whitespace.
+    lines += ["<table><tr>"]
+    for game in games:
+        rows = sorted(by_game[game], key=lambda pair: -pair[1])
+        lines.append('<td valign="top">')
+        lines.append("")
+        lines += game_table(game, rows, coverage)
+        lines.append("")
+        lines.append("</td>")
+    lines += ["</tr></table>", ""]
+
+    if coverage:
+        lines += [
+            "**names** is what this project has recovered and published here. **% found** is how much",
+            "of that pool *anybody* can name -- this project's names plus every one already in the",
+            "community tables, over every id the game holds. A type at 80% has one id in five still",
+            "unnamed; `sound_asset` on Black Ops 4 at 11% is the largest unworked ground in either game.",
+            "",
+        ]
+
+    lines += [
         "**Generated. Do not edit anything here by hand** -- `scripts/collect_names.py` rewrites it",
         "whenever a submission lands, and an edit would be overwritten without warning. Corrections",
         "belong in a submission, which is the record these are built from.",
@@ -287,21 +392,7 @@ def write_index(written, check):
         "Only the five asset types worth searching are here. Submissions carry names for 105 types;",
         "the rest stay in `submissions/`, which is the record.",
         "",
-        "## Contents",
-        "",
     ]
-
-    for game in sorted(by_game):
-        rows = sorted(by_game[game], key=lambda pair: -pair[1])
-        total = sum(count for _, count in rows)
-        lines += [
-            "### `%s/` -- %s names in %d file(s)" % (game, format(total, ","), len(rows)),
-            "",
-            "| asset type | names |",
-            "|---|---:|",
-        ]
-        lines += ["| `%s` | %s |" % (kind, format(count, ",")) for kind, count in rows]
-        lines.append("")
 
     body = "\n".join(lines)
     path = os.path.join(ROOT, FOLDER, "README.md")
@@ -322,6 +413,60 @@ def write_index(written, check):
     return 1
 
 
+def write_summary(written, check):
+    """The same figures as the README, as JSON, for anything that is not a person.
+
+    The README is HTML so it can put two tables side by side, which is right for a reader and
+    wrong for a program: scraping it would break the next time anybody touches the layout. So the
+    numbers are written once more in a shape a bot can read, and the two never have to agree by
+    hand because both come from this function's caller.
+
+    `names` is what this project has published here. `named`/`total`/`found_pct` are about the
+    game: every id in that pool, and how many of them *anybody* can name.
+    """
+    coverage = pool_coverage()
+    by_game = collections.defaultdict(list)
+    for game, kind, count in written:
+        by_game[game].append((kind, count))
+
+    out = {"games": {}, "totals": {}}
+    grand = 0
+    for game in sorted(by_game):
+        counts = coverage.get(game, {})
+        types = {}
+        for kind, count in sorted(by_game[game], key=lambda pair: -pair[1]):
+            named, total = counts.get(kind, (0, 0))
+            types[kind] = {
+                "names": count,
+                "named": named,
+                "total": total,
+                "found_pct": round(100.0 * named / total, 1) if total else None,
+            }
+        game_total = sum(count for _, count in by_game[game])
+        grand += game_total
+        out["games"][game] = {"names": game_total, "files": len(by_game[game]), "types": types}
+
+    out["totals"] = {"names": grand, "games": len(by_game)}
+
+    body = json.dumps(out, indent=2, sort_keys=True) + chr(10)
+    path = os.path.join(ROOT, FOLDER, "summary.json")
+
+    existing = ""
+    if os.path.exists(path):
+        with open(path, encoding="utf-8", errors="replace") as handle:
+            existing = handle.read()
+
+    if existing == body:
+        return 0
+
+    if not check:
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, "w", encoding="utf-8", newline=chr(10)) as handle:
+            handle.write(body)
+
+    return 1
+
+
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--check", action="store_true", help="report what would change, write nothing")
@@ -336,6 +481,7 @@ def main(argv):
 
     changed, written = write(gathered, options.check)
     changed += write_index(written, options.check)
+    changed += write_summary(written, options.check)
 
     names = sum(count for _, _, count in written)
     games = len({game for game, _, _ in written})
