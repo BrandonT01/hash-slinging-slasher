@@ -38,7 +38,12 @@ import pathlib
 import re
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Walk up to the repository rather than counting parents: a fixed count is right in
+# contrib/ and wrong once `submit` files this under scripts/contributed/, where it
+# resolves to a scripts/scripts that has never existed. scripts/README.md.
+ROOT = pathlib.Path(__file__).resolve().parent
+while not (ROOT / "scripts" / "snapshot.py").exists() and ROOT != ROOT.parent:
+    ROOT = ROOT.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 PATTERN = re.compile(r"^(.*?)_([a-z0-9]+)_to_([a-z0-9]+)$")

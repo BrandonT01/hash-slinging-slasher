@@ -73,7 +73,14 @@ them; `scripts/borrow_old_titles.py` fills it from these same three tables.
 import os
 import sys
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+# Walk up to the repository rather than trusting our own directory: `snapshot.py` lives in
+# scripts/, not beside a script filed in scripts/contributed/. scripts/README.md.
+_root = os.path.dirname(os.path.abspath(__file__))
+while not os.path.exists(os.path.join(_root, "scripts", "snapshot.py")):
+    if _root == os.path.dirname(_root):
+        break
+    _root = os.path.dirname(_root)
+sys.path.insert(0, os.path.join(_root, "scripts"))
 
 import snapshot
 

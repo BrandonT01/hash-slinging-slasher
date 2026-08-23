@@ -27,7 +27,12 @@ import collections
 import pathlib
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Walk up to the repository rather than counting parents: a fixed count is right in
+# contrib/ and wrong once `submit` files this under scripts/contributed/, where it
+# resolves to a scripts/scripts that has never existed. scripts/README.md.
+ROOT = pathlib.Path(__file__).resolve().parent
+while not (ROOT / "scripts" / "snapshot.py").exists() and ROOT != ROOT.parent:
+    ROOT = ROOT.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 TABLES = ["fnv1a_xmaterials", "fnv1a_xmaterials_v2", "fnv1a_ximages", "fnv1a_ximages_v2",
