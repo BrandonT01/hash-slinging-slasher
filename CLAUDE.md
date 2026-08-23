@@ -267,6 +267,31 @@ Two things follow that you need to know:
 - **`submit` sends one pull request per game**, titled `[BLKOPS04] findings from ...`, so a
   reviewer can tell at a glance which title a batch is for.
 
+## There is a third game in `snapshots/`, and it is a corpus rather than a target
+
+`snapshots/modwar19.names.txt.gz` holds **1,167,131 Modern Warfare 2019 asset names in plain
+text**. Modern Warfare 2019 does not hash its names — the name is a `char*` in the asset header —
+so there is nothing in it to recover and it is **not** a game to solve. It is there because every
+method here builds candidates out of names known to be real (§7), and it shipped Warzone, so it
+carries a great deal of Cold War's content: 174,116 of its names mention `t9`, Treyarch's Cold War
+codename.
+
+Read it with `snapshot.name_corpus()`, never by opening the path — the committed file is gzipped
+and the raw capture is gitignored. `snapshot_names` captures a new one if you have the game open
+in Cordycep.
+
+**Two things about it are already measured, and both cost a night if you rediscover them:**
+
+- **Using the names verbatim returns nothing, against either game.** They were taken into
+  cod-name-db verbatim about three years ago, so every identically-shared name is already
+  published. Measured: 0 in the five wanted types for both titles.
+- **Recombining them as cores returns nothing either** — 0 in 184 billion.
+
+What works is **the middles**: cut at segment boundaries on both ends, re-decorated with the
+target game's own affixes. 256 names on Cold War and 29 on Black Ops 4 in one pass each.
+`METHODS.md` method 26 has the detail, and `mw19_middles.py --reach` measures the ceiling of a
+variant in a minute — do that before spending the machine on one.
+
 ---
 
 # 5. The five asset types, and the pools that waste a night

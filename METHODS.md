@@ -42,6 +42,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 23 | uncarried sound endings | `sound_alias` and `sound_asset`, the two largest pools | `scripts/contributed/uncarried_endings_20260823-040620.py --sound-pass` | **1,385 names.** 79% of published sound names end in something `data/sound.suffixes.txt` cannot express -- proportionally the larger of the two ending gaps |
 | 24 | measured image channels | `image`, through the channels method 13's hand-written list omits | `scripts/contributed/image_channels_wide_20260823-043005.py` | 36 names, but it widens a derivation `derive_closure` re-runs every round: 231 of 250 real channels were uncarried, `_thermalmap` alone heads 16,000 |
 | 25 | all-boundary cores | every method built as core x ending | `scripts/contributed/uncarried_endings_allboundary_20260823-134935.py` -> `confirm_plan` | **the most productive change measured on 2026-08-23.** Not a new method -- a fix to how every ending sweep builds its cores. Turned 2,065 names into 2,553 while using five times fewer endings, and 1,385 sound names into 1,746 in a single pass |
+| 26 | MW19 middles, Cold War decorations | any type, through a **third title's** vocabulary | `scripts/contributed/mw19_middles_20260823-160437.py` -> `confirm_plan` | **256 on Cold War and 29 on Black Ops 4, 2026-08-23.** Modern Warfare 2019 does not hash its names, so all 1,167,131 are captured in plain text. Verbatim they are spent; their **middles**, re-decorated with the target game's own affixes, are not |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -1454,6 +1455,71 @@ to identify anything. This paragraph originally closed by calling the cross unme
 true when it was written and was overtaken within the day; it is kept because the reasoning that
 motivated it is still the right reasoning, and only its conclusion moved.
 
+## A third title as a corpus, and the two ways it does not work
+
+Written 2026-08-23, when Modern Warfare 2019 was captured with `snapshot_names` and turned out
+to be worth exactly one of the three things tried with it.
+
+Modern Warfare 2019 holds its asset names in plain text -- the name is a `char*` in the header,
+not a hash -- so there is nothing to recover from it and it is not a target. What it is, is
+**1,167,131 real Call of Duty asset names**, captured to `snapshots/modwar19.names.txt.gz` and
+read with `snapshot.name_corpus()`. It shipped Warzone, so it carries a great deal of Cold War's
+content: 174,116 of its names mention `t9`, Treyarch's Cold War codename, against 2,632
+mentioning `t8`. That ratio is the whole story of what it is good for.
+
+### Verbatim is spent, and was spent before this project existed
+
+    MW19 names against Cold War       2,107 ids, 2,027 of them localizeentry, ZERO wanted
+    MW19 names against Black Ops 4    1,106 ids, 1,049 of them localize_entry, ZERO wanted
+    already in the published tables   66,842 of the names
+
+The corpus was taken into cod-name-db verbatim about three years ago. Every name the two titles
+share **identically** is therefore already published, which is why a verbatim pass returns
+nothing and always will. Do not run one.
+
+### Recombining it as cores returns nothing either
+
+    MW19 all-boundary cores x uncarried endings    0 in 184 billion candidates
+
+Worth understanding rather than just avoiding, because the reason generalises. A core is a
+*prefix*: it can only put new material on the **front** of a name. Asked what endings actually
+followed an MW19 core inside real Cold War names, the answer was 3,886 near-unique tails whose
+commonest appeared three times, including `otgun_leveraction` -- a cut through the middle of
+"shotgun". Those prefix matches were coincidental character boundaries, not shared vocabulary.
+
+### What works is the middles
+
+The same asset is often in both titles under **the same middle with different decoration** -- a
+prefix or a suffix that one title adds and the other does not. So cut each MW19 name at segment
+boundaries on *both* ends, which makes the result a morpheme rather than a substring, and
+re-decorate with the **target game's own** measured beginnings and endings.
+
+Ceiling measured before spending the machine, as a fraction of known Cold War names the method
+could express at all:
+
+    MW19 all-boundary cores x uncarried endings     1.00%   -> returned 0
+    MW19 middles x Cold War prefixes and suffixes   7.96%   -> returned 256
+
+and it decomposes into real vocabulary rather than coincidence:
+
+    'i_me_'    + 'decal_water_puddle'              + '_col'
+    'c_'       + 't9_rus_pl_spetsnaz_infiltration' + '_torso'
+    'ui_icon_' + 'callingcards'                    + '_gilded'
+
+**Measure the ceiling before running this shape.** `mw19_middles.py --reach` does it in a minute
+and it is what separated the 7.96% method from the 1.00% one before either cost a night.
+
+Measured and not worth it: `--strip 3` reaches 7.27% against `--strip 2`'s 7.96%, so stripping
+deeper costs a third more candidates for less reach.
+
+### Why the corpus is kept whole
+
+The Black Ops 4 return is small and always will be -- the `t8` share is 1.5% of the `t9` share.
+The reason the whole corpus is committed rather than the `t9` subset is the titles *after* these
+two: Modern Warfare 2019's conventions are what Modern Warfare 2022, 2023 and Black Ops 6
+inherit, and those titles reuse its assets directly. It is the seed corpus for the next targets,
+not this one.
+
 ## Dead ends
 
 Do not spend a night rediscovering these. Each cost real time.
@@ -1491,6 +1557,8 @@ Do not spend a night rediscovering these. Each cost real time.
 | Doubly uncarried -- an uncarried beginning over an uncarried ending | Both halves are productive alone (6,674 names from endings, 2,846 from `mcdp/`), so the cross looked like the obvious next question. 100 uncarried beginnings x 458k middles x 5,000 uncarried two-segment endings, **229 billion candidates: 0**. A name is reachable through one cap or the other, not through both at once -- the middles that survive stripping a segment off each end are too short to identify anything. |
 | The animation transition grid, composed rather than observed | `xanim` is the least-named type in both games and has a real grammar: 6,149 published names match `<core>_<from>_to_<to>` over 1,446 cores, 101 from-states and 129 to-states. That grid is 18.8 M combinations and the tables hold 0.03% of it, so composing the two state vocabularies looked like free ground. 50k cores x 13,029 composed transitions: **1 name a game**. The unobserved pairings are unobserved because they do not exist -- a weapon has the transitions its state machine allows and no others. |
 | Materials from image cores through the thirteenth directory | `mcdp/` swept against every published material core returned 2,846, so asking the same directory from the image side looked like the other half of the seam. **0 both games.** The material-core sweep had already taken it; image cores add nothing `mcdp/` did not already reach. |
+| Modern Warfare 2019 names used verbatim | The corpus was taken into cod-name-db verbatim about three years ago, so every name the titles share identically is already published. Measured 2026-08-23: **0 in the five wanted types** against both games -- 2,107 Cold War ids of which 2,027 are `localizeentry`, and 1,106 Black Ops 4 ids of which 1,049 are `localize_entry`. 66,842 of the names are already in the tables. There is nothing left in a verbatim pass and there never will be. Use the middles -- method 26. |
+| Modern Warfare 2019 names recombined as all-boundary cores | 1.84 M cores from the corpus against the 100,000 uncarried endings, **0 in 184 billion candidates**. A core is only ever a *prefix*, so this can only decorate the front, and the endings that followed an MW19 core in real Cold War names were 3,886 near-unique tails -- commonest appearing three times, including `otgun_leveraction`, a cut through the middle of "shotgun". Coincidental character boundaries, not vocabulary. Cutting at segment boundaries on **both** ends is what makes a middle a morpheme, and that shape returns 256. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
 
 ---
