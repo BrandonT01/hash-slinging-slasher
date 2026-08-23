@@ -1,0 +1,2 @@
+4a78c3f6ffc0ec82,fly_ballistic_knife_inspect_b
+7860df34050924c8,wpn_tomahawk_charge_2_swt_npc
