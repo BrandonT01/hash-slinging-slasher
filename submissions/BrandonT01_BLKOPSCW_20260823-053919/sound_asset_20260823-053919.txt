@@ -1,0 +1,12 @@
+a5413087aaf9020,vox/scripted/mpl/anbo/vox_anbo_stk_hub_move_mult_01.rn75.pc.en.snd
+d6beaa56beec62b,vox/scripted/mpl/ami6/vox_ami6_stk_hub_move_mult_00.rn75.pc.en.snd
+1a9f9f73420a4266,vox/scripted/mpl/anme/vox_anme_stk_hub_move_mult_01.rn75.pc.en.snd
+25eef1fb89e94d8e,vox/scripted/mpl/adgi/vox_adgi_stk_hub_move_mult_01.rn75.pc.en.snd
+2702fd2c7162c76b,vox/scripted/mpl/adgi/vox_adgi_stk_hub_move_mult_00.rn75.pc.en.snd
+272e59c5d6ca6d4e,vox/scripted/mpl/ami6/vox_ami6_stk_hub_move_mult_01.rn75.pc.en.snd
+3cfc9aeced161f85,vox/scripted/mpl/anbo/vox_anbo_stk_hub_move_mult_00.rn75.pc.en.snd
+431474d6a6428283,vox/scripted/mpl/anme/vox_anme_stk_hub_move_mult_00.rn75.pc.en.snd
+47690c3ca5091f8e,vox/scripted/mpl/abnd/vox_abnd_stk_hub_move_mult_01.rn75.pc.en.snd
+487d176d8c82996b,vox/scripted/mpl/abnd/vox_abnd_stk_hub_move_mult_00.rn75.pc.en.snd
+4c30eb07fa96d6c5,vox/scripted/mpl/ahva/vox_ahva_stk_hub_move_mult_00.rn75.pc.en.snd
+63e261f796642c60,vox/scripted/mpl/ahva/vox_ahva_stk_hub_move_mult_01.rn75.pc.en.snd
