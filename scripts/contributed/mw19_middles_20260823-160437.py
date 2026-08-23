@@ -47,7 +47,6 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import snapshot
 
-CAPTURE = ROOT / "snapshots" / "modwar19.names.txt"
 SEPS = "_/\\."
 
 
@@ -76,10 +75,11 @@ def middles_of(name, strip, min_len):
 
 def load_names(t9_only=False):
     names, dropped = [], 0
-    for line in CAPTURE.read_text(encoding="utf-8", errors="replace").splitlines():
-        _, _, name = line.partition(",")
-        if not name:
-            continue
+    # Through the shared reader, so the gzipped corpus and the raw one both work: the committed
+    # artefact is `modwar19.names.txt.gz` (7.3 MB against 54 MB) and a capture straight off the
+    # loader is the plain file. Reading the path directly worked only on the machine that
+    # captured it.
+    for _pool, name in snapshot.name_corpus("modwar19"):
         if "~" in name:
             dropped += 1
             continue
@@ -100,9 +100,6 @@ def main():
     parser.add_argument("--sample", type=int, default=40000)
     parser.add_argument("--out", default="mw19_middles.txt")
     args = parser.parse_args()
-
-    if not CAPTURE.exists():
-        raise SystemExit(f"{CAPTURE} not found -- capture MODWAR19 first")
 
     names, dropped = load_names(args.t9)
     print(f"{len(names)} MW19 names ({dropped} composites dropped)", file=sys.stderr)

@@ -30,13 +30,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import snapshot
 
-CAPTURE = ROOT / "snapshots" / "modwar19.names.txt"
 
 
 def main():
-    if not CAPTURE.exists():
-        raise SystemExit(f"{CAPTURE} not found -- run snapshot_names against MODWAR19 first")
-
     path = next((p for p in snapshot.snapshots()
                  if "blkopscw" in os.path.basename(p).lower()), None)
     if not path:
@@ -49,11 +45,8 @@ def main():
     known = snapshot.known_hashes()
     print(f"published tables:  {len(known)} hashes resolved")
 
-    names = []
-    for line in CAPTURE.read_text(encoding="utf-8", errors="replace").splitlines():
-        _, _, name = line.partition(",")
-        if name:
-            names.append(name)
+    # Through the shared reader so the gzipped corpus works too.
+    names = [name for _pool, name in snapshot.name_corpus("modwar19")]
     print(f"captured names:    {len(names)}\n")
 
     in_game_named = 0        # hashes to an id Cold War holds, and the tables already name it

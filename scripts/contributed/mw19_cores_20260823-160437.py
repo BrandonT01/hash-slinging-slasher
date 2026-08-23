@@ -30,8 +30,10 @@ import sys
 ROOT = pathlib.Path(__file__).resolve().parent
 while not (ROOT / "scripts" / "snapshot.py").exists() and ROOT != ROOT.parent:
     ROOT = ROOT.parent
+sys.path.insert(0, str(ROOT / "scripts"))
 
-CAPTURE = ROOT / "snapshots" / "modwar19.names.txt"
+import snapshot
+
 SEPS = "_/\\."
 
 
@@ -44,14 +46,10 @@ def main():
     parser.add_argument("--out", default="mw19_cores.txt")
     args = parser.parse_args()
 
-    if not CAPTURE.exists():
-        raise SystemExit(f"{CAPTURE} not found -- run snapshot_names against MODWAR19 first")
-
     names, dropped = [], 0
-    for line in CAPTURE.read_text(encoding="utf-8", errors="replace").splitlines():
-        _, _, name = line.partition(",")
-        if not name:
-            continue
+    # Through the shared reader so the gzipped corpus works too: the committed artefact is
+    # `modwar19.names.txt.gz` (7.3 MB against 54 MB) and only the capturing machine has the raw.
+    for _pool, name in snapshot.name_corpus("modwar19"):
         if "~" in name:          # a Cordycep composite, not a name the game uses
             dropped += 1
             continue
