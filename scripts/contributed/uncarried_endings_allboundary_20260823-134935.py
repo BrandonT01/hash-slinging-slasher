@@ -63,7 +63,12 @@ import collections
 import pathlib
 import sys
 
-ROOT = pathlib.Path(__file__).resolve().parent.parent
+# Walk up until the repository is found, rather than counting parents. A fixed count is
+# correct in contrib/ and wrong once `submit` files this under scripts/contributed/,
+# where it would resolve to a scripts/scripts that has never existed. scripts/README.md.
+ROOT = pathlib.Path(__file__).resolve().parent
+while not (ROOT / "scripts" / "snapshot.py").exists() and ROOT != ROOT.parent:
+    ROOT = ROOT.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 
 TABLES = ["fnv1a_xmaterials", "fnv1a_xmaterials_v2", "fnv1a_ximages", "fnv1a_ximages_v2",
@@ -85,7 +90,11 @@ def all_boundary_cores(name, min_core, sound):
     Sound names break at path separators and at the dot before their tail as well as at
     underscores, so a sound path contributes cores at every one of those.
     """
-    seps = "_/." if sound else "_"
+    # Black Ops 4 sound names keep their BACKSLASHES and their id is the hash of exactly that
+    # (CLAUDE.md section 5), while Cold War sound paths fold to forward slashes. Both separators
+    # are listed so this is correct for either game -- without the backslash every Black Ops 4
+    # directory boundary is invisible and the core list collapses to the basename.
+    seps = "_/" + chr(92) + "." if sound else "_"
     for i, ch in enumerate(name):
         if ch in seps and i >= min_core:
             yield name[:i]
