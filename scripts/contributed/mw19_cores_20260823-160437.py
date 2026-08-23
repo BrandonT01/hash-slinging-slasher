@@ -50,12 +50,11 @@ def main():
     # Through the shared reader so the gzipped corpus works too: the committed artefact is
     # `modwar19.names.txt.gz` (7.3 MB against 54 MB) and only the capturing machine has the raw.
     for _pool, name in snapshot.name_corpus("modwar19"):
-        if "~" in name:          # a Cordycep composite, not a name the game uses
-            dropped += 1
-            continue
-        if args.t9 and "t9" not in name:
-            continue
-        names.append(name.lower())
+        # Packed-channel entries are several real names joined by `&`, not artefacts.
+        for piece in snapshot.unpack(name):
+            if args.t9 and "t9" not in piece:
+                continue
+            names.append(piece.lower())
 
     print(f"{len(names)} names ({dropped} composites dropped)", file=sys.stderr)
 

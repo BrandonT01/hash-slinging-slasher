@@ -43,6 +43,8 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 24 | measured image channels | `image`, through the channels method 13's hand-written list omits | `scripts/contributed/image_channels_wide_20260823-043005.py` | 36 names, but it widens a derivation `derive_closure` re-runs every round: 231 of 250 real channels were uncarried, `_thermalmap` alone heads 16,000 |
 | 25 | all-boundary cores | every method built as core x ending | `scripts/contributed/uncarried_endings_allboundary_20260823-134935.py` -> `confirm_plan` | **the most productive change measured on 2026-08-23.** Not a new method -- a fix to how every ending sweep builds its cores. Turned 2,065 names into 2,553 while using five times fewer endings, and 1,385 sound names into 1,746 in a single pass |
 | 26 | MW19 middles, Cold War decorations | any type, through a **third title's** vocabulary | `scripts/contributed/mw19_middles_20260823-160437.py` -> `confirm_plan` | **256 on Cold War and 29 on Black Ops 4, 2026-08-23.** Modern Warfare 2019 does not hash its names, so all 1,167,131 are captured in plain text. Verbatim they are spent; their **middles**, re-decorated with the target game's own affixes, are not |
+| 27 | packed-channel parts | `image`, from a title that packs textures into colour channels | `scripts/contributed/mw19_channel_parts_*.py` -> `confirm_list` | **63 names in one second, 1 per 6,559 candidates -- the most efficient method here.** MW19 names a packed image after *every* texture in it, joined by `&`. Splitting them yields 211,306 names that appear nowhere else in that corpus |
+| 28 | channel-code swap | `image` and `material` | `scripts/contributed/mw19_channel_swap_*.py` -> `confirm_plan` | **52 names.** The last segment of a packed name is a channel code (`_c _g _n _s`); everything before it is the asset. Cut the code, put the *target* game's endings on -- including the 1,162 codes measured off Cold War's own names that `data/suffixes.txt` does not carry |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -1527,6 +1529,44 @@ two: Modern Warfare 2019's conventions are what Modern Warfare 2022, 2023 and Bl
 inherit, and those titles reuse its assets directly. It is the seed corpus for the next targets,
 not this one.
 
+## What a ceiling predicts, and the filter that hid a tenth of a corpus
+
+Two things were learned the hard way on 2026-08-23 and are cheap for everybody after.
+
+### A ceiling under about 2% has never returned anything
+
+`--reach` measures what fraction of *known* target-game names a method could express at all. It
+costs a minute. Measured against what each method then returned:
+
+    MW19 all-boundary cores x uncarried endings     1.00%   ->   0 names
+    MW19 material bodies x Cold War directories     1.28%   ->   0 names
+    MW19 middles x Cold War affixes                 7.96%   -> 256 names
+
+The two that could express one name in a hundred returned nothing at all, over 184 and 19.7
+billion candidates. **Measure the ceiling before spending the machine, and treat anything under
+about 2% as a negative already.** A ceiling is not a yield -- most expressible names are already
+published, which is why 7.96% buys hundreds rather than thousands -- but it separates a method
+that can reach the ground from one that cannot, and it does it in a minute rather than an hour.
+
+### If a filter is discarding a tenth of the data, look at what it is discarding
+
+The Modern Warfare 2019 capture was first read with a filter that dropped every entry containing
+`~`, labelled in its own docstring as "a Cordycep composite, not a name the game uses". That
+label was half right -- Cordycep does merge those entries -- and being half right stopped the
+question. What was actually in them was **two or more real image names joined by `&`**, because
+the title packs textures into colour channels and names the asset after all of them:
+
+    c_t9_zmb_ndu_zombie_jacket_n&c_t9_zmb_ndu_zombie_jacket_green_g~13414439723048909555
+
+`_n` and `_g` -- normal and gloss -- either side of the `&`. It cost **211,306 names that appear
+nowhere else in the corpus**, 57,149 of them mentioning `t9`, and they turned out to be the most
+productive material in the whole capture.
+
+The signal was there before any domain knowledge: the filter was throwing away **121,538 of
+1,167,131 entries, 11.6%**. Artefacts are rare. A tenth of a corpus is structure. **When a filter
+discards a large fraction, that fraction is the thing to look at, not the thing to drop** -- and
+a plausible name for something is not an explanation of it.
+
 ## Dead ends
 
 Do not spend a night rediscovering these. Each cost real time.
@@ -1564,6 +1604,7 @@ Do not spend a night rediscovering these. Each cost real time.
 | Doubly uncarried -- an uncarried beginning over an uncarried ending | Both halves are productive alone (6,674 names from endings, 2,846 from `mcdp/`), so the cross looked like the obvious next question. 100 uncarried beginnings x 458k middles x 5,000 uncarried two-segment endings, **229 billion candidates: 0**. A name is reachable through one cap or the other, not through both at once -- the middles that survive stripping a segment off each end are too short to identify anything. |
 | The animation transition grid, composed rather than observed | `xanim` is the least-named type in both games and has a real grammar: 6,149 published names match `<core>_<from>_to_<to>` over 1,446 cores, 101 from-states and 129 to-states. That grid is 18.8 M combinations and the tables hold 0.03% of it, so composing the two state vocabularies looked like free ground. 50k cores x 13,029 composed transitions: **1 name a game**. The unobserved pairings are unobserved because they do not exist -- a weapon has the transitions its state machine allows and no others. |
 | Materials from image cores through the thirteenth directory | `mcdp/` swept against every published material core returned 2,846, so asking the same directory from the image side looked like the other half of the seam. **0 both games.** The material-core sweep had already taken it; image cores add nothing `mcdp/` did not already reach. |
+| Modern Warfare 2019 material bodies under Cold War's directories | The exact analogue of the channel swap, and it looked as good: MW19 material names are paths under its own directories (`twc4/` 134,344, `m2o/`, `mo/`, `tm/`), Cold War uses its own thirteen, and the directory names the title while the body names the asset. 243,206 bodies x 13 directories x 5,791 endings, 19.7 billion candidates: **0**. The ceiling explains it -- see *what a ceiling predicts* below. |
 | Modern Warfare 2019 names used verbatim | The corpus was taken into cod-name-db verbatim about three years ago, so every name the titles share identically is already published. Measured 2026-08-23: **0 in the five wanted types** against both games -- 2,107 Cold War ids of which 2,027 are `localizeentry`, and 1,106 Black Ops 4 ids of which 1,049 are `localize_entry`. 66,842 of the names are already in the tables. There is nothing left in a verbatim pass and there never will be. Use the middles -- method 26. |
 | Modern Warfare 2019 names recombined as all-boundary cores | 1.84 M cores from the corpus against the 100,000 uncarried endings, **0 in 184 billion candidates**. A core is only ever a *prefix*, so this can only decorate the front, and the endings that followed an MW19 core in real Cold War names were 3,886 near-unique tails -- commonest appearing three times, including `otgun_leveraction`, a cut through the middle of "shotgun". Coincidental character boundaries, not vocabulary. Cutting at segment boundaries on **both** ends is what makes a middle a morpheme, and that shape returns 256. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |

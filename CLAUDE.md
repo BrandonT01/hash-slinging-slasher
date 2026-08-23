@@ -284,6 +284,13 @@ decorates another — a character's material name carries the fragments its imag
 wear — so the corpus is not filtered down to the five wanted types. What you take from it is your
 choice; what it holds is everything.
 
+**Its image names are often several names in one.** Modern Warfare 2019 packs textures into a
+single file's colour channels and names the asset after *every* texture in it, joined by `&`:
+`..._jacket_n&..._jacket_green_g~13414439723048909555` is a normal map and a gloss map, two real
+names. 211,306 names live only inside those entries. `snapshot.unpack()` splits them; use it
+rather than filtering them out, which is what the first pass here did — and see *the filter that
+hid a tenth of a corpus* in `METHODS.md`, because the lesson is general.
+
 Read it with `snapshot.name_corpus()`, never by opening the path — the committed file is gzipped
 and the raw capture is gitignored. `snapshot_names` captures a new one if you have the game open
 in Cordycep.

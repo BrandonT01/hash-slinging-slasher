@@ -28,6 +28,9 @@ import settings
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MAGIC = b"CODIDS"
+
+# The disambiguator appended to a packed-channel entry -- see `unpack`.
+_PACKED_TAIL = re.compile(r"~\d+$")
 RECORD = 10
 
 BASIS = 0xCBF29CE484222325
@@ -147,6 +150,26 @@ def read(path):
         records.append((asset_id, pool))
 
     return Snapshot(game, records)
+
+
+def unpack(name):
+    """The individual asset names inside one captured entry.
+
+    Modern Warfare 2019 packs several textures into one image using its colour channels -- colour
+    with specular, normal with gloss and occlusion -- and the loader holds one asset whose name is
+    every packed texture's name joined by `&`, with a disambiguating `~<decimal>` appended:
+
+        c_t9_zmb_ndu_zombie_jacket_n&c_t9_zmb_ndu_zombie_jacket_green_g~13414439723048909555
+
+    That is two real image names, not one name and not an artefact. Treating these as junk threw
+    away 211,306 names that appear nowhere else in the corpus, 57,149 of them mentioning `t9`.
+    Anything reading the corpus for vocabulary should go through here.
+    """
+    name = _PACKED_TAIL.sub("", name.strip())
+    for piece in name.split("&"):
+        piece = piece.strip()
+        if piece:
+            yield piece
 
 
 def name_corpus(game="modwar19"):

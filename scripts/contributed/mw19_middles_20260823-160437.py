@@ -80,12 +80,12 @@ def load_names(t9_only=False):
     # loader is the plain file. Reading the path directly worked only on the machine that
     # captured it.
     for _pool, name in snapshot.name_corpus("modwar19"):
-        if "~" in name:
-            dropped += 1
-            continue
-        if t9_only and "t9" not in name:
-            continue
-        names.append(name.lower())
+        # Packed-channel entries are several real names joined by `&`, not artefacts. Dropping
+        # them cost 211,306 names that appear nowhere else in the corpus, 57,149 of them t9.
+        for piece in snapshot.unpack(name):
+            if t9_only and "t9" not in piece:
+                continue
+            names.append(piece.lower())
     return names, dropped
 
 
