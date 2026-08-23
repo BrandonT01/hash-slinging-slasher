@@ -5,16 +5,16 @@
 
 <table>
 <tr><th align="left"><code>blkops04/</code></th>
-<th align="right" colspan="2">67,049 names in 6 file(s)</th>
+<th align="right" colspan="1">67,049 names in 6 file(s)</th>
 </tr>
-<tr><th align="left">asset type</th><th align="right">names</th><th align="right">% found</th>
+<tr><th align="left">asset type</th><th align="right">names</th>
 </tr>
-<tr><td><code>material</code></td><td align="right">26,671</td><td align="right">78.1%</td></tr>
-<tr><td><code>image</code></td><td align="right">18,797</td><td align="right">73.8%</td></tr>
-<tr><td><code>sound_alias</code></td><td align="right">9,522</td><td align="right">70.2%</td></tr>
-<tr><td><code>xmodel</code></td><td align="right">8,379</td><td align="right">77.9%</td></tr>
-<tr><td><code>xanim</code></td><td align="right">3,502</td><td align="right">68.9%</td></tr>
-<tr><td><code>sound_asset</code></td><td align="right">178</td><td align="right">10.8%</td></tr>
+<tr><td><code>material</code></td><td align="right">26,671</td></tr>
+<tr><td><code>image</code></td><td align="right">18,797</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">9,522</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">8,379</td></tr>
+<tr><td><code>xanim</code></td><td align="right">3,502</td></tr>
+<tr><td><code>sound_asset</code></td><td align="right">178</td></tr>
 </table>
 
 </td>
@@ -22,25 +22,20 @@
 
 <table>
 <tr><th align="left"><code>blkopscw/</code></th>
-<th align="right" colspan="2">50,627 names in 6 file(s)</th>
+<th align="right" colspan="1">50,883 names in 6 file(s)</th>
 </tr>
-<tr><th align="left">asset type</th><th align="right">names</th><th align="right">% found</th>
+<tr><th align="left">asset type</th><th align="right">names</th>
 </tr>
-<tr><td><code>sound_alias</code></td><td align="right">25,660</td><td align="right">65.3%</td></tr>
-<tr><td><code>material</code></td><td align="right">13,950</td><td align="right">79.3%</td></tr>
-<tr><td><code>image</code></td><td align="right">5,622</td><td align="right">81.9%</td></tr>
-<tr><td><code>xanim</code></td><td align="right">2,624</td><td align="right">64.0%</td></tr>
-<tr><td><code>xmodel</code></td><td align="right">2,596</td><td align="right">76.5%</td></tr>
-<tr><td><code>sound_asset</code></td><td align="right">175</td><td align="right">80.3%</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">25,661</td></tr>
+<tr><td><code>material</code></td><td align="right">13,971</td></tr>
+<tr><td><code>image</code></td><td align="right">5,806</td></tr>
+<tr><td><code>xanim</code></td><td align="right">2,666</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">2,604</td></tr>
+<tr><td><code>sound_asset</code></td><td align="right">175</td></tr>
 </table>
 
 </td>
 </tr></table>
-
-**names** is what this project has recovered and published here. **% found** is how much
-of that pool *anybody* can name -- this project's names plus every one already in the
-community tables, over every id the game holds. A type at 80% has one id in five still
-unnamed; `sound_asset` on Black Ops 4 at 11% is the largest unworked ground in either game.
 
 **Generated. Do not edit anything here by hand** -- `scripts/collect_names.py` rewrites it
 whenever a submission lands, and an edit would be overwritten without warning. Corrections
