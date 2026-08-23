@@ -1,0 +1,8 @@
+2d41970a5bcfb8a,vox_cras_kill_team_4
+3042f9791517308c,vox_cras_kill_sniper_0
+3042fa791517323f,vox_cras_kill_sniper_1
+331cca664f38b0ca,fly_emote_ralph_helmet_f
+5602979a1ba404d3,vox_cras_threat_spec
+78a9b49a7738d7f1,vox_cras_threat_sera
+7b52e3947929aff0,vox_cras_threat_reap
+7b59e294792fcceb,vox_cras_threat_reco
