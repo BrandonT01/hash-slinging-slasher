@@ -343,7 +343,7 @@ fn main() {
             slice.len()
         );
 
-        for (id, name) in run_best(&plan.beginnings, &plan.endings, slice, &wanted, plan.bare) {
+        for (id, name) in run_best(&plan.beginnings, &plan.endings, slice, &wanted, plan.bare, plan.fold) {
             results.add(&pool_label(wanted[&id]), id, name);
         }
 

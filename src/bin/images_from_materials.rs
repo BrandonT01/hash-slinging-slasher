@@ -184,7 +184,7 @@ fn main() {
     for (index, slice) in stems.chunks(size).enumerate() {
         println!("\nslice {}/{} -- {} stems", index + 1, stems.len().div_ceil(size), slice.len());
 
-        for (id, name) in run_best(&openings, &endings, slice, &wanted, false) {
+        for (id, name) in run_best(&openings, &endings, slice, &wanted, false, true) {
             results.add(&pool_label(wanted[&id]), id, name);
         }
 

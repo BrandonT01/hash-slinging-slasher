@@ -426,17 +426,49 @@ pub struct Search {
     /// It is for a scraped string, which may already be the whole name; it is not where the stem
     /// is a fragment that is known to need dressing.
     bare: bool,
+
+    /// Whether backslashes are folded to forward slashes, as every asset type but one wants.
+    /// `Meet` has carried this since Black Ops 4's SAB sounds were added; this side did not, so
+    /// the forward direction folded whatever it was told. See `unfolded`.
+    fold: bool,
 }
 
 impl Search {
     pub fn new(openings: &[String], endings: &[String]) -> Self {
+        Self::with_fold(openings, endings, true)
+    }
+
+    /// A search over names whose backslashes are **not** folded to forward slashes.
+    ///
+    /// The forward-hashing mirror of [`Meet::unfolded`]. Both have to exist, because `run_best`
+    /// picks between them on cost alone: a plan that asked for the unfolded hash and happened to
+    /// be cheaper forwards used to get the folded one and match nothing.
+    pub fn unfolded(openings: &[String], endings: &[String]) -> Self {
+        Self::with_fold(openings, endings, false)
+    }
+
+    fn with_fold(openings: &[String], endings: &[String], fold: bool) -> Self {
         Self {
             openings: openings
                 .iter()
-                .map(|opening| (opening.clone(), hash64(opening)))
+                .map(|opening| {
+                    let hash = if fold { hash64(opening) } else { hash64_raw(opening) };
+                    (opening.clone(), hash)
+                })
                 .collect(),
             endings: endings.to_vec(),
             bare: true,
+            fold,
+        }
+    }
+
+    /// The fold this search was built with, applied. Every hash on this side goes through here.
+    #[inline(always)]
+    fn feed(&self, hash: u64, text: &[u8]) -> u64 {
+        if self.fold {
+            feed(hash, text)
+        } else {
+            feed_raw(hash, text)
         }
     }
 
@@ -572,21 +604,21 @@ impl Search {
             let piece = stem.as_bytes();
 
             if self.bare {
-                let plain = feed(BASIS, piece);
+                let plain = self.feed(BASIS, piece);
                 test!(plain, stem.to_string());
 
                 for ending in &self.endings {
-                    test!(feed(plain, ending.as_bytes()), format!("{stem}{ending}"));
+                    test!(self.feed(plain, ending.as_bytes()), format!("{stem}{ending}"));
                 }
             }
 
             for (opening, base) in &self.openings {
-                let prefixed = feed(*base, piece);
+                let prefixed = self.feed(*base, piece);
                 test!(prefixed, format!("{opening}{stem}"));
 
                 for ending in &self.endings {
                     test!(
-                        feed(prefixed, ending.as_bytes()),
+                        self.feed(prefixed, ending.as_bytes()),
                         format!("{opening}{stem}{ending}")
                     );
                 }
@@ -640,6 +672,14 @@ pub fn candidate_space(openings: usize, endings: usize, stems: usize, bare: bool
 
 /// Runs a search whichever way round is cheaper, and says which it chose.
 ///
+/// `fold` decides the normalisation on **both** sides, and it has to, because which side runs is
+/// decided by cost. It used to take no such argument and both branches folded, so
+/// `confirm_plan`'s `fold: no` -- the flag that exists solely for Black Ops 4's SAB sound names,
+/// whose ids are the hash of the string with its backslashes left alone -- reached the
+/// fingerprint, the banner and the results spelling but never the hash. Those plans matched
+/// nothing while looking perfectly healthy, which is exactly the failure the flag was added to
+/// prevent.
+///
 /// Peeling the endings off the wanted ids turns a product into a sum, but it is not free: each
 /// batch has to be sorted before it can be searched, and a batch is `wanted x endings x 2`
 /// entries. Where there are few stems and a great many endings, that sort costs more than the
@@ -652,6 +692,7 @@ pub fn run_best<S: AsRef<str> + Sync>(
     stems: &[S],
     wanted: &HashMap<u64, usize>,
     bare: bool,
+    fold: bool,
 ) -> Vec<(u64, String)> {
     let width = (openings.len() as u64 + u64::from(bare)).max(1);
     let breadth = stems.len() as u64 * width;
@@ -667,7 +708,7 @@ pub fn run_best<S: AsRef<str> + Sync>(
             meet as f64 / 1e9,
             plain as f64 / 1e9
         );
-        let search = Meet::new(openings, endings);
+        let search = if fold { Meet::new(openings, endings) } else { Meet::unfolded(openings, endings) };
         let search = if bare { search } else { search.dressed_only() };
         search.run(stems, wanted)
     } else {
@@ -676,7 +717,8 @@ pub fn run_best<S: AsRef<str> + Sync>(
             plain as f64 / 1e9,
             meet as f64 / 1e9
         );
-        let search = Search::new(openings, endings);
+        let search =
+            if fold { Search::new(openings, endings) } else { Search::unfolded(openings, endings) };
         let search = if bare { search } else { search.dressed_only() };
         search.run(stems, wanted)
     }
@@ -686,6 +728,51 @@ pub fn run_best<S: AsRef<str> + Sync>(
 mod tests {
     use super::*;
     use crate::id_of;
+
+    /// `run_best` has to carry the fold whichever direction it picks.
+    ///
+    /// This is the regression for a bug that cost the largest pool in the project. `run_best`
+    /// took no `fold`, so both of its branches folded; `confirm_plan`'s `fold: no` reached the
+    /// banner, the fingerprint and the results spelling and never the hash. Every Black Ops 4
+    /// SAB plan ever written -- including `scripts/sab_plan.py`, whose 187 billion candidates
+    /// against 70,878 unnamed ids are recorded in METHODS.md as a dead end -- searched for
+    /// backslashed names under the folded hash, which by this project's own measurement can
+    /// match nothing at all.
+    ///
+    /// So both directions are asserted, and both are forced: the cost model picks one, and the
+    /// bug lived in whichever one nobody happened to exercise.
+    #[test]
+    fn run_best_carries_the_fold_in_both_directions() {
+        let name = r"zmbi\hellhounds\steply_hellhound_step_06.ln100.pc.snd";
+        let cut = name.len() - ".ln100.pc.snd".len();
+        let (stem, ending) = name.split_at(cut);
+
+        let unfolded_id = hash64_raw(name) & ID_MASK;
+        let wanted: HashMap<u64, usize> = [(unfolded_id, 0)].into_iter().collect();
+
+        // Few stems and few endings hashes forwards; many endings peels. Both have to agree.
+        let endings = vec![ending.to_owned()];
+        let many: Vec<String> = (0..4096).map(|n| format!("{ending}{n}")).collect();
+
+        for endings in [&endings, &many] {
+            let mut list = endings.clone();
+            if !list.contains(&ending.to_owned()) {
+                list.push(ending.to_owned());
+            }
+
+            let found = run_best(&[], &list, &[stem], &wanted, true, false);
+            assert_eq!(
+                found.iter().map(|(_, name)| name.as_str()).collect::<Vec<_>>(),
+                vec![name],
+                "an unfolded search must find a backslashed name"
+            );
+
+            assert!(
+                run_best(&[], &list, &[stem], &wanted, true, true).is_empty(),
+                "and a folded one must not, or the flag is doing nothing"
+            );
+        }
+    }
 
     /// The whole of the fast search rests on the hash running backwards exactly, so this is the
     /// test that matters most: peeling a string off a hash has to give back what was there

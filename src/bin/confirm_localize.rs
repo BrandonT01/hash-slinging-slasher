@@ -314,7 +314,7 @@ Run a method from METHODS.md instead. If you genuinely need this pool, pass {ANY
         println!("
 --- round {round}: every key under {} categories ---", openings.len());
 
-        for (id, name) in run_best(&openings, &[], &keys, &wanted, false) {
+        for (id, name) in run_best(&openings, &[], &keys, &wanted, false, true) {
             results.add(&pool_label(pool), id, name);
         }
 
@@ -331,7 +331,7 @@ Run a method from METHODS.md instead. If you genuinely need this pool, pass {ANY
             proven.len()
         );
 
-        for (id, name) in run_best(&possible_categories, &[], &proven, &wanted, false) {
+        for (id, name) in run_best(&possible_categories, &[], &proven, &wanted, false, true) {
             results.add(&pool_label(pool), id, name);
         }
 
@@ -364,7 +364,7 @@ Run a method from METHODS.md instead. If you genuinely need this pool, pass {ANY
             openings.len()
         );
 
-        for (id, name) in run_best(&openings, &endings, &proven, &wanted, false) {
+        for (id, name) in run_best(&openings, &endings, &proven, &wanted, false, true) {
             results.add(&pool_label(pool), id, name);
         }
 
@@ -383,7 +383,7 @@ Run a method from METHODS.md instead. If you genuinely need this pool, pass {ANY
             endings.len()
         );
 
-        for (id, name) in run_best(&families, &endings, &vocabulary_words, &wanted, false) {
+        for (id, name) in run_best(&families, &endings, &vocabulary_words, &wanted, false, true) {
             results.add(&pool_label(pool), id, name);
         }
 
