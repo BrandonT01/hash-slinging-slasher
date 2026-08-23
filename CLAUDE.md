@@ -267,6 +267,28 @@ Two things follow that you need to know:
 - **`submit` sends one pull request per game**, titled `[BLKOPS04] findings from ...`, so a
   reviewer can tell at a glance which title a batch is for.
 
+## Before pointing a night anywhere, check where the unnamed actually are
+
+```
+python contrib/unnamed_profile.py          where the recovered names came from
+python contrib/unnamed_profile.py --grid   which families are grid-shaped and sparse
+```
+
+Every list here is measured off what is **known**. The target is what is **unknown**, and those
+are not the same shape. There is a direct sample of the unknown sitting in `findings/` — every
+name confirmed here was unnamed until somebody found it — and profiled against the published
+tables it is shorter, flatter and far less numeric. More usefully, it says which families:
+
+    vox_   42.72% of everything ever recovered, against 0.02% of the published tables
+    then mcdp/, fly_, evt_, callingcards_, amb_ — all at or near zero in the tables
+
+Those are **sound aliases**, and `sound_alias` is Cold War's largest unnamed pool at 43,603. The
+tables barely contain that family, which is exactly why it is unnamed — and why a method tuned on
+the published corpus will never point at it. Measured 2026-08-23, one evening on that ground
+returned names at **1 per 7.0 billion candidates**.
+
+---
+
 ## There is a third game in `snapshots/`. It is spare parts, not a step
 
 `snapshots/modwar19.names.txt.gz` holds **1,167,131 Modern Warfare 2019 asset names in plain
@@ -304,7 +326,15 @@ in Cordycep.
 
 Neither of those is the interesting question. **The interesting question is which parts to strip
 and which of the target game's own affixes to put back on**, and that one is open: the first
-answer to it, `mw19_middles.py`, returned 256 names on Cold War in a single pass. `METHODS.md`
+answer to it, `mw19_middles.py`, returned 256 names on Cold War in a single pass.
+
+**Know what it costs before you commit a night to it.** Everything this corpus produced on
+2026-08-23 — 412 names across seven passes — took **58.8 trillion candidates, one name per 142.6
+billion**, twenty times the price of the sound-alias ground above. It reaches `image` and
+`material`, which are Cold War's two *best*-covered pools at 81% and 76% named, and it cannot
+reach `sound_alias` at all. A million real asset names from a real Call of Duty game feels like
+striking oil; the arithmetic says it is the expensive seam. Run `unnamed_profile.py` first, and
+come here when a method you are already building is short of vocabulary. `METHODS.md`
 method 26 has the detail. Whatever variant you think of, `--reach` measures its ceiling in a
 minute — that measurement is what separated a 7.96% method from a 1.00% one before either cost a
 night.
