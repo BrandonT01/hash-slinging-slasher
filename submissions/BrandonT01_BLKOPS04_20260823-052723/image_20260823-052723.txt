@@ -1,0 +1,4 @@
+7a51a92b8c1549e,i_c_t8_mp_spe_buffer_body1_boots_paladin_exob_m
+133c450a6e985aac,uie_keyprompt_texture_small
+72a2a3f4182f41c4,fxt8_pstfx_fire_dmg_r
+72a2b4f4182f5ea7,fxt8_pstfx_fire_dmg_c
