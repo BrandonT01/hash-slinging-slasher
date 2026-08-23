@@ -46,6 +46,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 27 | packed-channel parts | `image`, from a title that packs textures into colour channels | `scripts/contributed/mw19_channel_parts_*.py` -> `confirm_list` | **63 names in one second, 1 per 6,559 candidates -- the most efficient method here.** MW19 names a packed image after *every* texture in it, joined by `&`. Splitting them yields 211,306 names that appear nowhere else in that corpus |
 | 28 | channel-code swap | `image` and `material` | `scripts/contributed/mw19_channel_swap_*.py` -> `confirm_plan` | **52 names.** The last segment of a packed name is a channel code (`_c _g _n _s`); everything before it is the asset. Cut the code, put the *target* game's endings on -- including the 1,162 codes measured off Cold War's own names that `data/suffixes.txt` does not carry |
 | 29 | t9 underscore restored | any type, through segment boundaries no tokenizer could see | `scripts/contributed/mw19_middles_*.py` on a respelled corpus | **9 names.** MW19 omits the underscore after `t9` (`t9woods` where Cold War writes `_woods_`), so every `_`-splitting tokenizer here was blind to 1.2 M segment boundaries. Restoring it is preprocessing, not a method -- it improves whatever is run afterwards |
+| 30 | family grid completion | `sound_alias` above all, the largest unnamed pool | `scripts/contributed/unnamed_profile_*.py` -> `confirm_list` | **44 names.** `vox_<speaker>_<line>` is a 439 x 13,012 grid with 37,983 cells named; the unseen ones are candidates by construction. Same shape for `fly_`, `evt_`, `amb_`, `callingcards_`, `p7_`/`p8_`/`p9_` |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -1627,6 +1628,45 @@ beginnings x 30,375 stems x 5,979 endings, 39.2 billion candidates -- returned *
 Warfare 2019 contributes **0** characters, **2** skins and **1** nation that Cold War's corpus
 lacks; only the part slot has anything new, 615 of 5,979. A template whose vocabulary is already
 inside the corpus you are searching is the self-recombination trap under a different name.
+
+## Aim at the unnamed distribution, not the published one
+
+Written 2026-08-23. It is the most useful hour of the day and it cost no machine time at all.
+
+Every list here is measured off what is **known** -- the published tables and the confirmed
+names. The target is what is **unknown**. Nobody had checked whether those are the same shape.
+They are not, and there is a direct sample of the unknown population sitting in `findings/`:
+**every name this project has confirmed was unnamed until somebody found it.**
+
+Profiled against the published tables -- 1,560,882 published against 54,875 recovered:
+
+                            published   recovered
+        median segments             8           6
+        contains `/`            44.6%       14.2%
+        contains `*`            16.0%        0.0%
+        contains a digit        93.2%       45.6%
+        average length           38.1        29.9
+
+**The unnamed names are shorter, flatter and far less numeric than the corpus every generator
+here is tuned on.** And the beginnings say where they are:
+
+        vox_           42.70% of everything recovered   against  0.02% of published
+        mcdp/           5.69%                                     0.04%
+        fly_            5.19%                                     0.00%
+        evt_            2.58%                                     0.00%
+        callingcards_   2.26%                                     0.00%
+        amb_            2.10%                                     0.00%
+
+`vox_` is **forty-two percent of every name this project has ever recovered** and two hundredths
+of a percent of the published tables. The endings agree: `_mtxitem` 10.41% against 0.00%, then
+`_use`, `_threat`, `_dyn`, `_dstr`, `_npc`, `_plr`, `_vox`.
+
+Those are sound aliases and UI strings, and Cold War's largest unnamed pool is `sound_alias` at
+43,603. The published tables barely contain that family, which is *why* it is unnamed -- and why
+a method measured against the published corpus will never point at it.
+
+`contrib/unnamed_profile.py` prints all of this, and `--grid` ranks the families that are
+grid-shaped. Run it before choosing where to spend a night.
 
 ## Dead ends
 
