@@ -149,6 +149,38 @@ def read(path):
     return Snapshot(game, records)
 
 
+def name_corpus(game="modwar19"):
+    """Every `(pool, name)` a plain-text capture holds, gzipped or not.
+
+    Titles that do not hash their asset names are captured by `snapshot_names` as text rather
+    than as ids -- there is nothing to recover, so what is worth keeping is the corpus itself.
+    Modern Warfare 2019's is 1,167,131 names and 54 MB raw, which is three times the largest
+    `.ids` file, so the committed copy is gzipped and this opens either form. Prefer the gzip:
+    a clone that has both is one mid-migration, and the compressed one is the tracked artefact.
+    """
+    folder = settings.path("snapshots", "snapshots")
+    for name, opener in ((f"{game}.names.txt.gz", None), (f"{game}.names.txt", open)):
+        path = os.path.join(folder, name)
+        if not os.path.exists(path):
+            continue
+        if opener is None:
+            import gzip
+            handle = gzip.open(path, "rt", encoding="utf-8", errors="replace")
+        else:
+            handle = opener(path, encoding="utf-8", errors="replace")
+        with handle:
+            for line in handle:
+                pool, _, value = line.strip().partition(",")
+                if value and pool.isdigit():
+                    yield int(pool), value
+        return
+
+    raise SystemExit(
+        f"no name corpus for {game} in {folder}. Capture one with `snapshot_names` "
+        f"while Cordycep has the game open."
+    )
+
+
 def snapshots():
     """Every snapshot in the repository, newest game first is not meaningful so: sorted."""
     folder = settings.path("snapshots", "snapshots")

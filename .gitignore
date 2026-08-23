@@ -39,3 +39,7 @@ __pycache__/
 # committed because it is the format's documentation.
 /plans/*
 !/plans/example.txt
+
+# The plain-text name corpora are captured locally and committed gzipped: the raw Modern
+# Warfare 2019 file is 54 MB against 7.3 MB compressed. `snapshot.name_corpus()` reads either.
+snapshots/*.names.txt

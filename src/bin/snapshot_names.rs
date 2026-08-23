@@ -299,6 +299,14 @@ fn main() {
             }
             let _ = out.flush();
             println!("\n{written} name(s) written to {}", names_path.display());
+            // The raw file is gitignored and the committed artefact is the gzip -- 54 MB against
+            // 7.3 MB for Modern Warfare 2019, against 16.8 MB for the largest `.ids` in the
+            // repository. `snapshot.name_corpus()` reads either, so nothing downstream cares
+            // which one a clone has.
+            println!(
+                "gzip it before committing -- `gzip -9 -k {}` -- the raw file is gitignored.",
+                names_path.display()
+            );
         }
         Err(error) => eprintln!("\n{} could not be written: {error}", names_path.display()),
     }
