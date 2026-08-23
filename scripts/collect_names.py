@@ -243,38 +243,50 @@ def write(gathered, check):
     return changed, written
 
 
-def pool_coverage():
-    """{game: {asset type: (named, total)}} -- how much of each pool the tables can name.
+def pool_coverage(written):
+    """{game: {asset type: (named, total)}} -- how much of each pool anybody can name.
 
-    Read off the `.ids` snapshots and whatever `cod-name-db` tables this clone currently holds,
-    so the percentages are about the *game*, not about this folder: `image` at 82% means four
-    image names in five are known to somebody, not that this project found them. That is the
-    figure worth showing next to a count, because a count alone says nothing about how much is
-    left.
+    Read from `all_names/coverage.json`, which `scripts/measure_coverage.py` writes on a machine
+    that has the published tables. They are 345 MB and live in `cod-name-db/`, which is gitignored
+    and fetched by `start`, so nothing that runs in CI can see them -- and downloading them on
+    every merged submission, forty-odd on a busy night, for a figure that moves slowly would be
+    absurd.
 
-    Returns an empty mapping when the tables are missing, and the README then omits the column
+    This project's own growth since that baseline is added here rather than re-measured, and that
+    is exact rather than approximate: `submit` drops any name the tables already publish, so a
+    name confirmed after the baseline cannot already be inside its `named` count.
+
+    What the stored figure cannot see is names *somebody else* published upstream since. Those
+    raise the true percentage without raising this one, so a stale baseline under-reports. Re-run
+    `measure_coverage.py` and it corrects.
+
+    Returns an empty mapping when there is no baseline, and the README then omits the column
     rather than printing a percentage of nothing.
     """
-    try:
-        known = snapshot.known_hashes()
-    except Exception:
+    path = os.path.join(ROOT, FOLDER, "coverage.json")
+    if not os.path.exists(path):
         return {}
 
-    if not known:
+    try:
+        with open(path, encoding="utf-8", errors="replace") as handle:
+            baseline = json.load(handle)
+    except (ValueError, OSError):
         return {}
+
+    ours_now = collections.defaultdict(dict)
+    for game, kind, count in written:
+        ours_now[game][kind] = count
 
     out = {}
-    for path in snapshot.snapshots():
-        game = os.path.basename(path).replace(".ids", "").lower()
-        try:
-            snap = snapshot.read(path)
-        except SystemExit:
-            continue
-        by_pool = snap.by_pool()
+    for game, types in baseline.get("games", {}).items():
         counts = {}
-        for kind, ids in by_pool.items():
-            named = sum(1 for i in ids if i in known or (i & snapshot.ID_MASK) in known)
-            counts[kind] = (named, len(ids))
+        for kind, figures in types.items():
+            total = figures.get("total", 0)
+            named = figures.get("named", 0)
+            # Anything this project has published since the baseline was taken.
+            grown = ours_now.get(game, {}).get(kind, 0) - figures.get("ours_at_baseline", 0)
+            named = min(total, named + max(0, grown))
+            counts[kind] = (named, total)
         out[game] = counts
     return out
 
@@ -326,7 +338,7 @@ def write_index(written, check):
     for game, kind, count in written:
         by_game[game].append((kind, count))
 
-    coverage = pool_coverage()
+    coverage = pool_coverage(written)
     games = sorted(by_game)
 
     lines = [
@@ -347,11 +359,26 @@ def write_index(written, check):
     lines += ["</tr></table>", ""]
 
     if coverage:
+        measured = ""
+        try:
+            with open(os.path.join(ROOT, FOLDER, "coverage.json"), encoding="utf-8") as handle:
+                measured = json.load(handle).get("measured", "")
+        except Exception:
+            pass
+
         lines += [
             "**names** is what this project has recovered and published here. **% found** is how much",
-            "of that pool *anybody* can name -- this project's names plus every one already in the",
-            "community tables, over every id the game holds. A type at 80% has one id in five still",
-            "unnamed; `sound_asset` on Black Ops 4 at 11% is the largest unworked ground in either game.",
+            "of that pool *anybody* can name -- these names plus every one already in the community",
+            "tables, over every id the game holds. A type at 80% has one id in five still unnamed;",
+            "`sound_asset` on Black Ops 4 at 11% is the largest unworked ground in either game.",
+            "",
+            "The community half of that is measured against `cod-name-db`%s and stored in"
+            % (" on %s" % measured if measured else ""),
+            "`coverage.json`, because the tables are 345 MB and are not in this repository. Names",
+            "recovered here since are added on top, which is exact rather than approximate: `submit`",
+            "drops anything the tables already publish, so a later find cannot already be counted.",
+            "What a stale baseline misses is names *somebody else* published upstream, so it",
+            "under-reports rather than over-reports. `scripts/measure_coverage.py` refreshes it.",
             "",
         ]
 
@@ -424,7 +451,7 @@ def write_summary(written, check):
     `names` is what this project has published here. `named`/`total`/`found_pct` are about the
     game: every id in that pool, and how many of them *anybody* can name.
     """
-    coverage = pool_coverage()
+    coverage = pool_coverage(written)
     by_game = collections.defaultdict(list)
     for game, kind, count in written:
         by_game[game].append((kind, count))
