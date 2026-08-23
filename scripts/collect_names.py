@@ -326,8 +326,8 @@ def game_table(game, rows, coverage):
         "</tr>",
         "<tr>"
         '<th align="left">asset type</th>'
-        '<th align="right">names</th>'
-        + ('<th align="right">% found</th>' if show_percent else ""),
+        '<th align="right">found here</th>'
+        + ('<th align="right">named, of all in the game</th>' if show_percent else ""),
         "</tr>",
     ]
 
@@ -338,8 +338,16 @@ def game_table(game, rows, coverage):
         ]
         if show_percent:
             named, pool_total = counts.get(kind, (0, 0))
+            # The fraction, not just the percentage. Printing `8,423` beside `79.4%` reads as
+            # though the one is the other's numerator, and it is not: the count is what this
+            # project found, the percentage is what everybody together has named.
             cells.append(
-                '<td align="right">%s</td>' % ("%.1f%%" % (100.0 * named / pool_total) if pool_total else "--")
+                '<td align="right">%s</td>'
+                % (
+                    "%s / %s &nbsp;(%.1f%%)" % (format(named, ","), format(pool_total, ","), 100.0 * named / pool_total)
+                    if pool_total
+                    else "--"
+                )
             )
         out.append("<tr>" + "".join(cells) + "</tr>")
 

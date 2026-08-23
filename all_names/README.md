@@ -7,14 +7,14 @@
 <tr><th align="left"><code>blkops04/</code></th>
 <th align="right" colspan="2">67,662 names in 6 file(s)</th>
 </tr>
-<tr><th align="left">asset type</th><th align="right">names</th><th align="right">% found</th>
+<tr><th align="left">asset type</th><th align="right">found here</th><th align="right">named, of all in the game</th>
 </tr>
-<tr><td><code>xmodel</code></td><td align="right">8,423</td><td align="right">79.4%</td></tr>
-<tr><td><code>material</code></td><td align="right">26,988</td><td align="right">80.7%</td></tr>
-<tr><td><code>image</code></td><td align="right">19,023</td><td align="right">75.3%</td></tr>
-<tr><td><code>xanim</code></td><td align="right">3,528</td><td align="right">70.5%</td></tr>
-<tr><td><code>sound_asset</code></td><td align="right">178</td><td align="right">10.8%</td></tr>
-<tr><td><code>sound_alias</code></td><td align="right">9,522</td><td align="right">71.9%</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">8,423</td><td align="right">48,546 / 61,139 &nbsp;(79.4%)</td></tr>
+<tr><td><code>material</code></td><td align="right">26,988</td><td align="right">99,102 / 122,750 &nbsp;(80.7%)</td></tr>
+<tr><td><code>image</code></td><td align="right">19,023</td><td align="right">126,050 / 167,360 &nbsp;(75.3%)</td></tr>
+<tr><td><code>xanim</code></td><td align="right">3,528</td><td align="right">15,497 / 21,968 &nbsp;(70.5%)</td></tr>
+<tr><td><code>sound_asset</code></td><td align="right">178</td><td align="right">8,562 / 79,263 &nbsp;(10.8%)</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">9,522</td><td align="right">35,993 / 50,043 &nbsp;(71.9%)</td></tr>
 </table>
 
 </td>
@@ -24,14 +24,14 @@
 <tr><th align="left"><code>blkopscw/</code></th>
 <th align="right" colspan="2">50,883 names in 6 file(s)</th>
 </tr>
-<tr><th align="left">asset type</th><th align="right">names</th><th align="right">% found</th>
+<tr><th align="left">asset type</th><th align="right">found here</th><th align="right">named, of all in the game</th>
 </tr>
-<tr><td><code>xmodel</code></td><td align="right">2,604</td><td align="right">78.3%</td></tr>
-<tr><td><code>material</code></td><td align="right">13,971</td><td align="right">84.9%</td></tr>
-<tr><td><code>image</code></td><td align="right">5,806</td><td align="right">83.5%</td></tr>
-<tr><td><code>xanim</code></td><td align="right">2,666</td><td align="right">66.7%</td></tr>
-<tr><td><code>sound_asset</code></td><td align="right">175</td><td align="right">80.3%</td></tr>
-<tr><td><code>sound_alias</code></td><td align="right">25,661</td><td align="right">67.0%</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">2,604</td><td align="right">67,069 / 85,612 &nbsp;(78.3%)</td></tr>
+<tr><td><code>material</code></td><td align="right">13,971</td><td align="right">134,342 / 158,158 &nbsp;(84.9%)</td></tr>
+<tr><td><code>image</code></td><td align="right">5,806</td><td align="right">204,814 / 245,235 &nbsp;(83.5%)</td></tr>
+<tr><td><code>xanim</code></td><td align="right">2,666</td><td align="right">18,997 / 28,468 &nbsp;(66.7%)</td></tr>
+<tr><td><code>sound_asset</code></td><td align="right">175</td><td align="right">78,113 / 97,217 &nbsp;(80.3%)</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">25,661</td><td align="right">34,080 / 50,890 &nbsp;(67.0%)</td></tr>
 </table>
 
 </td>

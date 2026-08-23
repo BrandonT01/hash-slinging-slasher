@@ -60,14 +60,21 @@ def embed(summary):
         lines = []
         for kind, counts in rows:
             found = counts.get("found_pct")
-            # Backticks so the type names are monospace and the numbers line up in Discord.
+            # Two unrelated numbers, so they are labelled rather than left adjacent: the first is
+            # what this project found, the second is how much of that pool everybody together has
+            # named. Printed side by side and unlabelled, the first reads as the percentage's
+            # numerator, which it is not.
             lines.append(
-                "`%-12s` %6s  (%s found)"
-                % (kind, format(counts["names"], ","), "%.1f%%" % found if found is not None else "--")
+                "`%-12s %7s` %5s named"
+                % (
+                    kind,
+                    "+" + format(counts["names"], ","),
+                    "%.1f%%" % found if found is not None else "--",
+                )
             )
         fields.append(
             {
-                "name": "%s — %s names" % (NICE.get(game, game), format(data["names"], ",")),
+                "name": "%s — %s found here" % (NICE.get(game, game), format(data["names"], ",")),
                 "value": "\n".join(lines),
                 "inline": True,
             }
@@ -80,8 +87,8 @@ def embed(summary):
         "color": COLOUR,
         "fields": fields,
         "footer": {
-            "text": "%s names across %d games  ·  %% found is how much of that pool anybody can name"
-            % (format(totals["names"], ","), totals["games"])
+            "text": "%s names found by this project  ·  \"named\" is how much of that pool "
+            "everybody together has named" % format(totals["names"], ",")
         },
     }
 
