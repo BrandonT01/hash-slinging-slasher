@@ -45,6 +45,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 26 | MW19 middles, Cold War decorations | any type, through a **third title's** vocabulary | `scripts/contributed/mw19_middles_20260823-160437.py` -> `confirm_plan` | **256 on Cold War and 29 on Black Ops 4, 2026-08-23.** Modern Warfare 2019 does not hash its names, so all 1,167,131 are captured in plain text. Verbatim they are spent; their **middles**, re-decorated with the target game's own affixes, are not |
 | 27 | packed-channel parts | `image`, from a title that packs textures into colour channels | `scripts/contributed/mw19_channel_parts_*.py` -> `confirm_list` | **63 names in one second, 1 per 6,559 candidates -- the most efficient method here.** MW19 names a packed image after *every* texture in it, joined by `&`. Splitting them yields 211,306 names that appear nowhere else in that corpus |
 | 28 | channel-code swap | `image` and `material` | `scripts/contributed/mw19_channel_swap_*.py` -> `confirm_plan` | **52 names.** The last segment of a packed name is a channel code (`_c _g _n _s`); everything before it is the asset. Cut the code, put the *target* game's endings on -- including the 1,162 codes measured off Cold War's own names that `data/suffixes.txt` does not carry |
+| 29 | t9 underscore restored | any type, through segment boundaries no tokenizer could see | `scripts/contributed/mw19_middles_*.py` on a respelled corpus | **9 names.** MW19 omits the underscore after `t9` (`t9woods` where Cold War writes `_woods_`), so every `_`-splitting tokenizer here was blind to 1.2 M segment boundaries. Restoring it is preprocessing, not a method -- it improves whatever is run afterwards |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -1581,6 +1582,52 @@ The signal was there before any domain knowledge: the filter was throwing away *
 discards a large fraction, that fraction is the thing to look at, not the thing to drop** -- and
 a plausible name for something is not an explanation of it.
 
+## What a Saluki export tree says that a name list cannot
+
+Read 2026-08-23 off matched exports of the same two characters -- `woods` and `mi6` -- from both
+titles. `contrib/export_diff.py` does this for any pair of trees.
+
+An export tree is a labelled corpus that nothing here was reading:
+
+    <model name>/ _images/ <material name>/ <image name>.png
+
+so a pair of trees gives the model, material and image names for the *same asset* under two
+naming schemes. Three things came out of it, and the first is the one that matters.
+
+### Only the model name is title-specific
+
+    MW19 model      body_mp_western_t9woods_17_1_lod1
+    Cold War model  c_t9_usa_pl_woods_dope_torso
+
+Those share almost nothing -- MW19 **indexes** the skin (`_17_1`) where Cold War **names** it
+(`_dope_`). It is tempting to conclude the descriptor does not survive between titles. It does.
+It is in the *materials*:
+
+    MW19 material   mtl_c_t9_usa_pl_woods_dope_leaves
+    MW19 image      c_t9_usa_pl_woods_dope_leaves_n
+
+**Modern Warfare 2019's material and image names for Treyarch assets are Cold War names,
+verbatim, skin word included.** Only the model layer is respelled. Anybody comparing model names
+alone -- which is what a directory listing shows first -- will conclude the two titles share no
+vocabulary, and be wrong.
+
+### Cold War prefixes its images with `i_` and Modern Warfare 2019 does not
+
+    MW19      c_t9_usa_pl_woods_dope_leaves_n
+    Cold War  i_c_t9_usa_pl_woods_dope_leaves_c
+
+That single prefix is worth 63 names (method 27) and costs one pass of a few hundred thousand
+candidates.
+
+### And the character template is saturated
+
+`c_t9_<nation>_<role>_<char>_<skin>_<part>` is a real template: 23 nations, 75 characters, 405
+skins, 5,364 parts in Cold War's own corpus. Filling every slot from both corpora -- 216
+beginnings x 30,375 stems x 5,979 endings, 39.2 billion candidates -- returned **0**. Modern
+Warfare 2019 contributes **0** characters, **2** skins and **1** nation that Cold War's corpus
+lacks; only the part slot has anything new, 615 of 5,979. A template whose vocabulary is already
+inside the corpus you are searching is the self-recombination trap under a different name.
+
 ## Dead ends
 
 Do not spend a night rediscovering these. Each cost real time.
@@ -1621,6 +1668,8 @@ Do not spend a night rediscovering these. Each cost real time.
 | Modern Warfare 2019 material bodies under Cold War's directories | The exact analogue of the channel swap, and it looked as good: MW19 material names are paths under its own directories (`twc4/` 134,344, `m2o/`, `mo/`, `tm/`), Cold War uses its own thirteen, and the directory names the title while the body names the asset. 243,206 bodies x 13 directories x 5,791 endings, 19.7 billion candidates: **0**. The ceiling explains it -- see *what a ceiling predicts* below. |
 | Cold War item bodies crossed with Cold War variant tokens | The shape is real -- a character's materials share a skin token (`mtl_c_t9_usa_canteen_02_woods`, `mtl_c_t9_rus_chopper_pilot_vest_woods`) while the item varies, so swapping the token looked obvious. 4,650 bodies x 67 variants, 311,550 candidates: **0**. Its measured ceiling was 61.96%, which is the highest recorded here and entirely circular -- both lists were cut from the corpus being measured. Held out it is 22.62%, still high, and it still returns nothing: **a corpus recombined with itself cannot leave the region it already covers**, and that region is the named one. |
 | MW19's glued `t9<token>` words used as Cold War character names | A real observation used in the wrong slot. MW19 writes the token glued -- `t9woods`, `t9mi6` -- where Cold War separates it (`c_t9_usa_pl_woods_infiltration_torso`), so no underscore tokenizer here had ever seen those 519 tokens; 262 of them are real Cold War segments. But the glued vocabulary is overwhelmingly **weapon behaviour** (`t9standard` 14,794, `t9accurate` 12,895, `t9fastfire` 9,934), not characters, and `t9woods`/`t9mi6` are a rounding error in it. Poured into Cold War's character-model template -- 17 beginnings x 482 tokens x 3,501 tails, 28.7 M candidates -- it returned **0**. The tokens are worth revisiting in a weapon frame; the character frame is measured and closed. |
+| The Cold War character template filled from both corpora | `c_t9_<nation>_<role>_<char>_<skin>_<part>`, every slot filled from Cold War's corpus and Modern Warfare 2019's together: 216 beginnings x 30,375 stems x 5,979 endings, **39.2 billion candidates, 0**. MW19 adds 0 characters, 2 skins and 1 nation to what Cold War already holds -- only 615 of 5,979 parts are new -- so this is a corpus recombined with itself wearing a template. |
+| Cross-title spelling edits: joined pairs and singular/plural | The export diff shows real spelling differences between the titles -- MW19 `eyelashes` against Cold War `eyelash`, MW19 `inside`/`mouth` against Cold War `insidemouth`. Generating both edits over every Treyarch-shaped MW19 name, 1.43 M candidates: **0**. The differences are real and they are not a productive transform; the shared vocabulary is already shared verbatim. |
 | Modern Warfare 2019 names used verbatim | The corpus was taken into cod-name-db verbatim about three years ago, so every name the titles share identically is already published. Measured 2026-08-23: **0 in the five wanted types** against both games -- 2,107 Cold War ids of which 2,027 are `localizeentry`, and 1,106 Black Ops 4 ids of which 1,049 are `localize_entry`. 66,842 of the names are already in the tables. There is nothing left in a verbatim pass and there never will be. Use the middles -- method 26. |
 | Modern Warfare 2019 names recombined as all-boundary cores | 1.84 M cores from the corpus against the 100,000 uncarried endings, **0 in 184 billion candidates**. A core is only ever a *prefix*, so this can only decorate the front, and the endings that followed an MW19 core in real Cold War names were 3,886 near-unique tails -- commonest appearing three times, including `otgun_leveraction`, a cut through the middle of "shotgun". Coincidental character boundaries, not vocabulary. Cutting at segment boundaries on **both** ends is what makes a middle a morpheme, and that shape returns 256. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
