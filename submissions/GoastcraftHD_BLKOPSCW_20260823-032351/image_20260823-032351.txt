@@ -1,0 +1,4 @@
+1e14baddd06e72e0,ui_icon_medal_nose_tackle
+396672094bfb90cc,ui_icon_equipment_grapplegun
+644adfcc346553dd,ui_icon_featured_faceoff
+75ccffe5ac1c31e8,t7_hud_waypoints_safeguard_protect
