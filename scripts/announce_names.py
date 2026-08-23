@@ -87,12 +87,12 @@ def embed(summary):
 
     totals = summary["totals"]
     return {
-        "title": "Names recovered",
+        "title": "GitHub repository",
         "url": REPO + "/tree/main/all_names",
         "color": COLOUR,
         "fields": fields,
         "footer": {
-            "text": "%s names found by this project  ·  \"named\" is how much of that pool "
+            "text": "%s names found by this project - \"named\" is how much of that pool "
             "has been named in total (including cod-name-db too)" % format(totals["names"], ",")
         },
     }
