@@ -1,0 +1,6 @@
+2deeab9fc8038dde,zmb\ai\spartoi\vox\pain\pain_07.ln100.pc.snd
+47f0876c6d14b8fb,zmb\ai\spartoi\vox\pain\pain_06.ln100.pc.snd
+56f7f73ec4267a98,zmb\ai\spartoi\vox\pain\pain_09.ln100.pc.snd
+694bcda0829356a4,zmb\ai\spartoi\vox\pain\pain_05.ln100.pc.snd
+756a3ed12d61dc6d,zmb\ai\spartoi\vox\pain\pain_08.ln100.pc.snd
+7dcb2f6a6c6aa509,zmb\ai\spartoi\vox\pain\pain_04.ln100.pc.snd
