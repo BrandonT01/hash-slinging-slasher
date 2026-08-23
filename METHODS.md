@@ -1455,7 +1455,7 @@ to identify anything. This paragraph originally closed by calling the cross unme
 true when it was written and was overtaken within the day; it is kept because the reasoning that
 motivated it is still the right reasoning, and only its conclusion moved.
 
-## A third title as a corpus, and the two ways it does not work
+## A third title as spare parts, and which parts are worth taking
 
 Written 2026-08-23, when Modern Warfare 2019 was captured with `snapshot_names` and turned out
 to be worth exactly one of the three things tried with it.
@@ -1463,7 +1463,14 @@ to be worth exactly one of the three things tried with it.
 Modern Warfare 2019 holds its asset names in plain text -- the name is a `char*` in the header,
 not a hash -- so there is nothing to recover from it and it is not a target. What it is, is
 **1,167,131 real Call of Duty asset names**, captured to `snapshots/modwar19.names.txt.gz` and
-read with `snapshot.name_corpus()`. It shipped Warzone, so it carries a great deal of Cold War's
+read with `snapshot.name_corpus()`.
+
+**Treat it as spare parts, reached for when a method is short of vocabulary -- not as a place to
+point a pass because it is large.** Every asset type is in it deliberately, because a fragment
+from one type's name routinely decorates another; take whichever parts serve what you are
+building. The question this corpus poses is not "does it match" -- that is answered and the
+answer is no -- but **which parts to strip, and which of the target game's affixes to put back
+on**. That question is open, and every method below is one answer to it. It shipped Warzone, so it carries a great deal of Cold War's
 content: 174,116 of its names mention `t9`, Treyarch's Cold War codename, against 2,632
 mentioning `t8`. That ratio is the whole story of what it is good for.
 

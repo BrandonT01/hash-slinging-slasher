@@ -267,30 +267,40 @@ Two things follow that you need to know:
 - **`submit` sends one pull request per game**, titled `[BLKOPS04] findings from ...`, so a
   reviewer can tell at a glance which title a batch is for.
 
-## There is a third game in `snapshots/`, and it is a corpus rather than a target
+## There is a third game in `snapshots/`. It is spare parts, not a step
 
 `snapshots/modwar19.names.txt.gz` holds **1,167,131 Modern Warfare 2019 asset names in plain
 text**. Modern Warfare 2019 does not hash its names — the name is a `char*` in the asset header —
-so there is nothing in it to recover and it is **not** a game to solve. It is there because every
-method here builds candidates out of names known to be real (§7), and it shipped Warzone, so it
-carries a great deal of Cold War's content: 174,116 of its names mention `t9`, Treyarch's Cold War
-codename.
+so there is nothing in it to recover and it is **not** a game to solve.
+
+It is there as **raw material to harvest parts from, if you judge that useful for what you are
+already doing.** It is not a go-to, not a first move, and not a step in any routine — §2 still
+decides what to run, and "there is a big corpus sitting there" is not a reason to point a pass at
+it. Some nights it will be exactly the vocabulary a method is short of; most nights it will be
+irrelevant. Both are fine.
+
+**Every asset type is captured, deliberately.** A part harvested from one type's name routinely
+decorates another — a character's material name carries the fragments its images and models
+wear — so the corpus is not filtered down to the five wanted types. What you take from it is your
+choice; what it holds is everything.
 
 Read it with `snapshot.name_corpus()`, never by opening the path — the committed file is gzipped
 and the raw capture is gitignored. `snapshot_names` captures a new one if you have the game open
 in Cordycep.
 
-**Two things about it are already measured, and both cost a night if you rediscover them:**
+**Two things are already measured, so that nobody pays for them twice:**
 
-- **Using the names verbatim returns nothing, against either game.** They were taken into
-  cod-name-db verbatim about three years ago, so every identically-shared name is already
-  published. Measured: 0 in the five wanted types for both titles.
-- **Recombining them as cores returns nothing either** — 0 in 184 billion.
+- **The names used verbatim return nothing, against either game.** They went into cod-name-db
+  verbatim about three years ago, so every identically-shared name is already published. 0 in the
+  five wanted types, both titles. This is structural, not low yield.
+- **Recombining them as whole cores returns nothing either** — 0 in 184 billion.
 
-What works is **the middles**: cut at segment boundaries on both ends, re-decorated with the
-target game's own affixes. 256 names on Cold War and 29 on Black Ops 4 in one pass each.
-`METHODS.md` method 26 has the detail, and `mw19_middles.py --reach` measures the ceiling of a
-variant in a minute — do that before spending the machine on one.
+Neither of those is the interesting question. **The interesting question is which parts to strip
+and which of the target game's own affixes to put back on**, and that one is open: the first
+answer to it, `mw19_middles.py`, returned 256 names on Cold War in a single pass. `METHODS.md`
+method 26 has the detail. Whatever variant you think of, `--reach` measures its ceiling in a
+minute — that measurement is what separated a 7.96% method from a 1.00% one before either cost a
+night.
 
 ---
 
