@@ -1,0 +1,4 @@
+2866118cf8f2d426,p8_fxanim_mp_mal_crab_04_anim
+43fe0e5fb9b07801,p8_fxanim_mp_mal_crab_03_anim
+4d66f7c1284d6320,p8_fxanim_mp_mal_crab_02_anim
+79f6ed51b7250ae3,p8_fxanim_mp_mal_crab_01_anim
