@@ -91,7 +91,11 @@ def main():
     payload = {"embeds": [embed(summary)]}
 
     if args.dry_run:
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
+        # Written as UTF-8 bytes rather than printed. A Windows console is cp1252, and printing
+        # an em-dash to it produces a byte nothing downstream can decode -- which matters because
+        # --dry-run exists to be piped into something else.
+        out = json.dumps(payload, indent=2, ensure_ascii=False).encode("utf-8")
+        sys.stdout.buffer.write(out + bytes([10]))
         return 0
 
     url = os.environ.get("DISCORD_WEBHOOK", "").strip()
