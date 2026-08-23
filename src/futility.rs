@@ -111,6 +111,8 @@ mod tests {
     fn a_single_find_clears_the_streak() {
         let ledger = ledger();
         let restore = fs::read_to_string(&ledger).ok();
+        let _ = fs::create_dir_all(crate::paths::state());
+        let _ = fs::remove_file(&ledger);
 
         // Start from a known streak. `record` counts *on top of* whatever the ledger already
         // holds, so without this the test asserts against the machine's live count and fails on
