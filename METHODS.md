@@ -75,13 +75,13 @@ table under a name you would not have guessed is the thing you are about to rebu
 
 | method | ways | runs | names | candidates | 1 name per | best | latest | first | last | state |
 |---|---:|---:|---:|---:|---:|---:|---:|---|---|---|
-| final byte solved backwards | 1 | 21 | 1,564 | 225,772 | 144 | 18 | 345 | 2026-08-22 | 2026-08-23 | spent |
+| final byte solved backwards | 1 | 22 | 1,566 | 251,047 | 160 | 18 | 12,637 | 2026-08-22 | 2026-08-23 | spent |
 | gaps | 2 | 4 | 374 | 246,361 | 658 | 190 | 6,554 | 2026-08-20 | 2026-08-20 | spent |
 | black ops 1 build names, verbatim | 1 | 2 | 271 | 651,912 | 2,405 | 1,940 | 3,164 | 2026-08-22 | 2026-08-22 | live |
 | black ops 3 build names, respelled, full harvest | 1 | 2 | 148 | 473,642 | 3,200 | 1,691 | 29,602 | 2026-08-22 | 2026-08-22 | spent |
-| family gap filling | 1 | 12 | 192 | 1,009,106 | 5,255 | 654 | 7,874 | 2026-08-19 | 2026-08-23 | spent |
+| family gap filling | 1 | 13 | 196 | 1,113,742 | 5,682 | 654 | 26,159 | 2026-08-19 | 2026-08-23 | spent |
 | mw19 packed-channel parts, verbatim and i | 1 | 1 | 63 | 413,230 | 6,559 | 6,559 | 6,559 | 2026-08-23 | 2026-08-23 | untried |
-| image siblings of confirmed materials | 1 | 25 | 4,704 | 30,964,410 | 6,582 | 393 | 1,740,531 | 2026-08-19 | 2026-08-23 | spent |
+| image siblings of confirmed materials | 1 | 27 | 4,714 | 34,547,520 | 7,328 | 393 | 597,817 | 2026-08-19 | 2026-08-23 | spent |
 | image siblings | 3 | 5 | 529 | 4,621,863 | 8,736 | 1,734 | 68,329 | 2026-08-20 | 2026-08-21 | spent |
 | channels | 2 | 4 | 916 | 9,598,953 | 10,479 | 2,732 | 602,442 | 2026-08-20 | 2026-08-20 | spent |
 | paired-token-blocks-anim | 1 | 1 | 33 | 410,321 | 12,433 | 12,433 | 12,433 | 2026-08-20 | 2026-08-20 | untried |
@@ -93,7 +93,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | bo3 mod tools gdt asset names | 1 | 2 | 3 | 84,078 | 28,026 | 21,019 | 42,039 | 2026-08-22 | 2026-08-22 | live |
 | paired-token-blocks-alias-deterministic | 1 | 2 | 14 | 481,544 | 34,396 | 24,067 | 60,216 | 2026-08-20 | 2026-08-20 | live |
 | paired-token-blocks-anim-deterministic | 1 | 9 | 104 | 3,708,652 | 35,660 | 15,884 | 206,784 | 2026-08-20 | 2026-08-20 | spent |
-| image channel completion | 1 | 18 | 962 | 43,794,087 | 45,523 | 5,159 | 491,986 | 2026-08-20 | 2026-08-23 | spent |
+| image channel completion | 1 | 19 | 966 | 46,281,729 | 47,910 | 5,159 | 621,910 | 2026-08-20 | 2026-08-23 | spent |
 | continuations | 1 | 1 | 776 | 39,892,300 | 51,407 | 51,407 | 51,407 | 2026-08-20 | 2026-08-20 | untried |
 | older-title vocabulary | 1 | 2 | 59 | 3,144,542 | 53,297 | 34,939 | 112,305 | 2026-08-21 | 2026-08-21 | cooling |
 | black ops 3 build names, respelled | 1 | 1 | 1 | 54,358 | 54,358 | 54,358 | 54,358 | 2026-08-22 | 2026-08-22 | untried |
@@ -109,7 +109,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | correlated-token-blocks-alias-wide | 1 | 2 | 7 | 1,175,308 | 167,901 | 146,934 | 146,934 | 2026-08-20 | 2026-08-20 | live |
 | adjacent-token-order-model | 1 | 2 | 10 | 1,765,338 | 176,533 | 110,332 | 441,340 | 2026-08-20 | 2026-08-20 | cooling |
 | modern warfare 2 build names, verbatim | 1 | 1 | 1 | 209,784 | 209,784 | 209,784 | 209,784 | 2026-08-22 | 2026-08-22 | untried |
-| materials from image cores | 1 | 12 | 244 | 55,471,824 | 227,343 | 68,987 | 99,691 | 2026-08-20 | 2026-08-23 | live |
+| materials from image cores | 1 | 13 | 248 | 60,173,712 | 242,635 | 68,987 | 1,175,472 | 2026-08-20 | 2026-08-23 | spent |
 | paired-token-blocks-model-deterministic | 1 | 6 | 148 | 39,959,454 | 269,996 | 96,527 | 475,923 | 2026-08-20 | 2026-08-20 | cooling |
 | token-insertion-deletion-alias | 1 | 2 | 28 | 7,924,449 | 283,016 | 233,070 | 233,070 | 2026-08-20 | 2026-08-20 | live |
 | adjacent-token-order-batch | 1 | 2 | 26 | 7,517,953 | 289,152 | 250,599 | 250,599 | 2026-08-20 | 2026-08-20 | live |
@@ -152,16 +152,19 @@ table under a name you would not have guessed is the thing you are about to rebu
 | heads of length 3 | 1 | 1 | 692 | 46,352,610,953 | 66,983,541 | 66,983,541 | 66,983,541 | 2026-08-22 | 2026-08-22 | untried |
 | uncarried two-segment endings over the full published core list | 1 | 2 | 264 | 20,951,727,534 | 79,362,604 | 72,749,053 | 87,298,864 | 2026-08-23 | 2026-08-23 | live |
 | uncarried beginnings over the held vocabulary | 1 | 1 | 7 | 945,274,375 | 135,039,196 | 135,039,196 | 135,039,196 | 2026-08-23 | 2026-08-23 | untried |
+| wrapper decorations, suffix side | 1 | 8 | 1,071 | 185,010,310,334 | 172,745,387 | 1,985,948 | 159,762,864 | 2026-08-23 | 2026-08-23 | spent |
 | cold war sound, uncarried 3-segment endings | 1 | 2 | 121 | 22,865,684,520 | 188,972,599 | 181,473,686 | 181,473,686 | 2026-08-23 | 2026-08-23 | live |
 | uncarried endings over all-boundary truncation cores | 1 | 6 | 4,625 | 1,120,036,280,202 | 242,170,006 | 76,634,118 | 518,821,573 | 2026-08-23 | 2026-08-23 | cooling |
 | uncarried three-segment endings over the full published core list | 1 | 2 | 56 | 13,564,678,200 | 242,226,396 | 165,422,904 | 165,422,904 | 2026-08-23 | 2026-08-23 | live |
 | uncarried three-segment endings over all-boundary cores | 1 | 2 | 1,523 | 400,012,766,734 | 262,647,909 | 221,982,667 | 221,982,667 | 2026-08-23 | 2026-08-23 | live |
 | uncarried endings over published cores | 1 | 6 | 1,191 | 385,019,657,854 | 323,274,271 | 17,624,983 | 4,062,515,784 | 2026-08-23 | 2026-08-23 | spent |
 | sound, uncarried endings over all-boundary cores | 1 | 8 | 3,397 | 1,105,024,531,644 | 325,294,239 | 92,280,373 | 902,952,472 | 2026-08-23 | 2026-08-23 | cooling |
-| tails of length 3 | 1 | 17 | 1,696 | 573,101,092,738 | 337,913,380 | 35,873,048 | 833,387,572 | 2026-08-22 | 2026-08-23 | spent |
+| older-title decorations | 1 | 1 | 14 | 4,676,251,623 | 334,017,973 | 334,017,973 | 334,017,973 | 2026-08-23 | 2026-08-23 | untried |
 | sound dotted tails | 1 | 2 | 85 | 14,769,804,322 | 343,483,821 | 343,483,821 | 343,483,821 | 2026-08-19 | 2026-08-23 | untried |
 | confirmed-only cores over the full uncarried ending vocabulary | 1 | 8 | 1,576 | 555,022,909,612 | 352,171,896 | 141,523,942 | 3,319,756,536 | 2026-08-23 | 2026-08-23 | spent |
+| tails of length 3 | 1 | 18 | 1,698 | 609,000,483,878 | 358,657,528 | 35,873,048 | 17,949,695,570 | 2026-08-22 | 2026-08-23 | spent |
 | composed numeric endings | 1 | 2 | 14 | 6,497,838,750 | 464,131,339 | 406,114,921 | 406,114,921 | 2026-08-23 | 2026-08-23 | live |
+| wrapper decorations, prefix side | 1 | 4 | 22 | 10,237,404,404 | 465,336,563 | 39,559,390 | 1,180,777,075 | 2026-08-23 | 2026-08-23 | spent |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
 | family walking, numbers in place | 1 | 17 | 1,243 | 62,267,763,771 | 581,941,717 | 200,051,105 | 200,051,105 | 2026-08-19 | 2026-08-23 | live |
 | animation transition grid | 1 | 2 | 2 | 1,295,625,020 | 647,812,510 | 647,812,510 | 647,812,510 | 2026-08-23 | 2026-08-23 | live |
@@ -171,6 +174,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | all-boundary cores x uncarried endings, 2 segments | 1 | 1 | 163 | 177,157,271,555 | 1,086,854,426 | 1,086,854,426 | 1,086,854,426 | 2026-08-23 | 2026-08-23 | untried |
 | uncarried five-segment endings over all-boundary cores | 1 | 2 | 597 | 804,758,082,518 | 1,348,003,488 | 906,259,101 | 906,259,101 | 2026-08-23 | 2026-08-23 | live |
 | uncarried one-segment endings over all-boundary cores | 1 | 2 | 316 | 522,511,859,758 | 1,653,518,543 | 1,326,172,232 | 2,195,427,982 | 2026-08-23 | 2026-08-23 | live |
+| heads of length 3, head-measured alphabet | 1 | 2 | 69 | 152,931,233,682 | 2,216,394,691 | 1,737,854,928 | 3,058,624,673 | 2026-08-23 | 2026-08-23 | live |
 | uncarried endings ranks 60001-120000 over published cores | 1 | 2 | 21 | 95,849,557,466 | 4,564,264,641 | 2,995,298,670 | 9,584,955,746 | 2026-08-23 | 2026-08-23 | cooling |
 | mw19 image stems with the channel code swapped for cold war's own | 1 | 1 | 52 | 255,966,684,256 | 4,922,436,235 | 4,922,436,235 | 4,922,436,235 | 2026-08-23 | 2026-08-23 | untried |
 | all-boundary sound cores x uncarried sound endings, 2 segments | 1 | 1 | 37 | 198,601,685,997 | 5,367,613,135 | 5,367,613,135 | 5,367,613,135 | 2026-08-23 | 2026-08-23 | untried |
@@ -191,7 +195,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | sound files and aliases | 1 | 47 | 29,823 | 637,428,669,482,581 | 814,085,146,210 | 305,380,319,690 | 954,704,546,113 | 2026-08-19 | 2026-08-23 | cooling |
 | mw19 packed parts under cold war's uncarried beginnings | 1 | 1 | 2 | 3,588,945,525,920 | 1,794,472,762,960 | 1,794,472,762,960 | 1,794,472,762,960 | 2026-08-23 | 2026-08-23 | untried |
 | mw19 middles decorated | 1 | 1 | 13 | 29,134,495,063,900 | 2,241,115,004,915 | 2,241,115,004,915 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | untried |
-| not recorded | 1 | 52 | 2,940 | - | - | - | - | 2026-08-19 | 2026-08-23 | unmeasured |
+| not recorded | 1 | 53 | 3,386 | - | - | - | - | 2026-08-19 | 2026-08-23 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -214,7 +218,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-138 distinct methods, run 167 ways between them, across 631 runs. `names` is what each run
+142 distinct methods, run 171 ways between them, across 654 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
