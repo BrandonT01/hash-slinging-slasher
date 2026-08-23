@@ -93,7 +93,7 @@ def embed(summary):
         "fields": fields,
         "footer": {
             "text": "%s names found by this project  ·  \"named\" is how much of that pool "
-            "everybody together has named" % format(totals["names"], ",")
+            "has been named in total (including cod-name-db too)" % format(totals["names"], ",")
         },
     }
 
