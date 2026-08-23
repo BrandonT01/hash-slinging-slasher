@@ -184,7 +184,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | black ops 3 build vocabulary | 1 | 2 | 293 | 7,358,148,299,220 | 25,113,134,127 | 15,655,634,679 | 63,432,312,924 | 2026-08-22 | 2026-08-22 | cooling |
 | tails of length 5 | 1 | 4 | 670 | 19,811,769,907,699 | 29,569,805,832 | 10,653,467,440 | 319,932,215,920 | 2026-08-22 | 2026-08-22 | spent |
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
-| images derived from materials | 1 | 13 | 5,433 | 9,273,168,916,668 | 51,232,977,440 | 34,027,942,451 | 34,027,942,451 | 2026-08-19 | 2026-08-23 | live |
+| images derived from materials | 1 | 14 | 5,540 | 11,656,161,398,832 | 40,472,782,634 | 22,270,957,777 | 22,270,957,777 | 2026-08-19 | 2026-08-23 | live |
 | uncarried beginnings | 1 | 2 | 4 | 364,450,467,250 | 91,112,616,812 | 73,924,584,790 | 73,924,584,790 | 2026-08-23 | 2026-08-23 | live |
 | general search | 2 | 67 | 106,014 | 1,329,861,501,623,328 | 311,151,497,806 | 35,073,084,706 | 51,589,254,967,866 | 2026-08-19 | 2026-08-23 | spent |
 | info removed | 1 | 7 | 172 | 62,621,603,669,586 | 364,079,091,102 | 6,559 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | spent |
@@ -213,7 +213,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-136 distinct methods, run 165 ways between them, across 655 runs. `names` is what each run
+136 distinct methods, run 165 ways between them, across 656 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
