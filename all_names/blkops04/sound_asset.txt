@@ -156,6 +156,12 @@ cd774fa7ddc0fa7,zmb\ai\spartoi\foley\step_2\step_18.ln100.pc.snd
 4d853adec42a27b0,zmb\ai\spartoi\vox\pain\pain_01.ln100.pc.snd
 5be564de7d9f1617,zmb\ai\spartoi\vox\pain\pain_02.ln100.pc.snd
 7ece7a508ad4dd3a,zmb\ai\spartoi\vox\pain\pain_03.ln100.pc.snd
+7dcb2f6a6c6aa509,zmb\ai\spartoi\vox\pain\pain_04.ln100.pc.snd
+694bcda0829356a4,zmb\ai\spartoi\vox\pain\pain_05.ln100.pc.snd
+47f0876c6d14b8fb,zmb\ai\spartoi\vox\pain\pain_06.ln100.pc.snd
+2deeab9fc8038dde,zmb\ai\spartoi\vox\pain\pain_07.ln100.pc.snd
+756a3ed12d61dc6d,zmb\ai\spartoi\vox\pain\pain_08.ln100.pc.snd
+56f7f73ec4267a98,zmb\ai\spartoi\vox\pain\pain_09.ln100.pc.snd
 3549573baccb0aeb,zmb\ai\tiger\exp\exp_tiger_00.ln100.pc.snd
 692fa689e25f7a4f,zmb\ai\werewolf\vox\howl_2.0\wwolf_howl_00.ln100.pc.snd
 33fce846aeeebe92,zmb\ai\werewolf\vox\howl_2.0\wwolf_howl_01.ln100.pc.snd

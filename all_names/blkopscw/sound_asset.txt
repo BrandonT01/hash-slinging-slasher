@@ -1,6 +1,8 @@
 103a3b782cf289b9,amb/cp_rus_amerika/control_room/emt_soviet_comp_hum_click_lp.rr75.pc.all.snd
+4ad547d398de6cee,amb/electronics/computer/loops/reel/reel.rr75.pc.all.snd
 dcb65ad80fa5b76,amb/environment/water/sprinkler/small/sprinkler_sml_00.rr75.pc.all.snd
 1b046c9a0aec0207,amb/industrial/cement_mixer/cement_mixer_lp.rr75.pc.all.snd
+4397133371b70e94,evt/cp_rus_amerika/elevator/evt_tower_elevator_lp_lfe.rl75.pc.all.snd
 ddfa4b388a668e5,mc/mlt_p8_1forest5_0.sn55.pc_inspect.ln75.pc.all.snd
 ec0151ea605d6b6,mpl/executions/exec_136/exec_136_prone.ln75.pc.all.snd
 64f0592507621850,mpl/executions/exec_136/exec_136_stand.ln75.pc.all.snd
@@ -134,6 +136,7 @@ df5334158b4df09,vox/scripted/mpl/anme/vox_anme_stk_hub_offline_01.rn75.pc.en.snd
 4918d34a8b07fd4c,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_04.rn75.pc.en.snd
 74b36fa584493bf1,vox/scripted/zm_operators/weav/vox_weav_vox_jckl_zm_se_kill_veh_05.rn75.pc.en.snd
 6b58b9f6bf22c7cf,wc/t8_aut_zt8_exd_05_window_frame_wood_m_success
+75601e975adaf926,wpn/melee/battleaxe/battleaxe_first_raise.ln75.pc.all.snd
 68a898d583122f52,wpn/zmb/mega_barrel/reload/fly_mega_barrel_blazer_first_start.ln75.pc.all.snd
 43cb225f4a89c9fd,wpn/zmb/mega_barrel/reload/fly_mega_barrel_copycat_first_start.ln75.pc.all.snd
 3b1ba9dec21b5059,wpn/zmb/mega_barrel/reload/fly_mega_barrel_diffusion_first_start.ln75.pc.all.snd
