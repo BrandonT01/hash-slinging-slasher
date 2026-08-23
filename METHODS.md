@@ -35,6 +35,13 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 16 | final byte solved backwards | any name one **final character** from a known one, at any of 256 bytes | `scripts/final_byte.py` → `confirm_list` | **1 name per 18 candidates — the best measured here.** In `derive_closure`, so it re-runs free after any pass |
 | 17 | tails of length k | any name that is a known one with its **last k characters** replaced | `scripts/tails.py` → `confirm_plan` | k=3: **1,151 in 21s a game.** Subsumes k=1 and 2; `--length 4` for more |
 | 18 | heads of length k | any name that is a known one with its **first k characters** replaced | `scripts/tails.py --head` → `confirm_plan` | **692 on Cold War in one pass.** The mirror of 17, untried until 2026-08-22 |
+| 19 | uncarried directories | material directories the twelve-directory list omits | `contrib/mcdp_cores.py` -> `confirm_plan` | **2,846 on Cold War in one pass.** `mcdp/` is Cold War's second largest material directory and nothing here could emit it |
+| 20 | black ops 3 sab sounds, black ops 4 spelling | Black Ops 4 `sound_asset`, the largest pool in either game | `contrib/bo3_sab_to_bo4.py` -> `confirm_plan --no-fold` | Black Ops 3's SAB paths lower cased, language directory dropped, every Black Ops 4 tail put back on |
+| 21 | recovering a pool's seed corpus | any pool whose ids were injected rather than loaded | `contrib/sound_takes.py` | **not a search -- it is what every sound search should have been seeded from.** Cold War `sound_asset`: `all_names/` holds 148, the tables hold 39,199 |
+| 22 | uncarried endings | any type, through the endings `data/suffixes.txt` structurally cannot express | `contrib/uncarried_endings.py` -> `confirm_plan` | **6,674 names across both games on 2026-08-23, the largest method here.** Yield rises with the segment depth: 1 segment 1,191, 2 segments 2,065, 3 segments 1,800, 4 segments 1,054, 5 segments 564 |
+| 23 | uncarried sound endings | `sound_alias` and `sound_asset`, the two largest pools | `contrib/uncarried_endings.py --sound-pass` | **1,385 names.** 79% of published sound names end in something `data/sound.suffixes.txt` cannot express -- proportionally the larger of the two ending gaps |
+| 24 | measured image channels | `image`, through the channels method 13's hand-written list omits | `contrib/image_channels_wide.py` | 36 names, but it widens a derivation `derive_closure` re-runs every round: 231 of 250 real channels were uncarried, `_thermalmap` alone heads 16,000 |
+| 25 | all-boundary cores | every method built as core x ending | `contrib/uncarried_endings.py` + cores cut at every segment boundary | **the most productive change measured on 2026-08-23.** Not a new method -- a fix to how every ending sweep builds its cores. Turned 2,065 names into 2,553 while using five times fewer endings, and 1,385 sound names into 1,746 in a single pass |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -1326,6 +1333,104 @@ three folds, because the ceiling was never what moved.
 
 ---
 
+## The ending list is the bottleneck, and it is measurable
+
+Written 2026-08-23, after `mcdp/` and `uncarried_endings` returned 9,520 names between them in one
+evening from the same idea.
+
+Both wins came from the same place, and it is not a clever recombination -- it is the observation
+that **the committed lists are a cap, and everything outside them is unreachable no matter what
+method is pointed at it.** `data/prefixes.txt` carries 700 beginnings and `data/suffixes.txt`
+carries 4,629 endings. Measured against the published tables:
+
+    endings carried                4,629      (2,798 of one segment, 1,086 of two, 745 of three)
+    uncarried, 1 segment         178,016  heading   620,830 published names
+    uncarried, 2 segments        471,768  heading 1,610,162 published names
+    uncarried, 3 segments        786,512  heading 4,155,796 published names
+
+**Better than a quarter of the published corpus ends in something no generator here can put on a
+name**, and the commonest are not exotic -- `_thermalmap` heads 16,000 alone, and at two segments
+the ranking is animation transitions: `_to_walk`, `_to_sprint`, `_to_jog`, `_offset_additive`,
+`_empty_ads`.
+
+### Why this was not found by re-measuring
+
+CLAUDE.md §8 is right that re-running `derive_lists.py` does not reopen ground: it changes what a
+search is *called* without changing what it can *reach*. That is exactly why this was invisible.
+The ending list is **capped**, `derive_lists.py` reports what its ceiling cut, and re-measuring
+cannot lift a cap -- so the cut vocabulary was reported honestly every single run and never once
+acted on. The fix was not to measure again. It was to take what the cap threw away.
+
+### What it costs, and the shape that works
+
+The cores come from the published names with the same number of segments removed, so a core that
+wears `_c` in the tables can be asked about wearing `_thermalmap`. Two things keep it runnable:
+
+  - **Drop dotted endings.** Sound names carry a dotted tail, and at three segments they crowd out
+    every ending the other four types use. §5 already says a sound ending tried against a model id
+    can only ever be a coincidence. `--sounds` keeps them if a sound pass wants them.
+  - **Restrict the cores to one game past two segments.** The ending vocabulary grows faster than
+    the core list shrinks, and the published core list makes the plan unrunnable.
+
+### The core list mattered more than the ending list
+
+Added later the same day, and it is the single most productive change made to this method.
+
+Every ending sweep above built its cores the same way: a published name with **exactly as many
+trailing segments removed as the ending has**. A two-segment ending could therefore only ever
+attach to a name cut two segments from its end. That is an arbitrary restriction, and it was
+costing most of the yield.
+
+Cutting every known name at **every** segment boundary instead gives 1,334,022 cores, so a core
+that sits five segments deep in one name gets asked about wearing a two-segment ending from
+another. Measured 2026-08-23, both games together:
+
+    all-boundary cores x  20,000 endings        602 names
+    all-boundary cores x 100,000 endings      2,553 names
+    all-boundary cores x 300,000 endings      1,470 names
+
+against 2,065 for the original depth-matched sweep at 200,000 endings. Repeated at the other
+depths, both games: 1 segment **316**, 3 segments **1,523**, 4 segments **381**.
+
+It transfers to sound, which breaks at path separators as well as underscores. 839,743 sound
+cores against 100,000 uncarried sound endings returned **1,746 names in one pass** -- more than
+the entire depth-matched sound sweep (1,385) had returned across six. **The ending list was
+never the binding constraint -- the core list was**, and the two multiply: widening the endings
+five-fold over the wide core list quadrupled the yield, where widening them over the narrow one
+had gone flat.
+
+The lesson generalises past this method. When a cross product underperforms, work out which of
+the three lists is actually restricting it before widening whichever one is easiest to widen.
+
+### And the cores this project made itself
+
+The corpus grew by roughly 24,000 confirmed names on 2026-08-23, and that changes the core list
+in a way re-measuring never can. Cut at every boundary, **156,178 non-sound cores and 319,592
+sound cores exist only in `findings/` and the merged submissions** -- they occur nowhere in the
+published tables, so no ending sweep had ever crossed them with the ending vocabulary.
+
+    confirmed-only cores x 505,416 endings            746 names
+    confirmed-only SOUND cores x 184,215 endings      583 names
+
+This is the distinction §8 is drawing and it is worth stating in the positive. Re-running
+`derive_lists.py` reopens nothing because it renames the same reach. New **material** reopens
+ground properly, and confirming names is the only thing that produces it -- which is why the
+right move after any productive pass is to rebuild the core list and run again, and the wrong
+move is to re-measure and run the same thing.
+
+### Where it is spent, and where it is not
+
+Yield by depth, both games, 2026-08-23: 1 segment **1,191**, 2 segments **2,065**, 3 segments
+**1,800**, 4 segments **1,054**, 5 segments **564**. It decays with depth rather than with
+re-running, because each depth is a different vocabulary rather than a deeper sweep of one.
+
+The obvious next question -- and it is unmeasured -- is the mirror. This is all endings. The
+beginning list is capped at 700 the same way, and `mcdp/` is one beginning out of that cap worth
+2,846 names on its own. `contrib/redecorations.py` ranks uncarried beginnings by how much of their
+vocabulary is borrowed, and the general sweep over all 1,075 of them returned only 7 -- but that
+sweep used **bare stems and no endings**. Nobody has yet crossed the uncarried beginnings with the
+uncarried *endings*, and both halves are known to be productive on their own.
+
 ## Dead ends
 
 Do not spend a night rediscovering these. Each cost real time.
@@ -1353,6 +1458,15 @@ Do not spend a night rediscovering these. Each cost real time.
 | Cross-type generation involving `xanim` and a non-model type | Measured: 13 to 22 shared cores out of tens of thousands. There is no seam. |
 | Recombining the **zombies** family into Black Ops 4 xmodels | `contrib/zombie_models.py`, 20260821: every model name already known to carry `zombie`/`zmb`/`zm_` cut into 46,306 stems and recombined against 24 model beginnings and 407 endings. **452,317,008 candidates, 0 matched** -- not a low yield, a zero, against 20,922 unnamed BO4 model ids. The family's vocabulary is not the constraint: the unnamed models are not spelled out of pieces the named zombies models use. A wider ending set is the obvious next try and the measurement says not to bother with the same stems. |
 | Re-measuring the lists to reopen a spent method | `derive_lists.py` folds the confirmed names in, the fingerprint changes, and the tool stops saying the search is swept — so it looks like the method reopened. Three consecutive folds: **55 names, then 294, then 51**, the last on a corpus two and a half times larger. The lists are capped, so a fold displaces as much vocabulary as it adds; what reopens a method is different ground. This was `next_step`'s standing advice for a month and is most of how a 165-name pass became a 2-name one. |
+| Uncarried beginnings crossed with the whole corpus, in general | The shape that returned 2,846 for `mcdp/` returns almost nothing anywhere else. Measured 2026-08-23: all 1,075 uncarried beginnings against the 879,325-core held vocabulary gave **0 on Black Ops 4 and 7 on Cold War** in 945 M candidates. `mcdp/` worked because 692 of 692 of its cores were borrowed from other directories -- it was a re-decoration of a vocabulary already held. Rank by *borrowed share* before building one of these (`contrib/redecorations.py`); the rest of the uncarried beginnings have private vocabularies and this shape cannot reach them. |
+| Cold War sound files, numbered takes | 36,971 of the 39,199 recovered basenames end in a number, so this looked like the obvious shape. Swept every index in every measured width against every measured tail on 2026-08-23: **0**. Verified not to be a plumbing failure -- 2,783 of 2,816 numbered seeds reconstruct exactly from the stem and ending lists. The game's take runs are already fully named. |
+| Cold War sound files, directory x basename recombination | The same corpus, 248 real directories x 103,120 cores x the 16 commonest tails, 436 M candidates: **0**. Verified the same way -- 31,842 of 31,845 recovered names reconstruct exactly as directory + basename + tail. A Cold War sound basename does not appear under a directory the tables have not already caught it under. |
+| Black Ops 4 sound files, numbered takes and recombination | The largest pool in either game (70,878 unnamed of 79,263) and the most expensive negative here: 2,572 directories x 10,538 cores x 13,995 numbered-take endings, **379 billion candidates unfolded, 0 matched** -- not 0 new, 0 hits of any kind. Whatever the unnamed 70,878 are, they are not recombinations of the 5,977 that are named. |
+| Black Ops 3 SAB names respelled as Black Ops 4 | Black Ops 4 is Black Ops 3's direct sequel on the same audio pipeline, same directories, same dotted-tail grammar -- so the paths ought to carry over. 3.06 billion candidates, lower cased, language directory dropped, every Black Ops 4 tail restored: **0**. |
+| Cross-game sound transfer at full recovered vocabulary | METHODS lists this at 27 names, found when the seed corpora were 148 and 172 names. Re-run on 2026-08-23 with the recovered corpora -- 39,199 Cold War paths against Black Ops 4 unfolded, 5,977 Black Ops 4 paths against Cold War folded, both slash spellings: **0 each way**. The bigger corpus does not reopen it. |
+| Doubly uncarried -- an uncarried beginning over an uncarried ending | Both halves are productive alone (6,674 names from endings, 2,846 from `mcdp/`), so the cross looked like the obvious next question. 100 uncarried beginnings x 458k middles x 5,000 uncarried two-segment endings, **229 billion candidates: 0**. A name is reachable through one cap or the other, not through both at once -- the middles that survive stripping a segment off each end are too short to identify anything. |
+| The animation transition grid, composed rather than observed | `xanim` is the least-named type in both games and has a real grammar: 6,149 published names match `<core>_<from>_to_<to>` over 1,446 cores, 101 from-states and 129 to-states. That grid is 18.8 M combinations and the tables hold 0.03% of it, so composing the two state vocabularies looked like free ground. 50k cores x 13,029 composed transitions: **1 name a game**. The unobserved pairings are unobserved because they do not exist -- a weapon has the transitions its state machine allows and no others. |
+| Materials from image cores through the thirteenth directory | `mcdp/` swept against every published material core returned 2,846, so asking the same directory from the image side looked like the other half of the seam. **0 both games.** The material-core sweep had already taken it; image cores add nothing `mcdp/` did not already reach. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
 
 ---
