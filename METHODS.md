@@ -171,6 +171,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
 | images derived from materials | 1 | 12 | 5,363 | 6,891,212,945,064 | 62,082,999,505 | 39,600,932,504 | 47,855,724,037 | 2026-08-19 | 2026-08-22 | live |
 | uncarried beginnings | 1 | 2 | 4 | 364,450,467,250 | 91,112,616,812 | 73,924,584,790 | 73,924,584,790 | 2026-08-23 | 2026-08-23 | live |
+| mw19 middles under cold war's own decorations | 1 | 1 | 256 | 25,025,670,291,620 | 97,756,524,576 | 97,756,524,576 | 97,756,524,576 | 2026-08-23 | 2026-08-23 | untried |
 | general search | 2 | 63 | 105,570 | 1,020,326,453,766,951 | 239,064,305,006 | 35,073,084,706 | 35,073,084,706 | 2026-08-19 | 2026-08-23 | live |
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | sound files and aliases | 1 | 42 | 29,703 | 445,924,607,420,656 | 634,316,653,514 | 305,380,319,690 | 2,897,689,870,441 | 2026-08-19 | 2026-08-23 | cooling |
@@ -198,7 +199,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-122 distinct methods, run 150 ways between them, across 544 runs. `names` is what each run
+123 distinct methods, run 151 ways between them, across 545 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
