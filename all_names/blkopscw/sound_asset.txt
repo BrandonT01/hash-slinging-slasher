@@ -6,6 +6,7 @@ dcb65ad80fa5b76,amb/environment/water/sprinkler/small/sprinkler_sml_00.rr75.pc.a
 ddfa4b388a668e5,mc/mlt_p8_1forest5_0.sn55.pc_inspect.ln75.pc.all.snd
 ec0151ea605d6b6,mpl/executions/exec_136/exec_136_prone.ln75.pc.all.snd
 64f0592507621850,mpl/executions/exec_136/exec_136_stand.ln75.pc.all.snd
+3cb4818d15ce1ea2,mus/cp/rus_amerika/3.0_caught/mus_amerika_caught_v1.1_live_edit.sn75.pc.all.snd
 47370e49aa78862a,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_00.rn75.pc.en.snd
 192ed62bd28eb707,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_01.rn75.pc.en.snd
 18be692e2568c983,vox/scripted/mpl/abnd/vox_abnd_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd
