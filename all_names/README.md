@@ -37,10 +37,20 @@
 </td>
 </tr></table>
 
-**names** is what this project has recovered and published here. **% found** is how much
-of that pool *anybody* can name -- these names plus every one already in the community
-tables, over every id the game holds. A type at 80% has one id in five still unnamed;
-`sound_asset` on Black Ops 4 at 11% is the largest unworked ground in either game.
+**found here** is what this project has recovered and published in these files.
+**named, of all in the game** is the whole pool: those names plus every one already in
+the community tables, against every id the game holds.
+
+They are not the same measure, and the second is much the larger.
+
+Where `image` under `blkops04/` reads 19,023 and 126,050 / 167,360:
+this project found 19,023 of the 126,050 names anybody has for that pool, and
+41,310 of its ids are still nameless. The percentage is the fraction named,
+not the fraction found here.
+
+The emptiest pool is `sound_asset` under `blkops04/`: 8,562 of 79,263 named,
+so 70,701 ids carry no name at all. That is the largest unworked ground
+here, and it is invisible from a count on its own.
 
 The community half of that is measured against `cod-name-db` on 2026-08-24 and stored in
 `coverage.json`, because the tables are 345 MB and are not in this repository. Names

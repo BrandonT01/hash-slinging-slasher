@@ -389,12 +389,54 @@ def write_index(written, check):
         except Exception:
             pass
 
+        # A worked example and the emptiest pool, both computed. Written by hand they would be
+        # wrong within a night, and a generated page carrying stale numbers is worse than one
+        # carrying none.
+        worked = emptiest = None
+        for game in games:
+            for kind, count in by_game[game]:
+                named, total = coverage.get(game, {}).get(kind, (0, 0))
+                if not total:
+                    continue
+                if worked is None and count and named > count:
+                    worked = (game, kind, count, named, total)
+                if emptiest is None or named / total < emptiest[3] / emptiest[4]:
+                    emptiest = (game, kind, count, named, total)
+
         lines += [
-            "**names** is what this project has recovered and published here. **% found** is how much",
-            "of that pool *anybody* can name -- these names plus every one already in the community",
-            "tables, over every id the game holds. A type at 80% has one id in five still unnamed;",
-            "`sound_asset` on Black Ops 4 at 11% is the largest unworked ground in either game.",
+            "**found here** is what this project has recovered and published in these files.",
+            "**named, of all in the game** is the whole pool: those names plus every one already in",
+            "the community tables, against every id the game holds.",
             "",
+            "They are not the same measure, and the second is much the larger.",
+            "",
+        ]
+
+        if worked:
+            game, kind, count, named, total = worked
+            lines += [
+                "Where `%s` under `%s/` reads %s and %s / %s:"
+                % (kind, game, format(count, ","), format(named, ","), format(total, ",")),
+                "this project found %s of the %s names anybody has for that pool, and"
+                % (format(count, ","), format(named, ",")),
+                "%s of its ids are still nameless. The percentage is the fraction named,"
+                % format(total - named, ","),
+                "not the fraction found here.",
+                "",
+            ]
+
+        if emptiest:
+            game, kind, count, named, total = emptiest
+            lines += [
+                "The emptiest pool is `%s` under `%s/`: %s of %s named,"
+                % (kind, game, format(named, ","), format(total, ",")),
+                "so %s ids carry no name at all. That is the largest unworked ground"
+                % format(total - named, ","),
+                "here, and it is invisible from a count on its own.",
+                "",
+            ]
+
+        lines += [
             "The community half of that is measured against `cod-name-db`%s and stored in"
             % (" on %s" % measured if measured else ""),
             "`coverage.json`, because the tables are 345 MB and are not in this repository. Names",
