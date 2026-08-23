@@ -1,0 +1,2 @@
+3ad406b4428cb05a,wpn_turret_dska_brass_loop_npc
+79c36db4aeccde7f,wpn_turret_dska_brass_loop_plr
