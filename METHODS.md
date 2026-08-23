@@ -42,6 +42,7 @@ python scripts/coverage.py --five                where the unnamed assets actual
 | 23 | uncarried sound endings | `sound_alias` and `sound_asset`, the two largest pools | `scripts/contributed/uncarried_endings_20260823-040620.py --sound-pass` | **1,385 names.** 79% of published sound names end in something `data/sound.suffixes.txt` cannot express -- proportionally the larger of the two ending gaps |
 | 24 | measured image channels | `image`, through the channels method 13's hand-written list omits | `scripts/contributed/image_channels_wide_20260823-043005.py` | 36 names, but it widens a derivation `derive_closure` re-runs every round: 231 of 250 real channels were uncarried, `_thermalmap` alone heads 16,000 |
 | 25 | all-boundary cores | every method built as core x ending | `scripts/contributed/uncarried_endings_allboundary_20260823-134935.py` -> `confirm_plan` | **the most productive change measured on 2026-08-23.** Not a new method -- a fix to how every ending sweep builds its cores. Turned 2,065 names into 2,553 while using five times fewer endings, and 1,385 sound names into 1,746 in a single pass |
+| 30 | family grid completion | `sound_alias` above all, the largest unnamed pool | `scripts/unnamed_profile.py --grid` -> `confirm_list` | **44 names.** `vox_<speaker>_<line>` is a 436 x 13,012 grid with only 37,983 cells named; the unseen ones are candidates by construction. Same shape for `fly_`, `evt_`, `amb_`, `callingcards_`, `p7_`/`p8_`/`p9_` |
 | — | localize unfolding | `localizeentry` | `confirm_localize` | **off, and refuses to run.** Worthless — see dead ends |
 
 ### Every method that has actually been run
@@ -80,7 +81,6 @@ table under a name you would not have guessed is the thing you are about to rebu
 | black ops 1 build names, verbatim | 1 | 2 | 271 | 651,912 | 2,405 | 1,940 | 3,164 | 2026-08-22 | 2026-08-22 | live |
 | black ops 3 build names, respelled, full harvest | 1 | 2 | 148 | 473,642 | 3,200 | 1,691 | 29,602 | 2026-08-22 | 2026-08-22 | spent |
 | family gap filling | 1 | 13 | 196 | 1,113,742 | 5,682 | 654 | 26,159 | 2026-08-19 | 2026-08-23 | spent |
-| mw19 packed-channel parts, verbatim and i | 1 | 1 | 63 | 413,230 | 6,559 | 6,559 | 6,559 | 2026-08-23 | 2026-08-23 | untried |
 | image siblings of confirmed materials | 1 | 27 | 4,714 | 34,547,520 | 7,328 | 393 | 597,817 | 2026-08-19 | 2026-08-23 | spent |
 | image siblings | 3 | 5 | 529 | 4,621,863 | 8,736 | 1,734 | 68,329 | 2026-08-20 | 2026-08-21 | spent |
 | channels | 2 | 4 | 916 | 9,598,953 | 10,479 | 2,732 | 602,442 | 2026-08-20 | 2026-08-20 | spent |
@@ -176,7 +176,6 @@ table under a name you would not have guessed is the thing you are about to rebu
 | uncarried one-segment endings over all-boundary cores | 1 | 2 | 316 | 522,511,859,758 | 1,653,518,543 | 1,326,172,232 | 2,195,427,982 | 2026-08-23 | 2026-08-23 | live |
 | heads of length 3, head-measured alphabet | 1 | 2 | 69 | 152,931,233,682 | 2,216,394,691 | 1,737,854,928 | 3,058,624,673 | 2026-08-23 | 2026-08-23 | live |
 | uncarried endings ranks 60001-120000 over published cores | 1 | 2 | 21 | 95,849,557,466 | 4,564,264,641 | 2,995,298,670 | 9,584,955,746 | 2026-08-23 | 2026-08-23 | cooling |
-| mw19 image stems with the channel code swapped for cold war's own | 1 | 1 | 52 | 255,966,684,256 | 4,922,436,235 | 4,922,436,235 | 4,922,436,235 | 2026-08-23 | 2026-08-23 | untried |
 | all-boundary sound cores x uncarried sound endings, 2 segments | 1 | 1 | 37 | 198,601,685,997 | 5,367,613,135 | 5,367,613,135 | 5,367,613,135 | 2026-08-23 | 2026-08-23 | untried |
 | vox alias grid, slots composed rather than redistributed | 1 | 1 | 184 | 1,585,821,032,397 | 8,618,592,567 | 8,618,592,567 | 8,618,592,567 | 2026-08-23 | 2026-08-23 | untried |
 | black ops 1 build vocabulary | 1 | 2 | 204 | 2,038,307,570,080 | 9,991,703,774 | 6,575,185,709 | 20,799,056,837 | 2026-08-22 | 2026-08-22 | cooling |
@@ -188,13 +187,9 @@ table under a name you would not have guessed is the thing you are about to rebu
 | images derived from materials | 1 | 13 | 5,433 | 9,273,168,916,668 | 51,232,977,440 | 34,027,942,451 | 34,027,942,451 | 2026-08-19 | 2026-08-23 | live |
 | uncarried beginnings | 1 | 2 | 4 | 364,450,467,250 | 91,112,616,812 | 73,924,584,790 | 73,924,584,790 | 2026-08-23 | 2026-08-23 | live |
 | general search | 2 | 67 | 106,014 | 1,329,861,501,623,328 | 311,151,497,806 | 35,073,084,706 | 51,589,254,967,866 | 2026-08-19 | 2026-08-23 | spent |
-| mw19 middles exposed by restoring the t9 underscore | 1 | 1 | 9 | 3,945,929,848,210 | 438,436,649,801 | 438,436,649,801 | 438,436,649,801 | 2026-08-23 | 2026-08-23 | untried |
+| info removed | 1 | 7 | 172 | 62,621,603,669,586 | 364,079,091,102 | 6,559 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | spent |
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
-| mw19 packed-channel parts under cold war's decorations | 1 | 1 | 1 | 670,595,842,450 | 670,595,842,450 | 670,595,842,450 | 670,595,842,450 | 2026-08-23 | 2026-08-23 | untried |
-| mw19 middles under cold war's decorations, against black ops 4 | 1 | 1 | 32 | 25,025,670,291,620 | 782,052,196,613 | 782,052,196,613 | 782,052,196,613 | 2026-08-23 | 2026-08-23 | untried |
 | sound files and aliases | 1 | 47 | 29,823 | 637,428,669,482,581 | 814,085,146,210 | 305,380,319,690 | 954,704,546,113 | 2026-08-19 | 2026-08-23 | cooling |
-| mw19 packed parts under cold war's uncarried beginnings | 1 | 1 | 2 | 3,588,945,525,920 | 1,794,472,762,960 | 1,794,472,762,960 | 1,794,472,762,960 | 2026-08-23 | 2026-08-23 | untried |
-| mw19 middles decorated | 1 | 1 | 13 | 29,134,495,063,900 | 2,241,115,004,915 | 2,241,115,004,915 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | untried |
 | not recorded | 1 | 53 | 3,386 | - | - | - | - | 2026-08-19 | 2026-08-23 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
@@ -218,7 +213,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-142 distinct methods, run 171 ways between them, across 655 runs. `names` is what each run
+136 distinct methods, run 165 ways between them, across 655 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
@@ -1472,6 +1467,102 @@ not through both at once: the middles that survive stripping a segment off each 
 to identify anything. This paragraph originally closed by calling the cross unmeasured, which was
 true when it was written and was overtaken within the day; it is kept because the reasoning that
 motivated it is still the right reasoning, and only its conclusion moved.
+
+## Aim at the unnamed distribution, not the published one
+
+Written 2026-08-23. It is the most useful hour of that day and it cost no machine time at all.
+
+Every list here is measured off what is **known** -- the published tables and the confirmed
+names. The target is what is **unknown**. Nobody had checked whether those are the same shape.
+They are not, and there is a direct sample of the unknown population sitting in `findings/`:
+**every name this project has confirmed was unnamed until somebody found it.**
+
+Profiled against the published tables -- 1,560,882 published against 68,596 recovered:
+
+                            published   recovered
+        median segments             8           6
+        contains `/`            44.6%       20.0%
+        contains `*`            16.0%        0.0%
+        contains a digit        93.2%       54.4%
+        average length           38.1        32.2
+
+**The unnamed names are shorter, flatter and far less numeric than the corpus every generator
+here is tuned on.** And the beginnings say where they are:
+
+        vox_           35.05% of everything recovered   against  0.02% of published
+        mcdp/           4.64%                                     0.04%
+        fly_            4.29%                                     0.00%
+        evt_            2.21%                                     0.00%
+        callingcards_   1.81%                                     0.00%
+        amb_            1.75%                                     0.00%
+
+`vox_` is **a third of every name this project has ever recovered** and two hundredths of a
+percent of the published tables. The endings agree: `_mtxitem`, then `_use`, `_threat`, `_dyn`,
+`_dstr`, `_npc`, `_plr`, `_vox`.
+
+Those are sound aliases and UI strings, and Cold War's largest unnamed pool is `sound_alias` at
+43,603. The published tables barely contain that family, which is *why* it is unnamed -- and why
+a method measured against the published corpus will never point at it.
+
+`scripts/unnamed_profile.py` prints all of this, and `--grid` ranks the families that are
+grid-shaped. Run it before choosing where to spend a night. The figures above move as the corpus
+grows, so read them from the tool rather than from here.
+
+## What a ceiling does and does not predict
+
+`--reach`-style measurements ask what fraction of *known* names a method could express at all.
+They cost a minute and they are worth taking, but they mislead in two ways that cost a night
+each.
+
+**1. Measure it held out, or it is circular.** A ceiling built by cutting up the same corpus you
+then measure against is asking whether a method can reproduce its own input. Cold War item bodies
+crossed with Cold War variant tokens -- `mtl_c_t9_usa_canteen_02_woods` and its siblings, where
+the item stays and the skin word swaps -- measured **61.96%** that way, the highest figure ever
+recorded here. Split the corpus in half and build the vocabulary from one half only: **22.62%**.
+
+**2. Even an honest ceiling predicts nothing on its own**, because it measures reach over *named*
+names. That 22.62% method returned **0** over 311,550 candidates. The reason is the part worth
+keeping:
+
+> **Recombining a corpus with itself is bounded by that corpus.** Every name Cold War's own
+> bodies and Cold War's own variants can compose lies inside the region Cold War's vocabulary
+> already covers -- and that region is, by definition, the named one. The unnamed assets are
+> unnamed *because* they are outside it.
+
+So the question to ask of a method is not "how high is its ceiling" but **"where is its
+vocabulary from"**. A ceiling is useful for ruling out a method whose vocabulary comes from
+somewhere else, and useless for ranking one that recombines the corpus you are already searching
+-- that one is bounded whatever it measures.
+
+## The beginning list is capped too, and nobody has measured it until now
+
+Method 22 is *uncarried endings*: `data/suffixes.txt` carries 4,629 endings while the corpus holds
+178,016, and mining the difference returned 6,674 names -- the largest method here. The same
+question had never been asked of the **beginning** list.
+
+    beginnings carried by data/prefixes.txt            700
+    distinct beginnings in the corpus            1,134,831
+    uncarried                                    1,134,131   heading 7,432,611 names
+
+The commonest are not exotic and no generator here can emit them:
+
+    twc/ 229,447   jup_ 58,965   m/ 54,088   jup_vm_ 41,154   i_mtl_p8_ 30,826
+    tm/ 26,375     i_mtl_p9_ 25,110   i_c_t9_ 21,315   i_c_t8_ 20,529   tw/ 19,579
+
+`i_c_t9_` heads 21,315 names on its own -- the image prefix for Cold War character assets -- and
+the list cannot say it. `scripts/uncarried_beginnings.py` measures and writes the list.
+
+**Read the dead ends before building on this.** *Uncarried beginnings crossed with the whole
+corpus* returned 7 names and *doubly uncarried* returned 0, because both crossed these beginnings
+with **Cold War's own** stems -- a corpus recombined with itself, bounded by the region it already
+covers. The cap matters when the stems come from **outside** it.
+
+### The endings list has the same hole, in the channel codes
+
+`data/suffixes.txt` does not carry **1,162** of the codes Cold War's own names end in, including
+`_cm`, `_sg`, `_r1`--`_r3` and the whole `_NNn` family. `_cm` alone appears 12,727 times in the
+published material and image names. A method that swaps a trailing code cannot reach any of them
+while the list is capped, whatever else it gets right.
 
 ## Dead ends
 

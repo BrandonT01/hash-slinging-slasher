@@ -33,6 +33,52 @@ pub const RELAUNCHED: &str = "--relaunched";
 pub const NO_INSTALL: &str = "--no-install";
 
 /// Runs every check, fixes what it can, and returns whether a grind may begin.
+/// Whether this machine is already running a search, and what.
+///
+/// Reported by `start` because nothing else was looking. On 2026-08-22 a background loop was
+/// believed killed and was not -- the child was killed, the shell that starts the next one was
+/// not -- and it ran for **seven and a half hours**, competing for every core with each pass
+/// launched in that window and silently ruining their timings. Nobody noticed because nobody had
+/// any reason to check.
+///
+/// `start` is the one command everybody runs, so it is where this belongs. It never blocks: two
+/// searches at once is legitimate on a big machine, and the point is that it is a *decision*
+/// rather than a surprise.
+fn searches_running() -> Vec<String> {
+    let searches = [
+        "confirm_plan",
+        "confirm_list",
+        "confirm_cw",
+        "confirm_sounds",
+        "confirm_variants",
+        "images_from_materials",
+        "confirm_localize",
+    ];
+
+    let listing = if cfg!(windows) {
+        std::process::Command::new("tasklist").args(["/FO", "CSV", "/NH"]).output()
+    } else {
+        std::process::Command::new("ps").args(["-eo", "comm="]).output()
+    };
+
+    let Ok(listing) = listing else {
+        return Vec::new();
+    };
+
+    let text = String::from_utf8_lossy(&listing.stdout).to_lowercase();
+    let mine = std::process::id().to_string();
+
+    searches
+        .iter()
+        .filter(|name| {
+            text.lines()
+                .filter(|line| !line.contains(&mine))
+                .any(|line| line.contains(*name))
+        })
+        .map(|name| (*name).to_owned())
+        .collect()
+}
+
 pub fn run() -> bool {
     let arguments: Vec<String> = std::env::args().collect();
     let may_install = !arguments.iter().any(|argument| argument == NO_INSTALL);
@@ -58,6 +104,22 @@ pub fn run() -> bool {
         }
     } else {
         println!("  [ok]      git");
+    }
+
+    // Said before anything else that matters, because it changes how to read everything below: a
+    // pass already running means the cores are busy, any timing taken now is meaningless, and a
+    // second confirming tool will fight the first for `findings/`.
+    let already = searches_running();
+    if already.is_empty() {
+        println!("  [ok]      nothing is already grinding on this machine");
+    } else {
+        println!(
+            "  [note]    already grinding: {}
+                         Two searches at once share the cores, and two *confirming* tools both rewrite
+                         findings/ -- whichever finishes last wins. If that is not deliberate, stop it:
+                         python scripts/running.py --stop",
+            already.join(", ")
+        );
     }
 
     // 2. The clone itself. Done before anything reads a file out of it, because a pull changes
@@ -610,6 +672,12 @@ fn suggest(game: &str) {
 ");
     println!("  python scripts/methods_report.py --efficiency");
     println!("      what is spent. Use a ranking to rule methods OUT -- that is what it is good for.
+");
+    println!("  python scripts/unnamed_profile.py");
+    println!("      what the UNNAMED names look like, read off the ones already recovered. Every");
+    println!("      list here is measured on what is known, and the two are not the same shape:");
+    println!("      `vox_` is 35% of everything this project has ever found and 0.02% of the");
+    println!("      published tables. `--grid` ranks the families that are grids rather than text.
 ");
     println!("  python scripts/coverage.py --five");
     println!("  python scripts/seams.py");
