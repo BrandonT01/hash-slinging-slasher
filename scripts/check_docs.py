@@ -195,9 +195,15 @@ def main():
     # globbed nothing, examined no files, and reported success.
     for script in sorted(glob.glob(os.path.join(ROOT, "scripts", "contributed", "*.py"))):
         text = open(script, encoding="utf-8", errors="ignore").read()
-        if not re.search(r"^import snapshot", text, re.M):
+        # Indented too: plenty of generators import `snapshot` inside main() rather than at the
+        # top, and one that does is exactly as broken as one that does not.
+        if not re.search(r"^\s*import snapshot", text, re.M):
             continue
-        if 'os.path.join(_root, "scripts", "snapshot.py")' in text:
+        # Correct by *behaviour*, not by spelling. Any script that walks up has to test for
+        # `scripts/snapshot.py` on the way, so naming that file is the signature of a walk-up --
+        # whether written with os.path.join or with pathlib. Matching one literal instead let
+        # both of 2026-08-23's pathlib scripts through while they were genuinely broken.
+        if re.search(r"""["']snapshot\.py["']""", text):
             continue
 
         warnings.append(

@@ -112,6 +112,13 @@ mod tests {
         let ledger = ledger();
         let restore = fs::read_to_string(&ledger).ok();
 
+        // Start from a known streak. `record` counts *on top of* whatever the ledger already
+        // holds, so without this the test asserts against the machine's live count and fails on
+        // any clone whose last pass happened to find nothing -- which is a normal, correct state
+        // for this tool to be in, and was exactly the state on 2026-08-23. Recording a find is
+        // the documented way to clear it, so this uses the same path a real run would.
+        record(1);
+
         record(0);
         record(0);
         let after_two = empty_streak();
