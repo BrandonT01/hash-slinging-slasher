@@ -67,7 +67,7 @@ ROOT = snapshot.ROOT
 DERIVATIONS = [
     {
         "label": "image siblings of confirmed materials",
-        "script": "contrib/image_siblings.py",
+        "script": "scripts/contributed/image_siblings_20260819-190013.py",
         "args": [],
         "why": "the strongest measured cross-type seam: 15,770 shared cores, 12.8% of image's",
     },
@@ -87,6 +87,7 @@ DERIVATIONS = [
         "label": "final byte solved backwards",
         "script": "scripts/final_byte.py",
         "args": [],
+        "game_arg": True,
         "why": "one name per 18 candidates, the best measured here -- solved, not swept",
     },
     {
@@ -109,6 +110,7 @@ DERIVATIONS = [
         "label": "sound language and encoding variants",
         "script": "scripts/sound_languages.py",
         "args": [],
+        "game_arg": True,
         "why": "the same sound in the other eleven languages; Black Ops 4 only",
     },
 ]
@@ -121,6 +123,10 @@ WORTH_ANOTHER_ROUND = 1
 # Rounds are bounded regardless. A derivation with a bug that emits its own input would otherwise
 # loop until somebody noticed, and this runs unattended.
 MOST_ROUNDS = 12
+
+# The Rust search tools count consecutive empty jobs here. A closure round contains several
+# derivations but is itself one bounded job, so the wrapper aggregates their marks below.
+EMPTY_RUNS = os.path.join(ROOT, "state", "empty_runs.txt")
 
 
 def binary(name):
@@ -183,6 +189,35 @@ def worth_another_round(gained):
     return gained >= WORTH_ANOTHER_ROUND
 
 
+def generator_command(entry, game):
+    """Build a generator command, forwarding the game when its own seed set depends on it.
+
+    The confirmer's `--game` decides which ids a candidate is tested against. Some generators
+    also read a game's own unnamed ids or confirmed names, so they need the same argument or a
+    forced Cold War closure silently generates Black Ops 4 candidates and confirms them against
+    Cold War. Entries without `game_arg` deliberately draw on the shared published corpus.
+    """
+    script = os.path.join(ROOT, entry["script"])
+    command = [sys.executable, script] + entry["args"]
+    if game and entry.get("game_arg"):
+        command += ["--game", game]
+    return command
+
+
+def empty_run_count(path=EMPTY_RUNS):
+    try:
+        with open(path, encoding="ascii") as handle:
+            return max(int(handle.read().strip() or "0"), 0)
+    except (OSError, ValueError):
+        return 0
+
+
+def write_empty_run_count(count, path=EMPTY_RUNS):
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="ascii", newline="\n") as handle:
+        handle.write(str(max(count, 0)) + "\n")
+
+
 def self_test():
     """Proves the two things a closure run cannot show you about itself.
 
@@ -233,6 +268,16 @@ def self_test():
         assert worth_another_round(1) is True
         assert worth_another_round(0) is False
         assert worth_another_round(500) is True
+
+        final_byte = next(entry for entry in DERIVATIONS if entry["label"] == "final byte solved backwards")
+        material = next(entry for entry in DERIVATIONS if entry["label"] == "materials from image cores")
+        assert generator_command(final_byte, "BLKOPSCW")[-2:] == ["--game", "BLKOPSCW"]
+        assert "--game" not in generator_command(material, "BLKOPSCW")
+
+        empty_ledger = os.path.join(root, "state", "empty_runs.txt")
+        assert empty_run_count(empty_ledger) == 0
+        write_empty_run_count(2, empty_ledger)
+        assert empty_run_count(empty_ledger) == 2
 
         print("self-test passed: the round counter tracks the corpus, and the loop stops on zero.")
         return 0
@@ -305,7 +350,7 @@ def run_derivation(entry, confirm, game, dry_run):
         print("  %-42s skipped: %s is not here" % (entry["label"], entry["script"]))
         return 0
 
-    generate = [sys.executable, script] + entry["args"]
+    generate = generator_command(entry, game)
 
     if dry_run:
         try:
@@ -387,9 +432,15 @@ def main(argv):
     total = 0
     for round_number in range(1, max(options.rounds, 1) + 1):
         print("round %d" % round_number)
-        gained = sum(
-            run_derivation(entry, confirm, options.game, False) for entry in DERIVATIONS
-        )
+        empty_before = empty_run_count()
+        gains = []
+        for entry in DERIVATIONS:
+            # Each confirmer writes its own empty mark. Keep those internal marks from stopping
+            # the fourth derivation in one bounded round; the whole round is recorded once below.
+            write_empty_run_count(0)
+            gains.append(run_derivation(entry, confirm, options.game, False))
+        gained = sum(gains)
+        write_empty_run_count(0 if gained else min(empty_before + 1, 3))
         total += gained
         print("  round %d added %d\n" % (round_number, gained))
 
