@@ -1,0 +1,9 @@
+.00.sl100.pc.snd
+.0_mas.sn100.pc.snd
+.ll100.pc.snd
+.ln100.pc.snd
+.pn100.pc.snd
+.rr75.pc.en.snd
+.sl100.pc.snd
+.sn100.pc.snd
+.sn85.pc.snd
