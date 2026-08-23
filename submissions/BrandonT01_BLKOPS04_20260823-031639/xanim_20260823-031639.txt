@@ -1,0 +1,2 @@
+14437d0f540ec2ef,pb_emote_exotic_shared_fem_dracula
+2f009588e0bb612e,pb_emote_exotic_shared_male_dracula
