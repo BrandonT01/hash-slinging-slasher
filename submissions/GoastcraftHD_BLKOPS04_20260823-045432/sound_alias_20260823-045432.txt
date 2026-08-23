@@ -1,0 +1,8 @@
+4316133fe1d262a,evt_brutus_teleport_in
+154f2a5f74370402,wpn_demohammer_npc_lfe
+2e8ec75d5ff6a991,exp_zpear_imp_flux_l
+2e8ed15d5ff6ba8f,exp_zpear_imp_flux_r
+331cc1664f38a17f,fly_emote_ralph_helmet_m
+51a7d5000ad0d102,gdt_vision_pulse_visor_down
+683178a7f58d94bd,mpl_status_burn_loop_r
+6fd86d58e7f64963,evt_brutus_teleport_out
