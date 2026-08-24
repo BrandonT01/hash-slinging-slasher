@@ -4102,6 +4102,7 @@ a62565cb910fa38,i_wpn_t9_lmg_slowfire_feed_tray_chemburn_s
 104edcfea77f315a,img_wpn_t7_xr2_silencer_n
 581975d75cbd1f97,keya
 581970d75cbd1718,keyd
+6f8c3ea1169977a3,keymenu
 581983d75cbd3761,keyw
 3b0b320942cc4714,microsoft_stick_move
 742b29a826d8899a,microsoft_stick_move_look
@@ -4624,6 +4625,7 @@ b60b5cacf7f1783,uie_ui_menu_barracks_combat_record_shot_tracker_body_base
 1e858804153b1d5e,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldeg
 1e857f04153b0e13,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldel
 1e857e04153b0c60,vdd/gfx_english/sound/vox/scripted/cda/vox_cd0_incoming_rpg_001.sn60.ps3_foldem
+b5bb050d4d322ca,vdreveal
 75b30947a7d3e6d3,veh/helicopter/chinook/transport/mtx_titles_operator_bundle_5024_rivas_02`
 75b31047a7d3f2b8,veh/helicopter/chinook/transport/mtx_titles_operator_bundle_5024_rivas_02i
 5be6ed5f8f73c37b,volume-1_state-1_reflection_probes_b371190c_0
