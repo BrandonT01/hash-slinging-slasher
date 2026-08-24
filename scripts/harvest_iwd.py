@@ -35,6 +35,8 @@ import zipfile
 
 STEAM = r"C:\Program Files (x86)\Steam\steamapps\common"
 SEPARATORS = set("_/")
+# Folders a player writes to. Anything under one of these is community content, not shipped.
+USER_CONTENT = {"mods", "usermaps", "workshop", "raw", "downloaded"}
 
 
 def keep(text):
@@ -55,6 +57,15 @@ def main(argv):
     archives = 0
 
     for folder, _, entries in os.walk(options.root):
+        # Never walk into a folder a player writes to. `mods/` and `usermaps/` are where custom
+        # and community content lands, and community content is the one thing that must not enter
+        # a candidate list: it looks exactly like an official name, it can never be in either game
+        # we search, and it is different on every contributor's disk -- so a method seeded from it
+        # is not reproducible and its fingerprint means nothing. Measured on the Black Ops 3 tools
+        # beside this: one modder's folder alone contributed 1,216 names, all of them Black Ops 6
+        # weapon ports spelled `t10_...`, which METHODS records as dead against these two titles.
+        if any(part in USER_CONTENT for part in os.path.relpath(folder, options.root).lower().split(os.sep)):
+            continue
         for entry in entries:
             if not entry.lower().endswith(".iwd"):
                 continue

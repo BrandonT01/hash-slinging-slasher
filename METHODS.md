@@ -994,7 +994,7 @@ them hold ten Call of Duty installs here. Measured, all against both games' unna
 | source | what it is | names it printed | verbatim | under `data/prefixes.txt` x `data/suffixes.txt` |
 |---|---|---|---|---|
 | **Black Ops 4 zones** | Oodle block chains inside CASC BLTE frames, 141 GB | 273,138 | **145 matched, 92 new** | **6 new** |
-| **Black Ops 3 mod tools** | the *source* assets Steam ships beside the game — 32,937 `.tif`, 31,785 `.xmodel_bin`, 2,369 `.gdt`, 248,726 files in all | **867,766** | **11 new on Black Ops 4, 11 on Cold War** | running |
+| **Black Ops 3 mod tools** | ~~the source assets Steam ships beside the game~~ | ~~867,766~~ | 11 + 11 | 10 + 9 | **retired — the tree is not the shipped game. See below.** |
 | **`.iwd` archives** | 208 ZIP files across Black Ops, World at War, Modern Warfare 1-3 and Remastered | 528,740 | **0 both games** | -- |
 | **Cold War zones** | same CASC layout, fast files AES-256-CTR | 5,795 | 0 | -- |
 | **`BlackOps4.exe` and the aux data dirs** | 117 MB raw | 5,493 | 0 | -- |
@@ -1004,13 +1004,75 @@ them hold ten Call of Duty installs here. Measured, all against both games' unna
 that install; the mod tools are the other half, and they need **no format work at all** -- a source
 asset is named by its filename, and a `.gdt` is a plain-text table whose keys are asset names
 spelled the way the engine wants them. 248,726 files walked, 9,213 read as text, 867,766 distinct
-names. `contrib/harvest_bo3_tools.py`.
+names -- but from a tree that is not the shipped game. Replaced by
+`scripts/harvest_bo3_assetlist.py`, which reads only the shipped manifests; see below.
 
 `.iwd` is the same trick one title further back: it is a ZIP with the extension changed, so
 `zipfile` lists every path inside without decompressing anything. Half a million names for two
 minutes of work, and **zero**, which is the answer METHODS already predicts for verbatim
 older-title names and is worth having measured on a corpus this size.
 `contrib/harvest_iwd.py`.
+
+### Do not walk a mod tools install. Only `zone/` is the shipped game — 2026-08-24
+
+The first version of this walked the whole Black Ops 3 install and printed 867,766 names, and
+**that was wrong, for a reason worth more than the 41 names it found.**
+
+Most people using this repository *have* the Black Ops 3 mod tools — it is largely why they want
+these names unhashed in the first place. And a mod tools tree is not the shipped game: it is a
+working directory. `model_export/`, `source_data/`, `texture_assets/` and `share/raw/` are where
+a modder's own and the community's assets land, in the thousands.
+
+**The only path in a Black Ops 3 install that can be trusted is `zone/` in its root** — the
+official `.ff`, `.sab` and the rest, which ship and which nobody writes to. `contrib/harvest_bo3.py`
+already reads exactly that, so the safe source was already covered and the walk added only risk.
+
+Measured on the install this was written on, which is **the cleanest in the community** — its owner
+uses the tools only to release their own work — and therefore a **floor** rather than a typical
+case: one modder's folder, `model_export/_ninjaman829_bo6_guns/`, contributed **1,216 names**.
+
+They are the dangerous shape, not obvious rubbish:
+
+    t10_ar_coslo723_anim
+    wpn_t10_p01_ar_coslo723_barrel_v0_c
+    att_t10_ammo_unspent_556_v0_c
+
+`t10` is **Black Ops 6**. Those read exactly like official Treyarch names, they can never be in
+either title this project searches, and this file already records all eight `_v2` tables as
+**measured dead** — so every one of them is waste dressed as vocabulary.
+
+Three things follow, and the third is the one that generalises:
+
+- **Nothing bad was published.** Of the 1,216, **0** reached a submission: a candidate only becomes
+  a finding by hashing to a real unnamed id, and a Black Ops 6 name does not. The 41 names the
+  tools vocabulary did find are hash-verified and genuine — `i_t7_wood_white_birch_worn_c`,
+  `veh_t7_civ_city_flat_tire_fl` — and they stay.
+- **The waste is the contributor's night**, not the tables. On an install with a real mod library
+  this is most of the corpus, and it is being asked about a game it cannot be in.
+- **A method seeded from a user-writable directory is not a method.** It gives a different corpus
+  on every disk, so it cannot be reproduced, and its fingerprint — the whole mechanism that stops
+  two people grinding the same ground — means nothing. That is the general rule: **seed only from
+  something every contributor has identical bytes of.** Published tables, shipped containers,
+  `findings/`. Never a working directory.
+
+**`scripts/harvest_bo3_assetlist.py` replaces it**, and keeps the value without the risk. Two
+paths in a Black Ops 3 install are trustworthy, and both are shipped:
+
+| path | what it is | read by |
+|---|---|---|
+| `zone/` | the official `.ff` and `.sab` containers | `scripts/harvest_bo3.py` |
+| `zone_source/all/assetlist/*.csv` | 19 shipped per-zone manifests, one `type,name` row per asset | `scripts/harvest_bo3_assetlist.py` |
+
+The manifests give **106,836 distinct names** -- 36,617 image, 23,691 xanim, 10,484 material,
+5,271 xmodel -- with **0** matches for `ninjaman`, `_t10_` or any other community string, because
+nobody has a reason to write to them. The script finds the install through the **`TA_TOOLS_PATH`**
+environment variable the tools set, rather than a hardcoded Steam path, so it works on anybody's
+machine.
+
+`scripts/contributed/harvest_bo3_tools_20260824-032954.py` remains as the record of the submission
+that carried the walking version. Do not run it. `contrib/harvest_iwd.py` had the same fault — it was reading
+`World at War/mods/HumorModTWO/HumorModTwo.iwd` — and now refuses to walk `mods/`, `usermaps/`,
+`workshop/`, `raw/` or `downloaded/`.
 
 ### Black Ops 4 `sound_asset` is not in the shipped build either — 2026-08-24
 
