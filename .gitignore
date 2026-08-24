@@ -39,3 +39,8 @@ __pycache__/
 # committed because it is the format's documentation.
 /plans/*
 !/plans/example.txt
+
+# Names scraped out of a game build on this machine. `harvest_bo3.py` and the other
+# harvesters write here, and it is tens of megabytes of somebody else's shipped strings --
+# the *script* that regenerates it belongs in the pull request, never the output.
+/borrowed/

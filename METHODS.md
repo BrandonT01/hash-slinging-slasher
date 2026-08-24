@@ -151,9 +151,9 @@ table under a name you would not have guessed is the thing you are about to rebu
 | black ops 4, uncarried five-segment endings | 1 | 1 | 182 | 9,963,115,100 | 54,742,390 | 54,742,390 | 54,742,390 | 2026-08-23 | 2026-08-23 | untried |
 | cold war, uncarried three-segment endings | 1 | 2 | 742 | 42,578,054,890 | 57,382,823 | 23,804,371 | 203,050,496 | 2026-08-23 | 2026-08-23 | cooling |
 | cold war sound, uncarried two-segment endings | 1 | 1 | 195 | 11,273,898,861 | 57,814,865 | 57,814,865 | 57,814,865 | 2026-08-23 | 2026-08-23 | untried |
-| heads of length 3 | 1 | 1 | 692 | 46,352,610,953 | 66,983,541 | 66,983,541 | 66,983,541 | 2026-08-22 | 2026-08-22 | untried |
 | uncarried two-segment endings over the full published core list | 1 | 2 | 264 | 20,951,727,534 | 79,362,604 | 72,749,053 | 87,298,864 | 2026-08-23 | 2026-08-23 | live |
 | uncarried beginnings over the held vocabulary | 1 | 1 | 7 | 945,274,375 | 135,039,196 | 135,039,196 | 135,039,196 | 2026-08-23 | 2026-08-23 | untried |
+| heads of length 3 | 1 | 2 | 694 | 98,311,675,961 | 141,659,475 | 66,983,541 | 25,979,532,504 | 2026-08-22 | 2026-08-24 | spent |
 | wrapper decorations, suffix side | 1 | 8 | 1,071 | 185,010,310,334 | 172,745,387 | 1,985,948 | 159,762,864 | 2026-08-23 | 2026-08-23 | spent |
 | cold war sound, uncarried 3-segment endings | 1 | 2 | 121 | 22,865,684,520 | 188,972,599 | 181,473,686 | 181,473,686 | 2026-08-23 | 2026-08-23 | live |
 | uncarried endings over all-boundary truncation cores | 1 | 6 | 4,625 | 1,120,036,280,202 | 242,170,006 | 76,634,118 | 518,821,573 | 2026-08-23 | 2026-08-23 | cooling |
@@ -183,15 +183,19 @@ table under a name you would not have guessed is the thing you are about to rebu
 | black ops 1 build vocabulary | 1 | 2 | 204 | 2,038,307,570,080 | 9,991,703,774 | 6,575,185,709 | 20,799,056,837 | 2026-08-22 | 2026-08-22 | cooling |
 | tails of length 4 | 1 | 3 | 292 | 3,436,624,621,132 | 11,769,262,401 | 5,032,108,457 | 384,015,793,800 | 2026-08-22 | 2026-08-23 | spent |
 | head of one name, tail of another | 1 | 2 | 7 | 96,000,800,000 | 13,714,400,000 | 8,000,066,666 | 8,000,066,666 | 2026-08-22 | 2026-08-22 | live |
+| harvested strings, tails of length 3 | 1 | 1 | 4 | 86,898,811,198 | 21,724,702,799 | 21,724,702,799 | 21,724,702,799 | 2026-08-24 | 2026-08-24 | untried |
 | black ops 3 build vocabulary | 1 | 2 | 293 | 7,358,148,299,220 | 25,113,134,127 | 15,655,634,679 | 63,432,312,924 | 2026-08-22 | 2026-08-22 | cooling |
 | tails of length 5 | 1 | 4 | 670 | 19,811,769,907,699 | 29,569,805,832 | 10,653,467,440 | 319,932,215,920 | 2026-08-22 | 2026-08-22 | spent |
+| heads of length 4, slash-bearing beginnings | 1 | 2 | 13 | 398,873,132,550 | 30,682,548,657 | 24,929,570,784 | 39,887,313,255 | 2026-08-24 | 2026-08-24 | live |
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
 | images derived from materials | 1 | 14 | 5,540 | 11,656,161,398,832 | 40,472,782,634 | 22,270,957,777 | 22,270,957,777 | 2026-08-19 | 2026-08-23 | live |
+| harvested strings, heads of length 3 | 1 | 2 | 4 | 252,118,784,000 | 63,029,696,000 | 63,029,696,000 | 63,029,696,000 | 2026-08-24 | 2026-08-24 | live |
 | uncarried beginnings | 1 | 2 | 4 | 364,450,467,250 | 91,112,616,812 | 73,924,584,790 | 73,924,584,790 | 2026-08-23 | 2026-08-23 | live |
 | info removed | 1 | 8 | 428 | 87,647,273,961,206 | 204,783,350,376 | 6,559 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | spent |
-| general search | 2 | 70 | 107,056 | 1,637,256,125,068,628 | 307,986,479,508 | 35,073,084,706 | 406,661,610,114 | 2026-08-19 | 2026-08-24 | spent |
+| bo3 mod tools vocabulary under measured decorations | 1 | 1 | 9 | 2,812,429,606,000 | 312,492,178,444 | 312,492,178,444 | 312,492,178,444 | 2026-08-24 | 2026-08-24 | untried |
+| general search | 2 | 73 | 110,231 | 1,843,473,868,667,420 | 345,867,517,573 | 35,073,084,706 | 51,244,706,804,160 | 2026-08-19 | 2026-08-24 | spent |
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
-| sound files and aliases | 1 | 48 | 29,825 | 701,416,975,182,977 | 893,524,809,150 | 305,380,319,690 | 31,994,152,850,198 | 2026-08-19 | 2026-08-24 | spent |
+| sound files and aliases | 1 | 50 | 29,864 | 701,416,975,182,977 | 893,524,809,150 | 305,380,319,690 | 31,994,152,850,198 | 2026-08-19 | 2026-08-24 | spent |
 | not recorded | 1 | 53 | 3,386 | - | - | - | - | 2026-08-19 | 2026-08-23 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
@@ -215,7 +219,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-138 distinct methods, run 167 ways between them, across 675 runs. `names` is what each run
+142 distinct methods, run 171 ways between them, across 687 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
