@@ -962,6 +962,20 @@ outside the region the named corpus already covers.*
 **Nothing decompressed is written down.** A chunk is decompressed into memory, scanned, and
 dropped; the only output is the name list.
 
+### What the same harvester says about the rest of the build — 2026-08-24
+
+Measured while the archive sweep ran, so nobody repeats any of it:
+
+| | |
+|---|---|
+| **Cold War's archives** | 105 archives, 100 GB, same layout, same reader: **5,795 strings, 0 matched.** Cold War fast files are AES-256-CTR encrypted (already recorded in the dead ends), so the frames reassemble and hold nothing readable. Black Ops 4's are not. **The harvestable game is Black Ops 4.** |
+| `BlackOps4.exe`, the launcher, `Data/ecache`, `Data/viper`, `Data/indices`, `Data/config` | 117 MB, 5,493 strings, **0 matched.** Consistent with the loader-string-pool dead end: an asset is reachable from the binary only if the engine addresses it by name, and these are addressed by hash. |
+| `KAPI` frames — Black Ops 4's xpak containers, 135 in one archive | Cold War keeps its real asset names in an xpak's plain-text metadata section, so these looked like the richest thing in the build. **They are not: 3,763 strings and every one is noise** (`b57/.mk`, `sgxd/cp`). Black Ops 4's xpak has no plaintext metadata section. The 60% printable gate was right to drop them. |
+| Frames dropped for size | 276 of 2,101, all of them entries over 256 MB — payload, not zones. The one sampled that did reassemble (953 chunks, 244 MB) yielded nothing. |
+| Coverage | **2,101 frames across 141 GB, 1,825 reassembled (87%), 532 fast files walked.** One frame per 67 MB: these archives hold whole zones as single entries, so this is close to complete rather than a sample. |
+
+**And where the names land is the useful part.** Of the first 92, **56 were `sound_alias`** against 18 image and 18 material. Black Ops 4 sound aliases are written in plaintext inside the zones, which is precisely the pool three recombination shapes and 379 billion candidates could not touch. No backslash-bearing sound *file* paths appear anywhere in the build, so `sound_asset` is still not reached this way.
+
 ### What is left of this
 
 - **Cold War.** Identical layout, 100 GB, and `scripts/harvest_retail.py` still points at
