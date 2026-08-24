@@ -976,6 +976,51 @@ Measured while the archive sweep ran, so nobody repeats any of it:
 
 **And where the names land is the useful part.** Of the first 92, **56 were `sound_alias`** against 18 image and 18 material. Black Ops 4 sound aliases are written in plaintext inside the zones, which is precisely the pool three recombination shapes and 379 billion candidates could not touch. No backslash-bearing sound *file* paths appear anywhere in the build, so `sound_asset` is still not reached this way.
 
+### The other builds on the disk, and what each one is worth — 2026-08-24
+
+Once the Black Ops 4 reader worked, the question stopped being *"is a build readable"* and became
+*"which builds are on this machine, and what does each cost to read"*. Steam and Battle.net between
+them hold ten Call of Duty installs here. Measured, all against both games' unnamed ids:
+
+| source | what it is | names it printed | verbatim | under `data/prefixes.txt` x `data/suffixes.txt` |
+|---|---|---|---|---|
+| **Black Ops 4 zones** | Oodle block chains inside CASC BLTE frames, 141 GB | 273,138 | **145 matched, 92 new** | **6 new** |
+| **Black Ops 3 mod tools** | the *source* assets Steam ships beside the game — 32,937 `.tif`, 31,785 `.xmodel_bin`, 2,369 `.gdt`, 248,726 files in all | **867,766** | **11 new on Black Ops 4, 11 on Cold War** | running |
+| **`.iwd` archives** | 208 ZIP files across Black Ops, World at War, Modern Warfare 1-3 and Remastered | 528,740 | **0 both games** | -- |
+| **Cold War zones** | same CASC layout, fast files AES-256-CTR | 5,795 | 0 | -- |
+| **`BlackOps4.exe` and the aux data dirs** | 117 MB raw | 5,493 | 0 | -- |
+
+**The mod tools are the cheapest source on the disk and nobody had opened them.**
+`contrib/harvest_bo3.py` reads Black Ops 3's shipped `zone/*.ff`, which is the compressed half of
+that install; the mod tools are the other half, and they need **no format work at all** -- a source
+asset is named by its filename, and a `.gdt` is a plain-text table whose keys are asset names
+spelled the way the engine wants them. 248,726 files walked, 9,213 read as text, 867,766 distinct
+names. `contrib/harvest_bo3_tools.py`.
+
+`.iwd` is the same trick one title further back: it is a ZIP with the extension changed, so
+`zipfile` lists every path inside without decompressing anything. Half a million names for two
+minutes of work, and **zero**, which is the answer METHODS already predicts for verbatim
+older-title names and is worth having measured on a corpus this size.
+`contrib/harvest_iwd.py`.
+
+### Black Ops 4 `sound_asset` is not in the shipped build either — 2026-08-24
+
+Worth stating plainly, because the build was the last place the dead ends pointed and it has now
+been read. **No backslash-bearing sound path appears anywhere in Black Ops 4's 141 GB**, and
+neither does a forward-slash one: `.snd`, `vox/` and `/vox_` match **0** of the 273,138 strings
+harvested. The `.sabl`/`.sabs` files hold a hash table and FLAC payload and no plaintext at all.
+
+The reason is structural rather than a matter of looking harder: the engine addresses a sound file
+through its **alias**, and the alias resolves to a hash. The file paths existed in the developers'
+source tree at build time and were never shipped. That is consistent with what *did* come out --
+**56 of the first 92 names were `sound_alias`**, the by-name-addressed half of the sound system,
+against 0 `sound_asset`.
+
+So the 70,707 unnamed `sound_asset` ids are not reachable from this build, from the SAB files, or
+from any recombination of the 8,584 that are known. What would reach them is a source outside the
+shipped game entirely -- a leaked build, a developer tree, or the Black Ops 4 mod tools if they
+ever ship.
+
 ### What is left of this
 
 - **Cold War.** Identical layout, 100 GB, and `scripts/harvest_retail.py` still points at
