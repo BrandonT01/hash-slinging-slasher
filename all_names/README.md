@@ -5,13 +5,13 @@
 
 <table>
 <tr><th align="left"><code>blkops04/</code></th>
-<th align="right" colspan="2">69,768 names in 6 file(s)</th>
+<th align="right" colspan="2">69,849 names in 6 file(s)</th>
 </tr>
 <tr><th align="left">asset type</th><th align="right">found here</th><th align="right">named, of all in the game</th>
 </tr>
-<tr><td><code>xmodel</code></td><td align="right">8,561</td><td align="right">48,684 / 61,139 &nbsp;(79.6%)</td></tr>
-<tr><td><code>material</code></td><td align="right">27,495</td><td align="right">99,609 / 122,750 &nbsp;(81.1%)</td></tr>
-<tr><td><code>image</code></td><td align="right">19,907</td><td align="right">126,934 / 167,360 &nbsp;(75.8%)</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">8,575</td><td align="right">48,698 / 61,139 &nbsp;(79.7%)</td></tr>
+<tr><td><code>material</code></td><td align="right">27,551</td><td align="right">99,665 / 122,750 &nbsp;(81.2%)</td></tr>
+<tr><td><code>image</code></td><td align="right">19,918</td><td align="right">126,945 / 167,360 &nbsp;(75.9%)</td></tr>
 <tr><td><code>xanim</code></td><td align="right">3,682</td><td align="right">15,651 / 21,968 &nbsp;(71.2%)</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">178</td><td align="right">8,562 / 79,263 &nbsp;(10.8%)</td></tr>
 <tr><td><code>sound_alias</code></td><td align="right">9,945</td><td align="right">36,416 / 50,043 &nbsp;(72.8%)</td></tr>
@@ -43,9 +43,9 @@ the community tables, against every id the game holds.
 
 They are not the same measure, and the second is much the larger.
 
-Where `image` under `blkops04/` reads 19,907 and 126,934 / 167,360:
-this project found 19,907 of the 126,934 names anybody has for that pool, and
-40,426 of its ids are still nameless. The percentage is the fraction named,
+Where `image` under `blkops04/` reads 19,918 and 126,945 / 167,360:
+this project found 19,918 of the 126,945 names anybody has for that pool, and
+40,415 of its ids are still nameless. The percentage is the fraction named,
 not the fraction found here.
 
 The emptiest pool is `sound_asset` under `blkops04/`: 8,562 of 79,263 named,
