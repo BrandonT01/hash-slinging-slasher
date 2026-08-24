@@ -194,7 +194,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | heads of length 3, head-measured alphabet | 1 | 2 | 69 | 152,931,233,682 | 2,216,394,691 | 1,737,854,928 | 3,058,624,673 | 2026-08-23 | 2026-08-23 | live |
 | sound alias cores borrowed, sound alias decorations measured | 1 | 5 | 837 | 1,966,247,250,000 | 2,349,160,394 | 69,920,243 | 9,564,243,908 | 2026-08-24 | 2026-08-24 | spent |
 | image cores borrowed, image decorations measured | 1 | 10 | 647 | 2,113,985,426,500 | 3,267,365,419 | 1,015,745,750 | 9,419,898,920 | 2026-08-24 | 2026-08-24 | cooling |
-| xanim cores borrowed, xanim decorations measured | 1 | 12 | 298 | 994,343,298,200 | 3,336,722,477 | 26,167,942 | 16,013,867,111 | 2026-08-24 | 2026-08-24 | spent |
+| xanim cores borrowed, xanim decorations measured | 1 | 13 | 372 | 1,426,717,710,200 | 3,835,262,661 | 26,167,942 | 5,842,897,459 | 2026-08-24 | 2026-08-24 | spent |
 | xanim cores under borrowed xanim endings | 1 | 2 | 49 | 214,826,850,000 | 4,384,221,428 | 3,978,275,000 | 4,882,428,409 | 2026-08-24 | 2026-08-24 | live |
 | uncarried endings ranks 60001-120000 over published cores | 1 | 2 | 21 | 95,849,557,466 | 4,564,264,641 | 2,995,298,670 | 9,584,955,746 | 2026-08-23 | 2026-08-23 | cooling |
 | material cores borrowed, material decorations measured | 1 | 11 | 389 | 1,832,025,550,400 | 4,709,577,250 | 333,052,312 | 275,716,860,300 | 2026-08-24 | 2026-08-24 | spent |
@@ -211,12 +211,13 @@ table under a name you would not have guessed is the thing you are about to rebu
 | tails of length 5 | 1 | 4 | 670 | 19,811,769,907,699 | 29,569,805,832 | 10,653,467,440 | 319,932,215,920 | 2026-08-22 | 2026-08-22 | spent |
 | heads of length 4, slash-bearing beginnings | 1 | 2 | 13 | 398,873,132,550 | 30,682,548,657 | 24,929,570,784 | 39,887,313,255 | 2026-08-24 | 2026-08-24 | live |
 | xmodel cores under borrowed xmodel endings | 1 | 2 | 71 | 2,638,444,407,000 | 37,161,188,830 | 29,316,048,966 | 50,739,315,519 | 2026-08-24 | 2026-08-24 | live |
+| material cores under borrowed material endings | 1 | 2 | 90 | 3,381,470,631,000 | 37,571,895,900 | 35,223,652,406 | 35,223,652,406 | 2026-08-24 | 2026-08-24 | live |
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
-| material cores under borrowed material endings | 1 | 1 | 42 | 1,690,735,315,500 | 40,255,602,750 | 40,255,602,750 | 40,255,602,750 | 2026-08-24 | 2026-08-24 | untried |
 | images derived from materials | 1 | 14 | 5,540 | 11,656,161,398,832 | 40,472,782,634 | 22,270,957,777 | 22,270,957,777 | 2026-08-19 | 2026-08-23 | live |
 | image cores borrowed wide, stripped shallow | 1 | 2 | 6 | 243,078,381,000 | 40,513,063,500 | 30,384,797,625 | 30,384,797,625 | 2026-08-24 | 2026-08-24 | live |
 | harvested strings, heads of length 3 | 1 | 2 | 4 | 252,118,784,000 | 63,029,696,000 | 63,029,696,000 | 63,029,696,000 | 2026-08-24 | 2026-08-24 | live |
 | uncarried beginnings | 1 | 2 | 4 | 364,450,467,250 | 91,112,616,812 | 73,924,584,790 | 73,924,584,790 | 2026-08-23 | 2026-08-23 | live |
+| image cores under borrowed image endings | 1 | 1 | 10 | 1,385,501,166,000 | 138,550,116,600 | 138,550,116,600 | 138,550,116,600 | 2026-08-24 | 2026-08-24 | untried |
 | build strings under measured decorations | 1 | 1 | 6 | 885,240,258,000 | 147,540,043,000 | 147,540,043,000 | 147,540,043,000 | 2026-08-24 | 2026-08-24 | untried |
 | info removed | 1 | 8 | 428 | 87,647,273,961,206 | 204,783,350,376 | 6,559 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | spent |
 | bo3 mod tools vocabulary under measured decorations | 1 | 2 | 19 | 5,624,859,212,000 | 296,045,221,684 | 281,242,960,600 | 312,492,178,444 | 2026-08-24 | 2026-08-24 | live |
@@ -224,7 +225,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | sound files and aliases | 1 | 51 | 30,236 | 765,415,446,263,829 | 661,551,811,809 | 172,038,900,754 | 172,038,900,754 | 2026-08-19 | 2026-08-24 | live |
 | borrowed decorations over held cores | 1 | 1 | 1 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 2026-08-24 | 2026-08-24 | untried |
-| not recorded | 1 | 65 | 3,703 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
+| not recorded | 1 | 66 | 3,724 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -247,7 +248,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-170 distinct methods, run 199 ways between them, across 824 runs. `names` is what each run
+171 distinct methods, run 200 ways between them, across 828 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
