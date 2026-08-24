@@ -387,6 +387,12 @@ bd4a9291575c855,vox/scripted/operators/ptnv/vox_ptnv_mtx_execute_rare_01.rn75.pc
 53f6c4b082073bf1,vox/scripted/operators/ptnv/vox_ptnv_mtx_execute_rare_05.rn75.pc.en.snd
 36c6af520f545a46,vox/scripted/operators/ptnv/vox_ptnv_mtx_execute_rare_06.rn75.pc.en.snd
 5e890858a5bd1363,vox/scripted/operators/ptnv/vox_ptnv_mtx_execute_rare_07.rn75.pc.en.snd
+393309a305de75f0,vox/scripted/operators/rmbo/vox_rmbo_mtx_execute_rare_00.rn75.pc.en.snd
+4be81bdf4e72215,vox/scripted/operators/rmbo/vox_rmbo_mtx_execute_rare_01.rn75.pc.en.snd
+10abb31d8b3b52ba,vox/scripted/operators/rmbo/vox_rmbo_mtx_execute_rare_02.rn75.pc.en.snd
+2d578befc902557,vox/scripted/operators/rmbo/vox_rmbo_mtx_execute_rare_03.rn75.pc.en.snd
+6e0871c52c039d0c,vox/scripted/operators/rmbo/vox_rmbo_mtx_execute_rare_04.rn75.pc.en.snd
+5b66ff177654b1,vox/scripted/operators/rmbo/vox_rmbo_mtx_execute_rare_05.rn75.pc.en.snd
 7c33dc66f4f1c6f1,vox/scripted/operators/rvas/vox_rvas_mtx_execute_esad_00.rn75.pc.en.snd
 5ead6a48ec02b844,vox/scripted/operators/rvas/vox_rvas_mtx_execute_rare_00.rn75.pc.en.snd
 2e49fe91a0a7b009,vox/scripted/operators/rvas/vox_rvas_mtx_execute_rare_01.rn75.pc.en.snd
