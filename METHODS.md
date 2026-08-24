@@ -1010,6 +1010,55 @@ Two things worth taking from it beyond the names:
   stem alone -- a truncation, which is a different method. Getting this wrong does not fail; it
   reports billions of candidates and scans none.
 
+### And it was blind to a third of the corpus, for one character — 2026-08-24
+
+`--head` was added as "the same cross product with the lists swapped", and that is true of the
+stems and the beginnings. It is not true of the **alphabet**. `alphabet_of` counts `name[-4:]`,
+the characters names *end* in, because the function was written for tails; the head flag reused it
+unchanged.
+
+Names do not begin the way they end. Measured over 958,424 published and confirmed names:
+
+| | |
+|---|---|
+| characters names end in, top 37 | `_e0lnar1tocsdim2gphw34byku6f5v7x89zjq` — alnum and `_` |
+| characters names begin with | the same, plus `/` `*` `[` `$` |
+| first 3 characters inside the tail alphabet | **65.3%** |
+| first 4 characters inside the tail alphabet | **64.1%** |
+| first 5 characters inside the tail alphabet | **62.2%** |
+
+and the whole of that shortfall is one character:
+
+    blocked in the first four positions:   /  340,786 names    *  3,410    [  354    $  87
+
+`/` is the directory separator. METHODS already records that material names are paths under
+twelve directories and that `mc/` heads 496,666 published names — so **every `mc/ wc/ clt/ splm/
+vd/ mcs/ ei/ cltp/ vdd/ el/ mcp/ ec/ mcdp/` name has a slash inside its first four characters, and
+no head run has ever been able to spell one.** The 692-name pass was blind to a third of the
+ground it was pointed at, and the reach measurement did not show it because `reach.py` measures
+the committed beginning and ending lists rather than a method's own alphabet.
+
+**Fixed in `scripts/tails.py`**: `--head` now widens the alphabet with the characters names begin
+with and never end with, above a floor of 50,000 blocked fronts — which carries `/` and correctly
+declines `*`, a mesh-hash marker that is unreachable anyway. The cost is `((n+1)/n) ** k`, 11% at
+k=4.
+
+**And the ground itself is cheaper than the fix suggests.** Re-running the widened alphabet redoes
+the 1,874,161 beginnings of 2,085,136 that the narrow one already swept — 90% of the work for
+ground already covered. `contrib/heads_slash.py` writes the **complement** instead: only the
+210,975 four-character beginnings that carry a slash. 199 billion candidates, against 899 billion
+if `*`, `[` and `$` are carried too.
+
+Two things worth taking from this beyond the names:
+
+- **A method has an alphabet as well as a list, and nothing measures it.** `reach.py --missing`
+  reports what `data/prefixes.txt` and `data/suffixes.txt` cannot express and is run constantly.
+  It says nothing about a generator that builds its own vocabulary, and this one had been wrong
+  since the day it was written.
+- **Check the mirror's *inputs*, not only its shape.** The lesson recorded above was to try the
+  mirror of anything that works. The mirror was tried; what came with it unexamined was the
+  measurement feeding it.
+
 ### Structural overlap has now failed to predict yield three times — 2026-08-22
 
 Every time this project has measured that two name sets *share structure* and concluded a method
@@ -1604,6 +1653,8 @@ Do not spend a night rediscovering these. Each cost real time.
 | The animation transition grid, composed rather than observed | `xanim` is the least-named type in both games and has a real grammar: 6,149 published names match `<core>_<from>_to_<to>` over 1,446 cores, 101 from-states and 129 to-states. That grid is 18.8 M combinations and the tables hold 0.03% of it, so composing the two state vocabularies looked like free ground. 50k cores x 13,029 composed transitions: **1 name a game**. The unobserved pairings are unobserved because they do not exist -- a weapon has the transitions its state machine allows and no others. |
 | Materials from image cores through the thirteenth directory | `mcdp/` swept against every published material core returned 2,846, so asking the same directory from the image side looked like the other half of the seam. **0 both games.** The material-core sweep had already taken it; image cores add nothing `mcdp/` did not already reach. |
 | The `vox_` slot grid composed three deep, on Black Ops 4 | The same shape returned 184 on Cold War, so it looked like a method rather than a coincidence. 425 speakers x 381 x 423 composed slots, **68.5 M candidates against Black Ops 4: 0**. Pairing a speaker with a *whole observed tail* still pays there -- 17 of the 23 that method 30 found were `sound_alias` -- so what fails is composing the slots, not the family. Black Ops 4 records fewer lines per speaker than Cold War does, and the unobserved combinations are unobserved because they were never recorded. |
+| The cosmetic-bundle grid -- store themes crossed with store item wrappers | The one family this project owns outright: **5,652 names end in `_mtxitem` and 0 of them are published**, so unlike every other seed family its unnamed remainder cannot already have been claimed upstream. It is also a genuine product grid rather than a recombination -- a season ships one theme as a calling card *and* an emblem *and* a charm *and* a blueprint -- and the record proves the axes cross: **213 of 3,982 theme cores (5.3%) already appear under two or more item families** (`quartermaster`, `moonshiner`, `zombiepark`, `jacklinks`, `sovietnavy`), with calling-card/emblem carrying most of them. 336 learned wrappers x 15,647 themes x 120 `_mtxitem`-terminated tails, 636 M candidates: **0 on Black Ops 4 and 0 on Cold War.** Positive control passed -- **5,547 of 5,652 known `_mtxitem` names, 98.1%, are expressible** from those three lists, so the plan covered the space and the space is empty. This is the fourth grid to answer this way after the animation transition grid and the `vox_` slot grid, and together they say the same thing: **a store shipped the cells it shipped.** An unobserved cell in a product grid is unobserved because it was never made, not because nobody recorded it. Generator: `scripts/contributed/mtx_bundle_grid.py`. |
+| Every confirmed name of one title, tried verbatim in the other | Listed under *Candidates worth building* as `cross_game.py` from the beginning and never built, on the reasoning that Cold War carries a great deal of Black Ops 4's content so the two corpora are not independent. Built 2026-08-24: 173,046 spellings -- every name in `findings/` and `submissions/` for both games, folded and unfolded -- against each game's unnamed ids. **0 matched, both directions.** Nothing published can land here by construction, since the tables *are* the exclusion set, so this tested exactly the names cod-name-db has not caught up with; the answer is that shared content is already named on both sides. Costs two minutes and needs no plan. Generator: `scripts/contributed/cross_game_verbatim.py`. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
 
 ---

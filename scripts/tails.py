@@ -69,6 +69,9 @@ TABLES = (
 # seconds or hours.
 ALPHABET = 37
 
+# How many name fronts a character has to block before a head run pays the widening for it.
+HEAD_FLOOR = 50000
+
 # A stem shorter than this is not a name with its tail replaced, it is a fragment, and it collides
 # with everything.
 SHORTEST_STEM = 4
@@ -83,17 +86,44 @@ def known_names():
     return {name.strip().lower().replace("\\", "/") for name in names if name.strip()}
 
 
-def alphabet_of(names, size):
+def alphabet_of(names, size, head=False):
     """The characters real names actually end in, commonest first.
 
     Measured, not assumed. Counted across the last few characters rather than only the last, since
     a two-character tail draws on both positions.
+
+    `head` widens it with the characters names **begin** with that they never end with. Names do
+    not begin the way they end, and measured 2026-08-24 over 958,424 names the difference is one
+    character and a third of the corpus:
+
+        first 3 characters inside the tail alphabet   65.3%
+        first 4 characters inside the tail alphabet   64.1%
+        blocked in the first four positions      /  340,786 names   *  3,410   [  354   $  87
+
+    `/` is the directory separator, so every `mc/ wc/ clt/ splm/ vd/ mcs/ ei/ cltp/ vdd/ el/ mcp/
+    ec/ mcdp/` name -- `mc/` alone heads 496,666 published names -- was unspellable by every head
+    run before this. Carrying it costs `((size + 1) / size) ** length`, 11% at k=4.
+
+    Only characters blocking `HEAD_FLOOR` name fronts are carried, so `*` (a mesh hash marker, and
+    unreachable anyway) does not multiply the plan for 3,410 names.
     """
     counted = collections.Counter()
     for name in names:
         for character in name[-4:]:
             counted[character] += 1
-    return [character for character, _ in counted.most_common(size)]
+    alphabet = [character for character, _ in counted.most_common(size)]
+
+    if head:
+        fronts = collections.Counter()
+        for name in names:
+            for character in name[:4]:
+                fronts[character] += 1
+        alphabet += [
+            character
+            for character, seen in fronts.most_common()
+            if character not in alphabet and seen >= HEAD_FLOOR
+        ]
+    return alphabet
 
 
 def main(argv):
@@ -118,7 +148,7 @@ def main(argv):
     names = known_names()
     print("known names: %s" % format(len(names), ","), file=sys.stderr)
 
-    alphabet = alphabet_of(names, options.alphabet)
+    alphabet = alphabet_of(names, options.alphabet, head=options.head)
     endings = ["".join(pair) for pair in itertools.product(alphabet, repeat=options.length)]
 
     # The mirror. `tails` replaces the end because the end is where the hash keeps a resemblance
