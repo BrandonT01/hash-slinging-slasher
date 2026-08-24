@@ -59,6 +59,16 @@ TYPES = {
     "sound_asset": "fnv1a_xsounds",
 }
 SHORTEST_CORE = 4
+# How many decorations are used to *strip* a name back to its core, as opposed to how many the
+# plan then offers. These are different jobs and want very different numbers.
+#
+# Stripping wants the common ones only. Testing every name against 25,000 endings is nine billion
+# `endswith` calls -- minutes of Python per type -- and it is also wrong: with a long enough list
+# almost any tail matches something, so the "core" left behind is a fragment that identifies
+# nothing. The plan, by contrast, wants every ending we can afford, because that is the half
+# measured to be the bottleneck.
+STRIP_BEGINS = 300
+STRIP_ENDS = 800
 
 
 def ours(kind, table):
@@ -145,8 +155,8 @@ def main(argv):
         heads, tails = decorations(mine, options.depth, options.begins, options.ends)
 
         # Strip *their* spelling using *their* own decorations, so what crosses is the borrowed
-        # thing rather than Black Ops 3's way of writing it.
-        their_heads, their_tails = decorations(theirs, options.depth, options.begins, options.ends)
+        # thing rather than the source's way of writing it -- with the short lists, per STRIP_*.
+        their_heads, their_tails = decorations(theirs, options.depth, STRIP_BEGINS, STRIP_ENDS)
         stems = sorted(cores(theirs, their_heads, their_tails) - mine)
 
         base = "%s.%s" % (options.write_plans, kind)
