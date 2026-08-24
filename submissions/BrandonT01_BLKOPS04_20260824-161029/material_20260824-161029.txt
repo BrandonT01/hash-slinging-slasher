@@ -1,0 +1,4 @@
+a4f56f31ad5cc8d,mc/mtl_p7_mou_ibeam_bracket_patina_01_grey
+f90395b7cebc881,mc/mtl_c_t8_gen_gib_gore_arm_right_alpha
+6a0f7bb577f90443,mc/veh_t8_mil_drone_dart_decal_indent_01
+6caa66237fce3f11,mc/mtl_attach_t8_loot_smg_vmp_silent_01_decal
