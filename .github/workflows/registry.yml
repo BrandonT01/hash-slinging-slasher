@@ -92,17 +92,41 @@ jobs:
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A METHODS.md all_names scripts/contributed
-          git diff --cached --quiet && echo "nothing derived changed" && exit 0
-          git commit -m "Rebuild the registry and name lists from ${GITHUB_SHA::7}"
 
-          # `main` moves constantly -- both binaries workflows push, and submissions merge in
-          # batches -- so a single push loses the race often enough to be worth retrying. The
-          # rebase cannot conflict: nothing else writes the block between the generated-registry
-          # markers, and nothing else writes `all_names/`.
+          # Everything above is a pure function of `submissions/`, and that is what makes losing a
+          # push race recoverable: throw our commit away, take whatever `main` has become, and
+          # generate again. The answer is then correct by construction rather than merged.
+          #
+          # The previous version rebased instead, on the reasoning that "the rebase cannot
+          # conflict: nothing else writes the block between the generated-registry markers, and
+          # nothing else writes all_names/". Another run of **this** workflow writes both, and a
+          # batch of merging submissions starts several. When it did conflict, the retry loop ran
+          # `git pull --rebase` again with the conflict still unresolved, so every remaining
+          # attempt died on "Pulling is not possible because you have unmerged files" and the job
+          # failed. Nothing downstream notices: `all_names/` and `summary.json` simply stop being
+          # rebuilt, which is what the README and the Discord figures read, so the recovered-name
+          # counts quietly stall while every submission still merges cleanly.
+          regenerate() {
+            python scripts/methods_report.py --registry --write
+            python scripts/collect_names.py
+            python scripts/dedupe_contributed.py --remove
+            python scripts/check_docs.py
+          }
+
           for attempt in 1 2 3 4 5; do
-            git pull --rebase --quiet origin main && git push && exit 0
-            echo "push race on attempt $attempt, retrying"
+            git add -A METHODS.md all_names scripts/contributed
+            if git diff --cached --quiet; then
+              echo "nothing derived changed"
+              exit 0
+            fi
+            git commit --quiet -m "Rebuild the registry and name lists from ${GITHUB_SHA::7}"
+            git push --quiet && exit 0
+
+            echo "push race on attempt $attempt, regenerating against the new main"
+            git rebase --abort 2>/dev/null || true
+            git fetch --quiet origin main
+            git reset --hard --quiet origin/main
+            regenerate
             sleep $((attempt * 5))
           done
           echo "could not push after five attempts"
