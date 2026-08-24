@@ -118,7 +118,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | token-insertion-deletion-alias | 1 | 2 | 28 | 7,924,449 | 283,016 | 233,070 | 233,070 | 2026-08-20 | 2026-08-20 | live |
 | adjacent-token-order-batch | 1 | 2 | 26 | 7,517,953 | 289,152 | 250,599 | 250,599 | 2026-08-20 | 2026-08-20 | live |
 | per-prefix continuations | 3 | 4 | 538 | 159,447,283 | 296,370 | 79,618 | 1,430,530 | 2026-08-19 | 2026-08-21 | spent |
-| materials from image cores | 1 | 17 | 266 | 79,024,248 | 297,083 | 68,987 | 1,573,440 | 2026-08-20 | 2026-08-24 | spent |
+| materials from image cores | 1 | 18 | 267 | 83,744,928 | 313,651 | 68,987 | 4,720,680 | 2026-08-20 | 2026-08-24 | spent |
 | slotswap | 2 | 4 | 1,863 | 608,798,751 | 326,784 | 183,556 | 1,578,176 | 2026-08-20 | 2026-08-20 | cooling |
 | token insertion and deletion | 5 | 20 | 1,160 | 380,455,078 | 327,978 | 34,598 | 6,143,127 | 2026-08-20 | 2026-08-23 | spent |
 | cross-game sound stem transfer | 1 | 1 | 27 | 11,737,632 | 434,727 | 434,727 | 434,727 | 2026-08-20 | 2026-08-20 | untried |
@@ -167,7 +167,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | sound, uncarried endings over all-boundary cores | 1 | 8 | 3,397 | 1,105,024,531,644 | 325,294,239 | 92,280,373 | 902,952,472 | 2026-08-23 | 2026-08-23 | cooling |
 | confirmed-only cores over the full uncarried ending vocabulary | 1 | 8 | 1,576 | 555,022,909,612 | 352,171,896 | 141,523,942 | 3,319,756,536 | 2026-08-23 | 2026-08-23 | spent |
 | sound dotted tails | 1 | 3 | 126 | 29,595,227,882 | 352,324,141 | 343,483,821 | 361,595,696 | 2026-08-19 | 2026-08-24 | live |
-| tails of length 3 | 1 | 21 | 1,798 | 707,934,888,092 | 393,734,642 | 35,873,048 | 2,201,412,709 | 2026-08-22 | 2026-08-24 | spent |
+| tails of length 3 | 1 | 22 | 1,799 | 740,958,408,814 | 411,872,378 | 35,873,048 | 33,023,520,722 | 2026-08-22 | 2026-08-24 | spent |
 | composed numeric endings | 1 | 2 | 14 | 6,497,838,750 | 464,131,339 | 406,114,921 | 406,114,921 | 2026-08-23 | 2026-08-23 | live |
 | wrapper decorations, prefix side | 1 | 4 | 22 | 10,237,404,404 | 465,336,563 | 39,559,390 | 1,180,777,075 | 2026-08-23 | 2026-08-23 | spent |
 | older-title decorations | 1 | 2 | 18 | 9,352,503,246 | 519,583,513 | 334,017,973 | 334,017,973 | 2026-08-23 | 2026-08-23 | live |
@@ -224,7 +224,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-147 distinct methods, run 176 ways between them, across 707 runs. `names` is what each run
+147 distinct methods, run 176 ways between them, across 709 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
