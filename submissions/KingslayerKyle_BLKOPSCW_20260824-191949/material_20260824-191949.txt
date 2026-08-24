@@ -1,0 +1,5 @@
+f2dd524060763aa,mc/mtl_c_t9_zmb_rus_mechz_arm_mtl_paint_01
+17baffaada6ee8a0,mc/mtl_veh_t9_us_heli_light_ammo_door
+22707c18fad9a2a9,mc/mtl_veh_t9_us_heli_light_ammo_bullets
+33e770ad0c4d43c2,mc/mtl_wpn_t9_smg_heavy_receiver_base_emissive_blade
+741755ac4507a434,mc/mtl_c_t9_zmb_ammo_pouch_green
