@@ -154,6 +154,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | per-prefix-continuations-depth2-cap48 | 1 | 1 | 2 | 72,302,925 | 36,151,462 | 36,151,462 | 36,151,462 | 2026-08-20 | 2026-08-20 | untried |
 | cold war sound, uncarried 1-segment endings | 1 | 2 | 560 | 20,953,836,251 | 37,417,564 | 29,431,729 | 29,431,729 | 2026-08-23 | 2026-08-23 | live |
 | black ops 4, uncarried three-segment endings | 1 | 2 | 1,058 | 42,578,054,890 | 40,243,908 | 16,329,961 | 157,676,083 | 2026-08-23 | 2026-08-23 | cooling |
+| sound character insertion | 1 | 2 | 49 | 2,032,746,695 | 41,484,626 | 22,585,574 | 254,098,957 | 2026-08-24 | 2026-08-24 | spent |
 | black ops 4, uncarried four-segment endings | 1 | 1 | 409 | 18,715,524,480 | 45,759,228 | 45,759,228 | 45,759,228 | 2026-08-23 | 2026-08-23 | untried |
 | per-prefix-continuations-depth3-cap24 | 1 | 2 | 10 | 472,580,559 | 47,258,055 | 26,254,247 | 236,292,329 | 2026-08-20 | 2026-08-20 | cooling |
 | black ops 4, uncarried five-segment endings | 1 | 1 | 182 | 9,963,115,100 | 54,742,390 | 54,742,390 | 54,742,390 | 2026-08-23 | 2026-08-23 | untried |
@@ -185,6 +186,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | all-boundary cores x uncarried endings, 2 segments | 1 | 1 | 163 | 177,157,271,555 | 1,086,854,426 | 1,086,854,426 | 1,086,854,426 | 2026-08-23 | 2026-08-23 | untried |
 | xanim cores borrowed, xanim decorations measured | 1 | 10 | 269 | 317,475,928,400 | 1,180,207,912 | 26,167,942 | 5,018,452,260 | 2026-08-24 | 2026-08-24 | spent |
 | uncarried five-segment endings over all-boundary cores | 1 | 2 | 597 | 804,758,082,518 | 1,348,003,488 | 906,259,101 | 906,259,101 | 2026-08-23 | 2026-08-23 | live |
+| xanim cores borrowed wide, stripped shallow | 1 | 1 | 20 | 27,075,384,000 | 1,353,769,200 | 1,353,769,200 | 1,353,769,200 | 2026-08-24 | 2026-08-24 | untried |
 | uncarried one-segment endings over all-boundary cores | 1 | 2 | 316 | 522,511,859,758 | 1,653,518,543 | 1,326,172,232 | 2,195,427,982 | 2026-08-23 | 2026-08-23 | live |
 | heads of length 3, head-measured alphabet | 1 | 2 | 69 | 152,931,233,682 | 2,216,394,691 | 1,737,854,928 | 3,058,624,673 | 2026-08-23 | 2026-08-23 | live |
 | material cores borrowed, material decorations measured | 1 | 10 | 386 | 1,004,874,969,500 | 2,603,303,029 | 333,052,312 | 2,382,216,029 | 2026-08-24 | 2026-08-24 | cooling |
@@ -211,7 +213,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | sound files and aliases | 1 | 51 | 30,236 | 765,415,446,263,829 | 661,551,811,809 | 172,038,900,754 | 172,038,900,754 | 2026-08-19 | 2026-08-24 | live |
 | borrowed decorations over held cores | 1 | 1 | 1 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 2026-08-24 | 2026-08-24 | untried |
-| not recorded | 1 | 56 | 3,438 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
+| not recorded | 1 | 57 | 3,438 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -234,7 +236,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-157 distinct methods, run 186 ways between them, across 778 runs. `names` is what each run
+159 distinct methods, run 188 ways between them, across 782 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
