@@ -5,16 +5,16 @@
 
 <table>
 <tr><th align="left"><code>blkops04/</code></th>
-<th align="right" colspan="2">70,434 names in 6 file(s)</th>
+<th align="right" colspan="2">70,530 names in 6 file(s)</th>
 </tr>
 <tr><th align="left">asset type</th><th align="right">found here</th><th align="right">named, of all in the game</th>
 </tr>
-<tr><td><code>xmodel</code></td><td align="right">8,575</td><td align="right">48,698 / 61,139 &nbsp;(79.7%)</td></tr>
-<tr><td><code>material</code></td><td align="right">27,555</td><td align="right">99,669 / 122,750 &nbsp;(81.2%)</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">8,598</td><td align="right">48,721 / 61,139 &nbsp;(79.7%)</td></tr>
+<tr><td><code>material</code></td><td align="right">27,558</td><td align="right">99,672 / 122,750 &nbsp;(81.2%)</td></tr>
 <tr><td><code>image</code></td><td align="right">19,920</td><td align="right">126,947 / 167,360 &nbsp;(75.9%)</td></tr>
 <tr><td><code>xanim</code></td><td align="right">3,757</td><td align="right">15,726 / 21,968 &nbsp;(71.6%)</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">179</td><td align="right">8,563 / 79,263 &nbsp;(10.8%)</td></tr>
-<tr><td><code>sound_alias</code></td><td align="right">10,448</td><td align="right">36,919 / 50,043 &nbsp;(73.8%)</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">10,518</td><td align="right">36,989 / 50,043 &nbsp;(73.9%)</td></tr>
 </table>
 
 </td>
@@ -22,12 +22,12 @@
 
 <table>
 <tr><th align="left"><code>blkopscw/</code></th>
-<th align="right" colspan="2">53,532 names in 6 file(s)</th>
+<th align="right" colspan="2">53,574 names in 6 file(s)</th>
 </tr>
 <tr><th align="left">asset type</th><th align="right">found here</th><th align="right">named, of all in the game</th>
 </tr>
 <tr><td><code>xmodel</code></td><td align="right">2,744</td><td align="right">67,209 / 85,612 &nbsp;(78.5%)</td></tr>
-<tr><td><code>material</code></td><td align="right">14,383</td><td align="right">134,754 / 158,158 &nbsp;(85.2%)</td></tr>
+<tr><td><code>material</code></td><td align="right">14,425</td><td align="right">134,796 / 158,158 &nbsp;(85.2%)</td></tr>
 <tr><td><code>image</code></td><td align="right">6,276</td><td align="right">205,284 / 245,235 &nbsp;(83.7%)</td></tr>
 <tr><td><code>xanim</code></td><td align="right">3,061</td><td align="right">19,392 / 28,468 &nbsp;(68.1%)</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">514</td><td align="right">78,452 / 97,217 &nbsp;(80.7%)</td></tr>

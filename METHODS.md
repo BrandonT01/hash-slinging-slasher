@@ -186,7 +186,6 @@ table under a name you would not have guessed is the thing you are about to rebu
 | xanim cores borrowed wide, stripped shallow | 1 | 2 | 78 | 54,150,768,000 | 694,240,615 | 466,816,965 | 466,816,965 | 2026-08-24 | 2026-08-24 | live |
 | double deletion | 1 | 1 | 1 | 712,525,298 | 712,525,298 | 712,525,298 | 712,525,298 | 2026-08-24 | 2026-08-24 | untried |
 | family walking, whole words | 1 | 16 | 4,248 | 57,442,202,624 | 786,879,488 | 667,921,241 | 667,921,241 | 2026-08-19 | 2026-08-23 | live |
-| sound alias cores borrowed, sound alias decorations measured | 1 | 4 | 695 | 608,124,615,000 | 874,999,446 | 69,920,243 | 1,408,840,929 | 2026-08-24 | 2026-08-24 | spent |
 | cold war sound files, core tails of length 1 and 2 | 1 | 1 | 1 | 881,657,430 | 881,657,430 | 881,657,430 | 881,657,430 | 2026-08-23 | 2026-08-23 | untried |
 | uncarried four-segment endings over all-boundary cores | 1 | 2 | 381 | 400,012,766,734 | 1,049,902,274 | 1,020,440,731 | 1,020,440,731 | 2026-08-23 | 2026-08-23 | live |
 | all-boundary cores x uncarried endings, 2 segments | 1 | 1 | 163 | 177,157,271,555 | 1,086,854,426 | 1,086,854,426 | 1,086,854,426 | 2026-08-23 | 2026-08-23 | untried |
@@ -194,11 +193,12 @@ table under a name you would not have guessed is the thing you are about to rebu
 | uncarried one-segment endings over all-boundary cores | 1 | 2 | 316 | 522,511,859,758 | 1,653,518,543 | 1,326,172,232 | 2,195,427,982 | 2026-08-23 | 2026-08-23 | live |
 | xanim cores borrowed, xanim decorations measured | 1 | 11 | 271 | 561,968,886,200 | 2,073,685,926 | 26,167,942 | 122,246,478,900 | 2026-08-24 | 2026-08-24 | spent |
 | heads of length 3, head-measured alphabet | 1 | 2 | 69 | 152,931,233,682 | 2,216,394,691 | 1,737,854,928 | 3,058,624,673 | 2026-08-23 | 2026-08-23 | live |
-| material cores borrowed, material decorations measured | 1 | 10 | 386 | 1,004,874,969,500 | 2,603,303,029 | 333,052,312 | 2,382,216,029 | 2026-08-24 | 2026-08-24 | cooling |
+| sound alias cores borrowed, sound alias decorations measured | 1 | 5 | 837 | 1,966,247,250,000 | 2,349,160,394 | 69,920,243 | 9,564,243,908 | 2026-08-24 | 2026-08-24 | spent |
 | xmodel cores borrowed, xmodel decorations measured | 1 | 8 | 72 | 191,632,019,100 | 2,661,555,820 | 145,020,750 | 4,747,248,705 | 2026-08-24 | 2026-08-24 | spent |
 | image cores borrowed, image decorations measured | 1 | 10 | 647 | 2,113,985,426,500 | 3,267,365,419 | 1,015,745,750 | 9,419,898,920 | 2026-08-24 | 2026-08-24 | cooling |
 | xanim cores under borrowed xanim endings | 1 | 2 | 49 | 214,826,850,000 | 4,384,221,428 | 3,978,275,000 | 4,882,428,409 | 2026-08-24 | 2026-08-24 | live |
 | uncarried endings ranks 60001-120000 over published cores | 1 | 2 | 21 | 95,849,557,466 | 4,564,264,641 | 2,995,298,670 | 9,584,955,746 | 2026-08-23 | 2026-08-23 | cooling |
+| material cores borrowed, material decorations measured | 1 | 11 | 389 | 1,832,025,550,400 | 4,709,577,250 | 333,052,312 | 275,716,860,300 | 2026-08-24 | 2026-08-24 | spent |
 | all-boundary sound cores x uncarried sound endings, 2 segments | 1 | 1 | 37 | 198,601,685,997 | 5,367,613,135 | 5,367,613,135 | 5,367,613,135 | 2026-08-23 | 2026-08-23 | untried |
 | vox alias grid, slots composed rather than redistributed | 1 | 1 | 184 | 1,585,821,032,397 | 8,618,592,567 | 8,618,592,567 | 8,618,592,567 | 2026-08-23 | 2026-08-23 | untried |
 | black ops 1 build vocabulary | 1 | 2 | 204 | 2,038,307,570,080 | 9,991,703,774 | 6,575,185,709 | 20,799,056,837 | 2026-08-22 | 2026-08-22 | cooling |
@@ -208,10 +208,11 @@ table under a name you would not have guessed is the thing you are about to rebu
 | material cores borrowed wide, stripped shallow | 1 | 2 | 6 | 106,477,308,000 | 17,746,218,000 | 13,309,663,500 | 13,309,663,500 | 2026-08-24 | 2026-08-24 | live |
 | harvested strings, tails of length 3 | 1 | 1 | 4 | 86,898,811,198 | 21,724,702,799 | 21,724,702,799 | 21,724,702,799 | 2026-08-24 | 2026-08-24 | untried |
 | black ops 3 build vocabulary | 1 | 2 | 293 | 7,358,148,299,220 | 25,113,134,127 | 15,655,634,679 | 63,432,312,924 | 2026-08-22 | 2026-08-22 | cooling |
-| xmodel cores under borrowed xmodel endings | 1 | 1 | 45 | 1,319,222,203,500 | 29,316,048,966 | 29,316,048,966 | 29,316,048,966 | 2026-08-24 | 2026-08-24 | untried |
 | tails of length 5 | 1 | 4 | 670 | 19,811,769,907,699 | 29,569,805,832 | 10,653,467,440 | 319,932,215,920 | 2026-08-22 | 2026-08-22 | spent |
 | heads of length 4, slash-bearing beginnings | 1 | 2 | 13 | 398,873,132,550 | 30,682,548,657 | 24,929,570,784 | 39,887,313,255 | 2026-08-24 | 2026-08-24 | live |
+| xmodel cores under borrowed xmodel endings | 1 | 2 | 71 | 2,638,444,407,000 | 37,161,188,830 | 29,316,048,966 | 50,739,315,519 | 2026-08-24 | 2026-08-24 | live |
 | uncarried beginnings, optics and prefixed families | 1 | 2 | 7 | 271,475,197,760 | 38,782,171,108 | 27,147,519,776 | 67,868,799,440 | 2026-08-22 | 2026-08-22 | live |
+| material cores under borrowed material endings | 1 | 1 | 42 | 1,690,735,315,500 | 40,255,602,750 | 40,255,602,750 | 40,255,602,750 | 2026-08-24 | 2026-08-24 | untried |
 | images derived from materials | 1 | 14 | 5,540 | 11,656,161,398,832 | 40,472,782,634 | 22,270,957,777 | 22,270,957,777 | 2026-08-19 | 2026-08-23 | live |
 | image cores borrowed wide, stripped shallow | 1 | 2 | 6 | 243,078,381,000 | 40,513,063,500 | 30,384,797,625 | 30,384,797,625 | 2026-08-24 | 2026-08-24 | live |
 | harvested strings, heads of length 3 | 1 | 2 | 4 | 252,118,784,000 | 63,029,696,000 | 63,029,696,000 | 63,029,696,000 | 2026-08-24 | 2026-08-24 | live |
@@ -223,7 +224,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | sound files and aliases | 1 | 51 | 30,236 | 765,415,446,263,829 | 661,551,811,809 | 172,038,900,754 | 172,038,900,754 | 2026-08-19 | 2026-08-24 | live |
 | borrowed decorations over held cores | 1 | 1 | 1 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 2026-08-24 | 2026-08-24 | untried |
-| not recorded | 1 | 62 | 3,690 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
+| not recorded | 1 | 63 | 3,703 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -246,7 +247,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-169 distinct methods, run 198 ways between them, across 803 runs. `names` is what each run
+170 distinct methods, run 199 ways between them, across 808 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
