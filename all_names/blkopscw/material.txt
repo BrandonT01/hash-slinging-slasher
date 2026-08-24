@@ -8618,6 +8618,7 @@ f5f8a01ec7ff3e4,mc/mtl_wpn_t9_zm_ballistic_knife_alt_babayaga
 62bc116b37a069ea,mc/mtl_wrist_t9_rank_06_ui
 304a8266c7737ca,mc/mtl_zm_fld_aether_shroud
 2523ec5841eadea0,mc/mtl_zm_fld_aether_shroud_transition
+6ec8515dec3cd8bb,mc/p7_fe_paintshop_bkgd_mtl_01
 afecc60c082b463,mc/p7_slu_grass_scrub_blend
 672eb9c5490026b6,mc/p8_jpn_plaster_debris_beige
 6944a1bb9d06d728,mc/p8_lv8_temple_ornate_chest_wood_line
@@ -8883,6 +8884,7 @@ fbd9aa36aa72b4,mc/t9_decal_grunge_moisture_stained_01_no_normal
 377e607fa98b8b34,mc/t9_exp_graphics_poster_02
 76c453e9617b32d3,mc/t9_exp_metal_panels_1x1_painted_01_bare
 124aa6ebb67237e,mc/t9_exp_reception_glass_01
+739291df3db458fc,mc/t9_fir_effect_white_emissive_01_fade_01
 2fb0b11ab770415d,mc/t9_fir_plastic_tarp_01_teal
 4d85c65c2e101817,mc/t9_glass_clean_cracked_shard_01
 4e4b63241e634b07,mc/t9_glass_clean_wet_opaque_01
@@ -8969,6 +8971,9 @@ ae49800ca8db8d,mc/t9_wz_golova_metal_roof_01
 41744ec4a5541f17,mc/t9_wz_grass_hay_01_blend
 7ad5aea8c8d29c87,mc/t9_wz_metal_diamond_plate_01
 1bff72297922645f,mc/t9_wz_water_flow_all_directions
+4eac09b381faf301,mc/testmap_black_40
+2fca51681454d383,mc/vcs_crt_bright
+4219fab4a69120a8,mc/vcs_crt_default
 553a4d9420dfd769,mc/veh_t8_mil_air_jet_fighter_lights_glass
 4a877f28cdb80614,mc/water_cutaway
 5c10d7738c535732,mc/wood_bare_dark_worn_dark_01_dec
@@ -13227,6 +13232,7 @@ e2354be557c4c7a,uie_scene_blur_mask_normal
 274e1d310877ffe2,uie_vignette_multiply
 7f18f4c87633edda,uie_webkit_multiply
 5fa3ded1ceb3bf71,uie_webkit_video
+2e165e89feb766b8,vd/charred_burntstain_02_dec_gfx_no_normal
 143a909d397cd057,vd/flk_base_dirt_01_light_rvl
 736d7c578b4b6a9c,vd/gfx8_decal_mltv_scorch
 3490a0688f462ae1,vd/gfx9_decal_blast_crater_01
@@ -13515,6 +13521,7 @@ cf072022dcbbee7,vdd/gfx9_decal_bullet_rock_impact_4
 7f372e258e9e1ffa,vdd/gfx9_decal_scorch_2
 7f372f258e9e21ad,vdd/gfx9_decal_scorch_3
 7f3728258e9e15c8,vdd/gfx9_decal_scorch_4
+13ef3212171b8c88,wc/biodomes_bluesky
 6be21ba29f05dd52,wc/clip_weap
 381ac3cf95b657fb,wc/decal_favela_laundry
 df9311b908f2e92,wc/decal_favela_laundry_02
