@@ -3609,6 +3609,7 @@ cb2a4d9783af6cb,prj_nailgun_impact_vase
 1e57984743b53ee1,uin_cac_tactical_smoke
 22395c69d4f0bacd,uin_cac_tactical_stimshot
 60d0bd42d0748190,uin_cac_tactical_stun
+7171a25a546a33,uin_cac_wc_browse
 2c0ea1d5893448bc,uin_cac_wc_pick
 7d6ddc9c4858ce32,uin_crate_interact
 dcffd195d2773d,uin_cuav_static_loop
