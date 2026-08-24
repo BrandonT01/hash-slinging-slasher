@@ -1161,6 +1161,38 @@ of Oodle containers and that carry no type whatsoever. `scripts/harvest_bo3_asse
 Black Ops 3 ships 18,091 of them, so the one type where our corpus is thinnest is the one the
 external corpus is fattest in.
 
+### Which external corpora it works on, measured
+
+The method is not about Black Ops 3. It is about **any** corpus that carries its type, and three
+were to hand:
+
+| source | typed how | image | material | xmodel | xanim | sound_alias | sound_asset |
+|---|---|---|---|---|---|---|---|
+| Black Ops 3 shipped manifests | `type,name` rows | 277 + 197 | 107 + 110 | 13 + 17 | 41 + 37 | -- | -- |
+| cod-name-db `_v2` tables | one table per type | -- + 30 | 12 + 81 | no table | 24 + 10 | **199 + 473** | 0 |
+
+*(Black Ops 4 + Cold War, at 4,000 x 25,000 for the manifests and 600 x 3,000 upward for `_v2`.)*
+
+Two results in that table are worth more than the names.
+
+**The `_v2` tables are recorded dead in this file** -- all eight, 1,175,524 names hashed verbatim
+against 336,505 unnamed ids, **zero** -- and `cross_era`, which respells their cores our way but
+pools every type together, managed **61 names for 34.5 trillion candidates**. Typed, the same
+tables give hundreds. Nothing about the corpus changed; only whether an image core was asked to
+wear image decorations.
+
+**`sound_alias` is the richest of the lot.** `fnv1a_soundbanks_aliases_v2` is 20,564 names, the
+smallest external corpus tried, and it returned **339 on Cold War in one pass** and 134 more when
+widened, plus 199 on Black Ops 4. An alias is a bare underscore name with no directory and no
+channel code, so it is the type that suffers *most* from being pooled with images -- which is
+exactly why it had never paid before.
+
+**`sound_asset` returned 0**, and that is the expected answer rather than a disappointment: the
+sound-file dead ends in this file are extensive, and nothing about typing was going to make a
+recording's path transfer between titles. Note the Black Ops 4 half of that pool needs `fold: no`
+-- a plan crossing it folded matches nothing while looking healthy (§5), so a zero from a folded
+plan means nothing at all and was not counted here.
+
 ### And it is spent by
 
 Widening its own lists, eventually. Each step has returned more than the last so far, and the

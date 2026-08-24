@@ -50,6 +50,13 @@ TYPES = {
     "material": "fnv1a_xmaterials",
     "xmodel": "fnv1a_xmodels",
     "xanim": "fnv1a_xanims",
+    # sound_alias is the third-largest unnamed pool across the two games -- 14,894 in Black Ops 4
+    # and 17,662 in Cold War -- and it has a convention of its own: bare underscore names, no
+    # directory, no channel code. Pooling it with image would be the worst mixing of the lot.
+    "sound_alias": "fnv1a_soundbanks_aliases",
+    # sound_asset is the largest unnamed ground in either game -- 70,707 of 79,263 in Black Ops 4.
+    # Its convention is a path with a dotted encoding tail, which is nothing like the other five.
+    "sound_asset": "fnv1a_xsounds",
 }
 SHORTEST_CORE = 4
 
