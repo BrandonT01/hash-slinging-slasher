@@ -127,6 +127,12 @@ def main(argv):
                     if keep(spelling):
                         names.add(spelling)
 
+    # `borrowed/` is gitignored, so a fresh clone does not have it and the default output path
+    # lands inside it.
+    folder_out = os.path.dirname(options.out)
+    if folder_out:
+        os.makedirs(folder_out, exist_ok=True)
+
     with open(options.out, "w", encoding="utf-8") as handle:
         if options.typed:
             handle.write("\n".join("%s,%s" % row for row in sorted(set(typed))) + "\n")

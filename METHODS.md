@@ -1214,6 +1214,101 @@ Widening its own lists, eventually. Each step has returned more than the last so
 cores *shrink* as the lists widen -- deeper stripping leaves less middle -- so the two move against
 each other and there is a width past which it stops. Nobody has found it yet.
 
+### Why they move against each other: one flag was driving both — 2026-08-24
+
+The sentence above describes a real effect and gets its cause wrong, and the cause is fixable.
+`typed_cross.py` calls `decorations()` twice with the **same** `(depth, begins, ends)`:
+
+    heads, tails             = decorations(mine,   depth, begins, ends)   # the plan's columns
+    their_heads, their_tails = decorations(theirs, depth, begins, ends)   # used to STRIP
+
+The two uses are opposites. The first is **reach** -- every beginning and ending our names are
+measured to wear, and more of it is strictly better. The second is **stripping** -- the longest
+matching decoration is cut off each external name, and what survives is the core being borrowed.
+Widen that and there is less middle left to borrow. So "the two move against each other" is not a
+property of the method; it is one flag wired to both ends of it.
+
+Measured on the Black Ops 3 manifests (`contrib/measure_core_collapse.py`):
+
+| type | cores at depth 3, 250x1200 | at depth 6, 8000x50000 | lost |
+|---|---|---|---|
+| image | 10,121 | 6,206 | -39% |
+| material | 4,438 | 2,461 | -45% |
+| xmodel | 1,456 | 797 | -45% |
+| **xanim** | **2,268** | **883** | **-61%** |
+
+`xanim` is the type this method leads with, the least-named type in both games, and the one Black
+Ops 3 ships most of -- and the widest configuration ever run threw away **61% of its borrowed
+vocabulary** to buy ending-list reach. The ceiling nobody could find is largely this artefact: past
+a certain width each step is paying for reach with the very cores it is meant to decorate.
+
+**`scripts/contributed/typed_cross_split_20260824-155834.py` separates them.** `--depth/--begins/--ends` size our decorations;
+`--strip-depth/--strip-begins/--strip-ends` size theirs. Wide reach with shallow stripping gives
+xanim **2,249 cores against 883 at the same 8,000 x 50,000** -- 2.55x the vocabulary, and 1,366 of
+those cores are ones the coupled version cannot express *at any setting*, because the widening that
+would reach them is what destroys them.
+
+The general lesson is the one §1272 already records in a different costume: **a method has inputs
+as well as a shape, and a flag that means two things measures neither.** Check what a knob is wired
+to before concluding the method has a ceiling.
+
+---
+
+## 19. Borrowed endings, kept type by type — 2026-08-24
+
+**The mirror of §18, and the same one-line fix applied to a script that already existed.**
+
+`scripts/borrowed_decorations.py` already takes decorations from a build we are not searching and
+wears them on cores we already hold. It is the right idea and it has no `--kind`: one `--source`,
+one set of beginnings and one set of endings, asked about every asset type at once. §18 measured
+what that costs in the other direction -- pooled 0 against typed 50 -- and nothing had applied the
+result to the mirror.
+
+### Why a borrowed ending reaches what a measured one cannot
+
+Our ending lists are measured on names we already know, so an ending our games use is in the list
+**if the names using it have been found**. An ending used in Black Ops 4 only on assets nobody has
+named is invisible to that measurement. Black Ops 3 is Black Ops 4's direct predecessor -- same
+studio, same engine, same conventions -- so it can see them. That is the `uncarried.py` argument
+pointed at an external corpus instead of at our own cap.
+
+The overlap is the control, measured with `contrib/measure_borrowed_decorations.py`:
+
+| type | their endings | we already carry | new to us |
+|---|---|---|---|
+| xanim | 19,274 | 6,086 (**31.6%**) | 13,188 |
+| xmodel | 8,664 | 1,449 (16.7%) | 7,215 |
+| material | 21,991 | 3,182 (14.5%) | 18,809 |
+| image | 60,000 | 4,985 (8.3%) | 55,015 |
+
+A third of Black Ops 3's animation endings are ones our corpus independently arrived at. The
+borrowing is meaningful rather than two unrelated vocabularies being stapled together.
+
+### Only the endings transfer, and the same measurement says so
+
+Their *beginnings* do not: `t7_icon_attach_`, `mc/mtl_zmb_t7_`, `attach_t7_loot_`. A beginning
+carries the title tag and an ending carries the part, so beginnings stay ours. This is worth
+stating because `borrowed_decorations.py` borrows both, and half of what it borrows cannot match.
+
+### What it returned
+
+First run, 107 B candidates per game, 1,500 of our beginnings x 8,950 of our cores x 8,000
+borrowed endings:
+
+| | new names |
+|---|---|
+| Cold War `xanim` | **27** |
+| Black Ops 4 `xanim` | **22** |
+
+`scripts/contributed/typed_borrowed_endings_20260824-161029.py`.
+
+### And it is spent by
+
+The external corpus. Black Ops 3's manifests are 106,836 names and every ending in them is now
+either carried or tried at the 8,000 cap. Widening the cap is the next step and the same
+core-collapse caveat applies -- see §18's note on the coupled flags. A second external build with
+shipped manifests would reopen it entirely.
+
 ---
 
 ## Candidates worth building, with the measurement that decides each
@@ -1564,8 +1659,10 @@ destination table, since a name with nowhere to land is worth less than one that
 
 ### Others, briefly
 
-- **`numbered_grids.py`** — families numbered on *two* axes. `families.py --gaps` walks one; nothing
-  fills a hole in the second. Measure: how many names carry two separate numeric tokens.
+- ~~**`numbered_grids.py`**~~ — families numbered on *two* axes. **Built and measured dead,
+  2026-08-24 — see the dead ends.** The measurement this line asked for came back healthy (a third
+  of the corpus carries two numeric runs) and the pass came back **0 in both games**, on a
+  generator whose positive control rebuilds 100% of the observed cells. Do not rebuild it.
 - **`suffix_chains.py`** — endings compose (`_01` + `_c`). The list is capped at 4,800 *observed*
   endings, so rare compositions are structurally absent. Measure: how many pairwise compositions of
   the top 50 endings are already published but missing from `data/suffixes.txt`.
@@ -1966,6 +2063,7 @@ Do not spend a night rediscovering these. Each cost real time.
 | The `vox_` slot grid composed three deep, on Black Ops 4 | The same shape returned 184 on Cold War, so it looked like a method rather than a coincidence. 425 speakers x 381 x 423 composed slots, **68.5 M candidates against Black Ops 4: 0**. Pairing a speaker with a *whole observed tail* still pays there -- 17 of the 23 that method 30 found were `sound_alias` -- so what fails is composing the slots, not the family. Black Ops 4 records fewer lines per speaker than Cold War does, and the unobserved combinations are unobserved because they were never recorded. |
 | The cosmetic-bundle grid -- store themes crossed with store item wrappers | The one family this project owns outright: **5,652 names end in `_mtxitem` and 0 of them are published**, so unlike every other seed family its unnamed remainder cannot already have been claimed upstream. It is also a genuine product grid rather than a recombination -- a season ships one theme as a calling card *and* an emblem *and* a charm *and* a blueprint -- and the record proves the axes cross: **213 of 3,982 theme cores (5.3%) already appear under two or more item families** (`quartermaster`, `moonshiner`, `zombiepark`, `jacklinks`, `sovietnavy`), with calling-card/emblem carrying most of them. 336 learned wrappers x 15,647 themes x 120 `_mtxitem`-terminated tails, 636 M candidates: **0 on Black Ops 4 and 0 on Cold War.** Positive control passed -- **5,547 of 5,652 known `_mtxitem` names, 98.1%, are expressible** from those three lists, so the plan covered the space and the space is empty. This is the fourth grid to answer this way after the animation transition grid and the `vox_` slot grid, and together they say the same thing: **a store shipped the cells it shipped.** An unobserved cell in a product grid is unobserved because it was never made, not because nobody recorded it. Generator: `scripts/contributed/mtx_bundle_grid.py`. |
 | Every confirmed name of one title, tried verbatim in the other | Listed under *Candidates worth building* as `cross_game.py` from the beginning and never built, on the reasoning that Cold War carries a great deal of Black Ops 4's content so the two corpora are not independent. Built 2026-08-24: 173,046 spellings -- every name in `findings/` and `submissions/` for both games, folded and unfolded -- against each game's unnamed ids. **0 matched, both directions.** Nothing published can land here by construction, since the tables *are* the exclusion set, so this tested exactly the names cod-name-db has not caught up with; the answer is that shared content is already named on both sides. Costs two minutes and needs no plan. Generator: `scripts/contributed/cross_game_verbatim.py`. |
+| Numbered families as grids on **two** axes | `families.py --gaps` walks the *last* numeric run in a name and fills holes in it. A name carrying two numbers sits in a rectangle, and `families.py` keys its family on everything before the last number -- so `p7_..._01` and `p8_..._01` are unrelated families to it and it can never propose a cell by reasoning across them. Listed under *Candidates worth building* as `numbered_grids.py` from the beginning and never built. Built 2026-08-24: roughly **a third of every name in the corpus carries exactly two numeric runs** (material 36.6%, image 36.8%, xmodel 35.4%, xanim 20.8%), giving 983 rectangles of at least 2x2 whose cells the corpus has never shown. 128,899 candidates at margin 2, against **both** games: **0 matched, 0 hits of any kind** -- against 126,331 unnamed Cold War ids and 166,703 Black Ops 4 ones. Positive control passed and is the part worth keeping: **1,482 of 1,482 observed cells, 100.0%**, rebuild byte for byte from the template, and 543 of them (36.6%) hash to an id the Cold War snapshot actually holds -- so the plumbing is sound and the holes are genuinely empty. This is the **fifth** grid to answer this way after the animation transition grid, the `vox_` slot grid and the cosmetic-bundle grid, and it is the most general of them: those three each composed a *semantic* vocabulary, where this composes bare integers and so carries no assumption about meaning at all. Together they close the shape rather than three instances of it -- **an unobserved cell is unobserved because it was never made.** Do not build a sixth. Generator: `scripts/contributed/numbered_grids_20260824-155834.py`. |
 | Reading candidates with `BufRead::lines()` | Not a search dead end but the same lesson: the `String` per candidate *was* the program, capping `confirm_list` at 5.2M/s against 64.3M/s for raw bytes. |
 
 ---
