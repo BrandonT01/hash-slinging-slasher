@@ -1,0 +1,2 @@
+4b4169f51e266b55,wpn_ww_aether_launcher_fire_pap_npc
+6c1194cc0515f1b5,wpn_ballisticknife_fire_pap_plr
