@@ -905,6 +905,75 @@ returns exactly what it returned before; re-running over new ones is a new searc
 
 ---
 
+## 17. The build itself, read off this disk — 2026-08-24
+
+**Every dead end recorded against Black Ops 4 `sound_asset` ends with the same sentence:**
+*"anything reaching this pool has to come from outside the naming -- the SAB files, a build, or
+the game's own strings."* Three recombination shapes have returned 0 against 70,707 unnamed ids,
+`sabpaths` returned 0 in 187 billion candidates, and every older- and newer-title corpus is
+measured dead. The file has been pointing at an outside source for four days and nobody had
+checked whether one was reachable.
+
+Both games are installed on this machine, and so is the extracted SAB tree:
+
+    D:\Battlenet\Call of Duty Black Ops 4              142 GB
+    D:\Battlenet\Call of Duty Black Ops Cold War       100 GB
+    D:\Battlenet\BO4_Extracted_Sab                      30 GB
+
+### The SAB files are not the source, and that is now measured rather than assumed
+
+`zone/snd/**/*.sabl` and `*.sabs`, 414 files: magic `2UX#`, a hash table, FLAC payload, and the
+only printable string in any of them is `reference libFLAC 1.2.1 20070917`. **No plaintext
+whatsoever.** That is why the pool is 89% unnamed and why `sabpaths` had to guess at path
+structure in the first place. Do not spend a session extracting SABs for names; they hold none.
+
+### The build is the source, and it reads
+
+| | |
+|---|---|
+| `LPC/*.ff` — twelve loose fast files, 10.4 MB | **2,135 name-shaped strings → 7 new names, 1 per 305** |
+| `Data/data/data.NNN` — 148 CASC archives, 141 GB | first 0.5 GB of one archive: 3,637 strings → **10 new names, 1 per 364** |
+
+**1 per 305 is the second-best rate ever measured here**, behind `final_byte` at 1 per 18 and
+ahead of image siblings at 1 per 394 — and unlike either it is not bounded by the corpus, because
+its vocabulary is not drawn from the corpus at all. `outfit_northern_lights_legendary3_firebreak`
+and `loot_ui_icon_stickers_safari_animals_4_large` are not recombinations of anything this project
+holds. That is the whole point of §1473: *what finds names is a method whose vocabulary comes from
+outside the region the named corpus already covers.*
+
+`contrib/harvest_bo4.py` does it, and three details are the method:
+
+- **Oodle.** Black Ops 4 fast files are the same block chain Cold War uses — four little-endian
+  words per block, the last of which is the block's own offset, which is what proves the chain was
+  found rather than guessed. The game ships its own decompressor (`oo2core_6_win64.dll`), and Cold
+  War's `oo2core_8` reads Black Ops 4's streams too.
+- **BLTE, and this is the part that decides whether it works at all.** CASC frames every archive
+  entry into 256 KB chunks, **each prefixed by a one-byte mode**. So even an uncompressed chunk is
+  not contiguous with the next, and a block chain whose offsets are relative to the fast file's own
+  start dies at the first boundary. Walking the frame in place returned **11 names an archive**;
+  reassembling the frame first returned **3,637 from half of one**. The entry's own size sits in
+  the 30-byte header in front of the frame, which is what bounds a single-chunk frame carrying no
+  chunk table.
+- **A density check before the text filter.** Compressed payload decodes as printable often enough
+  to pass `harvest_retail.py`'s name filter: the first probe produced 6,092 strings of which **0**
+  matched any id, all of them noise like `0/2och5p`. A frame is only read as text if 60% of its
+  first 4 KB is printable.
+
+**Nothing decompressed is written down.** A chunk is decompressed into memory, scanned, and
+dropped; the only output is the name list.
+
+### What is left of this
+
+- **Cold War.** Identical layout, 100 GB, and `scripts/harvest_retail.py` still points at
+  `D:\_CW_FILES`, which is empty. The same harvester needs only its root changed.
+- **The `.idx` files.** `Data/data/*.idx` maps every content key to an archive, offset and size.
+  Reading them replaces the magic hunt and reaches entries the hunt cannot see — worth doing if the
+  archive sweep's yield justifies it.
+- **Encrypted frames.** BLTE mode `E` is Salsa20 against the build's key ring, and mode `F` is a
+  recursive frame. Both are dropped rather than guessed at. Neither has been counted.
+
+---
+
 ## Candidates worth building, with the measurement that decides each
 
 **Read this before inventing a method from scratch.** These are ideas that have been thought
