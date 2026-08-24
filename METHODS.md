@@ -1104,6 +1104,61 @@ ever ship.
 
 ---
 
+## 18. The typed cross: an external corpus, kept type by type — 2026-08-24
+
+**The single change that made an external corpus pay, and it is one line of principle.**
+
+Every cross this project has run pools its stems and asks one beginning list and one ending list
+about all of them. §6 already says why that is wrong -- *"Measure conventions, never guess them"* --
+and `snapshot.confirmed_names(kind=...)` exists precisely for it, with a docstring that is blunt:
+*"mixing types silently destroys exactly the measurement being taken."* An image wears `i_` and
+`_c`; a material wears `mc/mtl_`; an xanim wears neither. Pooling them spends almost every
+candidate asking a question no name of that type could answer.
+
+Measured on the same corpus, the same day, against both games:
+
+| | candidates | names |
+|---|---|---|
+| pooled, untyped (`bo3_dec`) | 346 B | **0** |
+| typed, 250 begin x 1,200 end | 5.5 B | **50** |
+| typed, 600 x 3,000 | 28 B | **54** |
+| typed, 1,500 x 8,000, depth 4 | 159 B | **305** |
+| typed, 4,000 x 25,000, depth 5 | 1.1 T | **108 and counting** |
+
+**Zero against fifty on a sixtieth of the machine**, and it keeps climbing as the lists widen --
+which is the *ending list is the bottleneck* result of §1355, now confirmed from the outside rather
+than by re-measuring our own corpus. `scripts/typed_cross.py`.
+
+### What makes it runnable is a typed external corpus
+
+A cross needs the two halves to come from different places (§1473), and the external half has to
+carry its type or there is nothing to keep apart. Black Ops 3's **shipped manifests** are exactly
+that: `zone_source/*/assetlist/*.csv`, one `type,name` row per asset, 247 files across thirteen
+locales, given away with no harvesting at all --
+
+    29,514 image     18,091 xanim     8,715 material     4,157 xmodel
+
+against `zone/`, which holds every asset in the game but only as strings that have to be pulled out
+of Oodle containers and that carry no type whatsoever. `scripts/harvest_bo3_assetlist.py`.
+
+### The shape, per type
+
+- **cores** -- that type's external names with *their own* measured decorations stripped, so what
+  crosses is the borrowed thing rather than Black Ops 3's spelling of it;
+- **beginnings and endings** -- measured on *our* names of the same type, published and confirmed.
+
+`xanim` leads consistently. It is the least-named type in both games -- 68.9% and 64.0% -- and
+Black Ops 3 ships 18,091 of them, so the one type where our corpus is thinnest is the one the
+external corpus is fattest in.
+
+### And it is spent by
+
+Widening its own lists, eventually. Each step has returned more than the last so far, and the
+cores *shrink* as the lists widen -- deeper stripping leaves less middle -- so the two move against
+each other and there is a width past which it stops. Nobody has found it yet.
+
+---
+
 ## Candidates worth building, with the measurement that decides each
 
 **Read this before inventing a method from scratch.** These are ideas that have been thought

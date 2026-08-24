@@ -79,13 +79,19 @@ def keep(text):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", default=None, help="overrides TA_TOOLS_PATH")
+    parser.add_argument("--all-locales", action="store_true",
+                        help="read every zone_source locale, not only `all/`")
     parser.add_argument("--typed", action="store_true",
                         help="write `type,name` rows rather than bare names")
     parser.add_argument("--out", default=os.path.join("borrowed", "bo3_assetlist.txt"))
     options = parser.parse_args(argv)
 
     root = tools_root(options.root)
-    folder = os.path.join(root, "zone_source", "all", "assetlist")
+    # `all/` is the shared half; the locale folders beside it are the same shipped structure and
+    # carry the localised assets -- 247 manifests between them against 19, and about a third more
+    # names. Same file, same format, same nobody-edits-it-except-to-override.
+    locale = "*" if options.all_locales else "all"
+    folder = os.path.join(root, "zone_source", locale, "assetlist")
     manifests = sorted(glob.glob(os.path.join(folder, "*.csv")))
     if not manifests:
         raise SystemExit(
