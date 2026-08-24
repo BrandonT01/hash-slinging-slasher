@@ -197,8 +197,8 @@ table under a name you would not have guessed is the thing you are about to rebu
 | xanim cores borrowed, xanim decorations measured | 1 | 13 | 372 | 1,426,717,710,200 | 3,835,262,661 | 26,167,942 | 5,842,897,459 | 2026-08-24 | 2026-08-24 | spent |
 | xanim cores under borrowed xanim endings | 1 | 2 | 49 | 214,826,850,000 | 4,384,221,428 | 3,978,275,000 | 4,882,428,409 | 2026-08-24 | 2026-08-24 | live |
 | uncarried endings ranks 60001-120000 over published cores | 1 | 2 | 21 | 95,849,557,466 | 4,564,264,641 | 2,995,298,670 | 9,584,955,746 | 2026-08-23 | 2026-08-23 | cooling |
-| material cores borrowed, material decorations measured | 1 | 11 | 389 | 1,832,025,550,400 | 4,709,577,250 | 333,052,312 | 275,716,860,300 | 2026-08-24 | 2026-08-24 | spent |
 | all-boundary sound cores x uncarried sound endings, 2 segments | 1 | 1 | 37 | 198,601,685,997 | 5,367,613,135 | 5,367,613,135 | 5,367,613,135 | 2026-08-23 | 2026-08-23 | untried |
+| material cores borrowed, material decorations measured | 1 | 12 | 464 | 2,654,652,970,400 | 5,721,234,850 | 333,052,312 | 10,968,365,600 | 2026-08-24 | 2026-08-24 | spent |
 | xmodel cores borrowed, xmodel decorations measured | 1 | 10 | 95 | 684,128,435,100 | 7,201,351,948 | 145,020,750 | 49,249,641,600 | 2026-08-24 | 2026-08-24 | spent |
 | vox alias grid, slots composed rather than redistributed | 1 | 1 | 184 | 1,585,821,032,397 | 8,618,592,567 | 8,618,592,567 | 8,618,592,567 | 2026-08-23 | 2026-08-23 | untried |
 | black ops 1 build vocabulary | 1 | 2 | 204 | 2,038,307,570,080 | 9,991,703,774 | 6,575,185,709 | 20,799,056,837 | 2026-08-22 | 2026-08-22 | cooling |
@@ -220,12 +220,13 @@ table under a name you would not have guessed is the thing you are about to rebu
 | image cores under borrowed image endings | 1 | 1 | 10 | 1,385,501,166,000 | 138,550,116,600 | 138,550,116,600 | 138,550,116,600 | 2026-08-24 | 2026-08-24 | untried |
 | build strings under measured decorations | 1 | 1 | 6 | 885,240,258,000 | 147,540,043,000 | 147,540,043,000 | 147,540,043,000 | 2026-08-24 | 2026-08-24 | untried |
 | info removed | 1 | 8 | 428 | 87,647,273,961,206 | 204,783,350,376 | 6,559 | 2,241,115,004,915 | 2026-08-23 | 2026-08-23 | spent |
+| heads of length 4 | 1 | 1 | 9 | 1,980,280,765,968 | 220,031,196,218 | 220,031,196,218 | 220,031,196,218 | 2026-08-24 | 2026-08-24 | untried |
 | bo3 mod tools vocabulary under measured decorations | 1 | 2 | 19 | 5,624,859,212,000 | 296,045,221,684 | 281,242,960,600 | 312,492,178,444 | 2026-08-24 | 2026-08-24 | live |
 | general search | 2 | 76 | 110,513 | 2,048,510,951,696,930 | 382,613,177,380 | 35,073,084,706 | 4,883,280,929,283 | 2026-08-19 | 2026-08-24 | spent |
 | newer-title cores respelled | 1 | 2 | 61 | 34,510,658,565,958 | 565,748,501,081 | 367,134,665,595 | 1,232,523,520,212 | 2026-08-22 | 2026-08-22 | cooling |
 | sound files and aliases | 1 | 51 | 30,236 | 765,415,446,263,829 | 661,551,811,809 | 172,038,900,754 | 172,038,900,754 | 2026-08-19 | 2026-08-24 | live |
 | borrowed decorations over held cores | 1 | 1 | 1 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 3,981,513,729,000 | 2026-08-24 | 2026-08-24 | untried |
-| not recorded | 1 | 66 | 3,724 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
+| not recorded | 1 | 67 | 3,729 | - | - | - | - | 2026-08-19 | 2026-08-24 | unmeasured |
 | bo3 techset tag sweep | 1 | 2 | 1,673 | - | - | - | - | 2026-08-18 | 2026-08-19 | unmeasured |
 | cutting at underscores and recombining | 1 | 1 | 435 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | general search, confirmed seeds only | 1 | 3 | 75 | - | - | - | - | 2026-08-20 | 2026-08-20 | unmeasured |
@@ -248,7 +249,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-171 distinct methods, run 200 ways between them, across 828 runs. `names` is what each run
+172 distinct methods, run 201 ways between them, across 831 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
