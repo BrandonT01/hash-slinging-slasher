@@ -1,0 +1,8 @@
+77b2b065c45b9ca,mc/t8_material_dropship_metal_brushed
+1d130d5432bb66da,mc/mtl_p7_cai_igc_mugshot_screen
+275cc3f7287190a6,mc/material_civ_pickup_metal_chrome
+35bbd1a05e1b80ce,mc/t7_stone_cobblestone_01_muddy_r01
+36ca5d0299e7de6f,wc/t7_wood_white_birch_worn
+6c6734eb78be1142,mc/mtl_p7_benchmark_06_hinge
+6cd4289b5c6f98c4,wc/t7_stone_cobblestone_01_muddy_r01
+6e4a9c14ca655c4a,mc/mtl_fxuse_test_lightsphere
