@@ -172,10 +172,10 @@ table under a name you would not have guessed is the thing you are about to rebu
 | wrapper decorations, prefix side | 1 | 4 | 22 | 10,237,404,404 | 465,336,563 | 39,559,390 | 1,180,777,075 | 2026-08-23 | 2026-08-23 | spent |
 | older-title decorations | 1 | 2 | 18 | 9,352,503,246 | 519,583,513 | 334,017,973 | 334,017,973 | 2026-08-23 | 2026-08-23 | live |
 | affix sweep | 1 | 1 | 1 | 532,497,168 | 532,497,168 | 532,497,168 | 532,497,168 | 2026-08-20 | 2026-08-20 | untried |
-| sound alias cores borrowed, sound alias decorations measured | 1 | 3 | 561 | 327,765,270,000 | 584,251,818 | 69,920,243 | 1,408,840,929 | 2026-08-24 | 2026-08-24 | spent |
 | animation transition grid | 1 | 2 | 2 | 1,295,625,020 | 647,812,510 | 647,812,510 | 647,812,510 | 2026-08-23 | 2026-08-23 | live |
 | family walking, numbers in place | 1 | 18 | 1,244 | 72,674,969,581 | 672,916,385 | 200,051,105 | 10,407,205,810 | 2026-08-19 | 2026-08-24 | spent |
 | family walking, whole words | 1 | 16 | 4,248 | 57,442,202,624 | 786,879,488 | 667,921,241 | 667,921,241 | 2026-08-19 | 2026-08-23 | live |
+| sound alias cores borrowed, sound alias decorations measured | 1 | 4 | 695 | 608,124,615,000 | 874,999,446 | 69,920,243 | 1,408,840,929 | 2026-08-24 | 2026-08-24 | spent |
 | cold war sound files, core tails of length 1 and 2 | 1 | 1 | 1 | 881,657,430 | 881,657,430 | 881,657,430 | 881,657,430 | 2026-08-23 | 2026-08-23 | untried |
 | uncarried four-segment endings over all-boundary cores | 1 | 2 | 381 | 400,012,766,734 | 1,049,902,274 | 1,020,440,731 | 1,020,440,731 | 2026-08-23 | 2026-08-23 | live |
 | all-boundary cores x uncarried endings, 2 segments | 1 | 1 | 163 | 177,157,271,555 | 1,086,854,426 | 1,086,854,426 | 1,086,854,426 | 2026-08-23 | 2026-08-23 | untried |
@@ -230,7 +230,7 @@ table under a name you would not have guessed is the thing you are about to rebu
 | weapon vocabulary growth, then attachment unfolding | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 | names already found and verified, but never sent | 1 | 1 | 0 | - | - | - | - | 2026-08-19 | 2026-08-19 | unmeasured |
 
-153 distinct methods, run 182 ways between them, across 757 runs. `names` is what each run
+153 distinct methods, run 182 ways between them, across 758 runs. `names` is what each run
 found new to the machine that ran it. A blank candidate count means no run of that method
 recorded one, so it cannot be ranked -- see `--unattributed`.
 <!-- END GENERATED REGISTRY -->
