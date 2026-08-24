@@ -9567,6 +9567,7 @@ f481d0cba05eda5,zmb_magic_box_poison
 19a745b2098457c1,zmb_ooze_clump_2
 19a744b20984560e,zmb_ooze_clump_3
 5b3d86c84a32f53d,zmb_ooze_clump_explo
+5206da37d0eec855,zmb_open_safe
 3614625ba65790bc,zmb_oura_arrow_break_1
 34939cf74f37ebaa,zmb_oura_arrow_break_1_lfe
 3614655ba65795d5,zmb_oura_arrow_break_2
