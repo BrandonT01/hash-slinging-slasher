@@ -1,0 +1,4 @@
+19bd5305a0c559f5,mp_silo_bc3_srgb_combo
+60282170ff11e41f,mp_silo_bc4_combo
+7be8a4b6fd6d5f06,mp_silo_bc7_combo
+7dbb5791cbcaf3f9,mp_silo_bc7_srgb_combo

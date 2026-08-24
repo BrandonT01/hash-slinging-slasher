@@ -1,0 +1,2 @@
+1ccfdc7e84d2488c,vm_hades_ads_reddot_lower_up
+7e7ca83194b2eff9,vm_hades_ads_reddot_lower_down
