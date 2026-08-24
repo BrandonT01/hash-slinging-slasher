@@ -33,6 +33,8 @@ import sys
 import zlib
 
 BO4 = r"D:\Battlenet\Call of Duty Black Ops 4"
+COLDWAR = r"D:\Battlenet\Call of Duty Black Ops Cold War"
+ROOTS = {"BLKOPS04": BO4, "BLKOPSCW": COLDWAR}
 # Black Ops 4 ships Oodle 6; Cold War's 8 reads it too, and either is taken.
 OODLES = (
     os.path.join(BO4, "oo2core_6_win64.dll"),
@@ -376,14 +378,17 @@ def main(argv):
     parser.add_argument("--blte", default=None,
                         help="how many CASC archives to read as BLTE frames, or 'all'")
     parser.add_argument("--from-archive", type=int, default=0, help="skip this many archives")
+    parser.add_argument("--game", default="BLKOPS04", choices=sorted(ROOTS),
+                        help="which installed build to read")
     parser.add_argument("--out", default="contrib/bo4_harvest.txt")
     options = parser.parse_args(argv)
+    root = ROOTS[options.game]
 
     if options.fast:
         decompress = oodle()
         if decompress is None:
             raise SystemExit("no Oodle DLL found beside either game")
-        folder = os.path.join(BO4, "LPC")
+        folder = os.path.join(root, "LPC")
         for entry in sorted(os.listdir(folder)):
             if not entry.endswith(".ff"):
                 continue
@@ -392,7 +397,7 @@ def main(argv):
             print("  %-58s %3d block(s)  +%s" % (entry, blocks, len(names) - before), flush=True)
 
     if options.archives:
-        folder = os.path.join(BO4, "Data", "data")
+        folder = os.path.join(root, "Data", "data")
         archives = sorted(
             entry for entry in os.listdir(folder)
             if entry.startswith("data.") and entry[5:].isdigit()
@@ -413,7 +418,7 @@ def main(argv):
         decompress = oodle()
         if decompress is None:
             raise SystemExit("no Oodle DLL found beside either game")
-        folder = os.path.join(BO4, "Data", "data")
+        folder = os.path.join(root, "Data", "data")
         archives = sorted(
             entry for entry in os.listdir(folder)
             if entry.startswith("data.") and entry[5:].isdigit()
@@ -443,7 +448,7 @@ def main(argv):
         decompress = oodle()
         if decompress is None:
             raise SystemExit("no Oodle DLL found beside either game")
-        folder = os.path.join(BO4, "Data", "data")
+        folder = os.path.join(root, "Data", "data")
         archives = sorted(
             entry for entry in os.listdir(folder)
             if entry.startswith("data.") and entry[5:].isdigit()
