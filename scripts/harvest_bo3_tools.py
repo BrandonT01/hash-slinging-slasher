@@ -1,6 +1,6 @@
 r"""Black Ops 3's asset names, taken from the mod tools rather than from the shipped zones.
 
-    python contrib/harvest_bo3_tools.py --out contrib/bo3_tools.txt
+    python contrib/harvest_bo3_tools.py
 
 `contrib/harvest_bo3.py` reads Black Ops 3's `zone/*.ff`, which is the shipped half of the build:
 compressed containers holding whatever the game loads. This reads the **other** half, which Steam
@@ -29,6 +29,14 @@ measured here.
 Three spellings of every path are printed, because which one the engine hashes is not knowable in
 advance and asking costs nothing: the path as it sits under the tools root, the path with its
 extension dropped, and the bare basename.
+
+
+**Writes into `borrowed/`, never `contrib/`.** `submit` carries everything in `contrib/`
+into the pull request, and a harvest is tens of thousands of scraped strings -- working
+data that regenerates from the build in minutes and would otherwise sit in every
+contributor's clone for ever. `borrowed/` is gitignored and `submit` does not read it.
+The rule is the one `contrib/` exists for: carry the thing that *finds* names, not the
+corpus it was built from.
 """
 import argparse
 import os
@@ -56,7 +64,7 @@ def keep(text):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", default=BO3)
-    parser.add_argument("--out", default="contrib/bo3_tools.txt")
+    parser.add_argument("--out", default=os.path.join("borrowed", "bo3_tools.txt"))
     parser.add_argument("--most-text-mb", type=float, default=64.0,
                         help="skip a text file larger than this; none of the real ones are")
     options = parser.parse_args(argv)

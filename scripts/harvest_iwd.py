@@ -19,6 +19,14 @@ rather than payload.
 
 Three spellings of every entry, for the same reason `harvest_bo3_tools.py` prints three: the path,
 the path without its extension, and the bare basename.
+
+
+**Writes into `borrowed/`, never `contrib/`.** `submit` carries everything in `contrib/`
+into the pull request, and a harvest is tens of thousands of scraped strings -- working
+data that regenerates from the build in minutes and would otherwise sit in every
+contributor's clone for ever. `borrowed/` is gitignored and `submit` does not read it.
+The rule is the one `contrib/` exists for: carry the thing that *finds* names, not the
+corpus it was built from.
 """
 import argparse
 import os
@@ -40,7 +48,7 @@ def keep(text):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", default=STEAM)
-    parser.add_argument("--out", default="contrib/iwd_names.txt")
+    parser.add_argument("--out", default=os.path.join("borrowed", "iwd_names.txt"))
     options = parser.parse_args(argv)
 
     names = set()

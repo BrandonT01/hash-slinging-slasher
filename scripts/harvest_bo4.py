@@ -24,6 +24,14 @@ The only output is the name list. The filter is `scripts/harvest_retail.py`'s, w
 already tuned against this failure mode -- a run of printable bytes inside compressed data is
 mostly printable noise, so a name has to carry a separator, three letters, and no run of one
 character repeated four times.
+
+
+**Writes into `borrowed/`, never `contrib/`.** `submit` carries everything in `contrib/`
+into the pull request, and a harvest is tens of thousands of scraped strings -- working
+data that regenerates from the build in minutes and would otherwise sit in every
+contributor's clone for ever. `borrowed/` is gitignored and `submit` does not read it.
+The rule is the one `contrib/` exists for: carry the thing that *finds* names, not the
+corpus it was built from.
 """
 import argparse
 import ctypes
@@ -380,7 +388,7 @@ def main(argv):
     parser.add_argument("--from-archive", type=int, default=0, help="skip this many archives")
     parser.add_argument("--game", default="BLKOPS04", choices=sorted(ROOTS),
                         help="which installed build to read")
-    parser.add_argument("--out", default="contrib/bo4_harvest.txt")
+    parser.add_argument("--out", default=os.path.join("borrowed", "bo4_harvest.txt"))
     options = parser.parse_args(argv)
     root = ROOTS[options.game]
 
