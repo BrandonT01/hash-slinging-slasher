@@ -3,6 +3,7 @@
 37b0671b078fa8df,amb\electronics\computer\loops\mainframe\mainframe_loop_00.ll100.pc.snd
 8edd1943621e4fe,amb\electronics\computer\loops\mainframe\mainframe_loop_01.ll100.pc.snd
 5133efdd3eb440e5,amb\electronics\computer\loops\mainframe\mainframe_loop_02.ll100.pc.snd
+e3dbb47100d95d4,amb\electronics\computer\loops\mainframe\mainframe_loop_03.ll100.pc.snd
 17530c7924e2a913,amb\electronics\computer\loops\reel\reel.ll100.pc.snd
 134d416f3bf6892b,amb\environment\industrial\generic\amb_industrial_loop_00.ll100.pc.snd
 2eaa0fc827ec33b1,amb\environment\industrial\generic\amb_industrial_loop_02.ll100.pc.snd

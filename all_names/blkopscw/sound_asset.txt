@@ -13,6 +13,7 @@ ec0151ea605d6b6,mpl/executions/exec_136/exec_136_prone.ln75.pc.all.snd
 2948df5d8da9d310,mpl/intros/mp_moscow/mp_moscow_van_door_v5.ln75.pc.all.snd
 72c0915480ac1b91,mpl/intros/mp_moscow/mp_moscow_van_foley_v12.ln75.pc.all.snd
 3cb4818d15ce1ea2,mus/cp/rus_amerika/3.0_caught/mus_amerika_caught_v1.1_live_edit.sn75.pc.all.snd
+551047bbde574246,uin/2k20/battlepass/tier_purchase/battlepass_tier_purch_s2.sn75.pc.all.snd
 47370e49aa78862a,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_00.rn75.pc.en.snd
 192ed62bd28eb707,vox/scripted/mpl/abnd/vox_abnd_dbl_atpsy_oprt_01.rn75.pc.en.snd
 18be692e2568c983,vox/scripted/mpl/abnd/vox_abnd_dbl_rnd_end_oprt_dead_dblagt_00.rn75.pc.en.snd

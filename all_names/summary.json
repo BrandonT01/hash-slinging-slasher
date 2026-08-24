@@ -2,36 +2,36 @@
   "games": {
     "blkops04": {
       "files": 6,
-      "names": 69849,
+      "names": 70410,
       "types": {
         "image": {
           "found_pct": 75.9,
-          "named": 126945,
-          "names": 19918,
+          "named": 126947,
+          "names": 19920,
           "total": 167360
         },
         "material": {
           "found_pct": 81.2,
-          "named": 99665,
-          "names": 27551,
+          "named": 99669,
+          "names": 27555,
           "total": 122750
         },
         "sound_alias": {
-          "found_pct": 72.8,
-          "named": 36416,
-          "names": 9945,
+          "found_pct": 73.7,
+          "named": 36897,
+          "names": 10426,
           "total": 50043
         },
         "sound_asset": {
           "found_pct": 10.8,
-          "named": 8562,
-          "names": 178,
+          "named": 8563,
+          "names": 179,
           "total": 79263
         },
         "xanim": {
-          "found_pct": 71.2,
-          "named": 15651,
-          "names": 3682,
+          "found_pct": 71.6,
+          "named": 15724,
+          "names": 3755,
           "total": 21968
         },
         "xmodel": {
@@ -44,42 +44,42 @@
     },
     "blkopscw": {
       "files": 6,
-      "names": 52903,
+      "names": 53285,
       "types": {
         "image": {
           "found_pct": 83.7,
-          "named": 205249,
-          "names": 6241,
+          "named": 205283,
+          "names": 6275,
           "total": 245235
         },
         "material": {
           "found_pct": 85.2,
-          "named": 134703,
-          "names": 14332,
+          "named": 134752,
+          "names": 14381,
           "total": 158158
         },
         "sound_alias": {
-          "found_pct": 68.1,
-          "named": 34681,
-          "names": 26262,
+          "found_pct": 68.2,
+          "named": 34729,
+          "names": 26310,
           "total": 50890
         },
         "sound_asset": {
           "found_pct": 80.7,
-          "named": 78451,
-          "names": 513,
+          "named": 78452,
+          "names": 514,
           "total": 97217
         },
         "xanim": {
-          "found_pct": 67.4,
-          "named": 19200,
-          "names": 2869,
+          "found_pct": 68.1,
+          "named": 19392,
+          "names": 3061,
           "total": 28468
         },
         "xmodel": {
-          "found_pct": 78.4,
-          "named": 67151,
-          "names": 2686,
+          "found_pct": 78.5,
+          "named": 67209,
+          "names": 2744,
           "total": 85612
         }
       }
@@ -95,6 +95,6 @@
   ],
   "totals": {
     "games": 2,
-    "names": 122752
+    "names": 123695
   }
 }
