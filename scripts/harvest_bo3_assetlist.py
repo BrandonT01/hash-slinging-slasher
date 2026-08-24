@@ -31,17 +31,34 @@ every disk, so it cannot be reproduced and its fingerprint -- the whole mechanis
 people grinding the same ground -- means nothing.
 
 `zone_source/all/assetlist/*.csv` passes that test. They are the shipped per-zone manifests, one
-`type,name` row per asset, and nobody has a reason to write to them. The other trustworthy path is
+`type,name` row per asset. The one edit people do make is to put `//` in front of a row, which is
+how the tools let you *override* that asset -- the row is otherwise unchanged, so the name on it is
+still Treyarch's and is read rather than skipped. The other trustworthy path is
 `zone/` itself, which `contrib/harvest_bo3.py` already reads.
 """
 import argparse
 import collections
 import glob
 import os
+import re
 import sys
 
 STEAM = r"C:\Program Files (x86)\Steam\steamapps\common\Call of Duty Black Ops III"
 SEPARATORS = set("_/")
+
+# A row is `type,name`, and the type is a plain identifier.
+#
+# **A commented-out row still names an official asset.** In the Black Ops 3 tools, putting `//` in
+# front of a line in one of these manifests is how you *override* that asset -- the build stops
+# taking Treyarch's copy and takes yours instead. Many people do it, and the row is not changed in
+# any other way, so the name on it is exactly as shipped. Skipping those would throw away real
+# names for no reason, so the marker is stripped and the row is read.
+#
+# The marker is only ever recognised at the **start of a line**, and only `//`. `#` is legal
+# *inside* a name -- a techset is spelled `2d_add#a60c435b` -- so treating it as a comment
+# anywhere would quietly truncate names.
+COMMENT = "//"
+KIND = re.compile(r"^[a-z][a-z0-9_]*$")
 
 
 def tools_root(given):
@@ -62,6 +79,8 @@ def keep(text):
 def main(argv):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--root", default=None, help="overrides TA_TOOLS_PATH")
+    parser.add_argument("--typed", action="store_true",
+                        help="write `type,name` rows rather than bare names")
     parser.add_argument("--out", default=os.path.join("borrowed", "bo3_assetlist.txt"))
     options = parser.parse_args(argv)
 
@@ -77,23 +96,43 @@ def main(argv):
 
     names = set()
     kinds = collections.Counter()
+    typed = []
+    skipped = 0
+    overridden = 0
 
     for path in manifests:
-        with open(path, encoding="utf-8", errors="replace") as handle:
+        with open(path, encoding="utf-8-sig", errors="replace") as handle:
             for line in handle:
-                kind, _, name = line.partition(",")
+                row = line.strip()
+                if row.startswith(COMMENT):
+                    row = row[len(COMMENT) :].strip()
+                    overridden += 1
+                kind, _, name = row.partition(",")
+                kind = kind.strip().strip('"').lower()
                 name = name.strip().strip('"').replace("\\", "/").lower()
                 if not name:
                     continue
-                kinds[kind.strip().lower()] += 1
+                if not KIND.match(kind):
+                    skipped += 1
+                    continue
+                kinds[kind] += 1
+                typed.append((kind, name))
                 for spelling in (name, os.path.splitext(name)[0], os.path.basename(name)):
                     if keep(spelling):
                         names.add(spelling)
 
     with open(options.out, "w", encoding="utf-8") as handle:
-        handle.write("\n".join(sorted(names)) + "\n")
+        if options.typed:
+            handle.write("\n".join("%s,%s" % row for row in sorted(set(typed))) + "\n")
+        else:
+            handle.write("\n".join(sorted(names)) + "\n")
 
     print("%d manifest(s) under %s" % (len(manifests), folder), file=sys.stderr)
+    if overridden:
+        print("   %s row(s) commented out to override the shipped asset; the name is still"
+              " Treyarch's, so it is read" % format(overridden, ","), file=sys.stderr)
+    if skipped:
+        print("   %s row(s) ignored: no asset type" % format(skipped, ","), file=sys.stderr)
     for kind, count in kinds.most_common(10):
         print("   %8s  %s" % (format(count, ","), kind), file=sys.stderr)
     print("\n%s distinct name(s) -> %s" % (format(len(names), ","), options.out), file=sys.stderr)
