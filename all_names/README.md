@@ -22,16 +22,16 @@
 
 <table>
 <tr><th align="left"><code>blkopscw/</code></th>
-<th align="right" colspan="2">52,574 names in 6 file(s)</th>
+<th align="right" colspan="2">52,751 names in 6 file(s)</th>
 </tr>
 <tr><th align="left">asset type</th><th align="right">found here</th><th align="right">named, of all in the game</th>
 </tr>
-<tr><td><code>xmodel</code></td><td align="right">2,655</td><td align="right">67,120 / 85,612 &nbsp;(78.4%)</td></tr>
-<tr><td><code>material</code></td><td align="right">14,239</td><td align="right">134,610 / 158,158 &nbsp;(85.1%)</td></tr>
-<tr><td><code>image</code></td><td align="right">6,112</td><td align="right">205,120 / 245,235 &nbsp;(83.6%)</td></tr>
-<tr><td><code>xanim</code></td><td align="right">2,813</td><td align="right">19,144 / 28,468 &nbsp;(67.2%)</td></tr>
+<tr><td><code>xmodel</code></td><td align="right">2,672</td><td align="right">67,137 / 85,612 &nbsp;(78.4%)</td></tr>
+<tr><td><code>material</code></td><td align="right">14,286</td><td align="right">134,657 / 158,158 &nbsp;(85.1%)</td></tr>
+<tr><td><code>image</code></td><td align="right">6,212</td><td align="right">205,220 / 245,235 &nbsp;(83.7%)</td></tr>
+<tr><td><code>xanim</code></td><td align="right">2,816</td><td align="right">19,147 / 28,468 &nbsp;(67.3%)</td></tr>
 <tr><td><code>sound_asset</code></td><td align="right">507</td><td align="right">78,445 / 97,217 &nbsp;(80.7%)</td></tr>
-<tr><td><code>sound_alias</code></td><td align="right">26,248</td><td align="right">34,667 / 50,890 &nbsp;(68.1%)</td></tr>
+<tr><td><code>sound_alias</code></td><td align="right">26,258</td><td align="right">34,677 / 50,890 &nbsp;(68.1%)</td></tr>
 </table>
 
 </td>
